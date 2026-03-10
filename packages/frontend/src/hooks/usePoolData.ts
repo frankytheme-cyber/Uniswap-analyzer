@@ -1,0 +1,106 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult } from '../types.ts'
+
+const API = '/api'
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const r = await fetch(url)
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `HTTP ${r.status}`)
+  }
+  return r.json() as Promise<T>
+}
+
+// ── Watchlist ─────────────────────────────────────────────────────────────────
+
+export function useWatchlist() {
+  return useQuery<WatchlistEntry[]>({
+    queryKey: ['watchlist'],
+    queryFn:  () => fetchJson(`${API}/watchlist`),
+  })
+}
+
+export function useAddToWatchlist() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { chain: string; address: string }) =>
+      fetch(`${API}/watchlist`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      }).then((r) => {
+        if (!r.ok) return r.json().then((e) => Promise.reject(e.error))
+        return r.json() as Promise<WatchlistEntry>
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['watchlist'] }),
+  })
+}
+
+export function useRemoveFromWatchlist() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`${API}/watchlist/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['watchlist'] }),
+  })
+}
+
+// ── Analysis ──────────────────────────────────────────────────────────────────
+
+export function usePoolAnalysis(chain: string, address: string, enabled = true) {
+  return useQuery<PoolAnalysis>({
+    queryKey: ['analysis', chain, address],
+    queryFn:  () => fetchJson(`${API}/analysis/${chain}/${address}`),
+    enabled:  enabled && !!chain && !!address,
+  })
+}
+
+export function usePoolHistory(chain: string, address: string, days: number = 30) {
+  return useQuery<DayData[]>({
+    queryKey: ['history', chain, address, days],
+    queryFn:  () => fetchJson(`${API}/analysis/${chain}/${address}/history?days=${days}`),
+    enabled:  !!chain && !!address,
+  })
+}
+
+export function usePoolTicks(chain: string, address: string) {
+  return useQuery<Tick[]>({
+    queryKey: ['ticks', chain, address],
+    queryFn:  () => fetchJson(`${API}/pools/${chain}/${address}/ticks`),
+    enabled:  !!chain && !!address,
+    staleTime: 30 * 60 * 1000,
+  })
+}
+
+export function useRawPool(chain: string, address: string) {
+  return useQuery<RawPool>({
+    queryKey: ['pool-raw', chain, address],
+    queryFn:  () => fetchJson(`${API}/pools/${chain}/${address}`),
+    enabled:  !!chain && !!address,
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+export function useILData(chain: string, address: string) {
+  return useQuery<ILResult>({
+    queryKey: ['il', chain, address],
+    queryFn:  () => fetchJson(`${API}/analysis/${chain}/${address}/il`),
+    enabled:  !!chain && !!address,
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+export function useRefreshPool() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ chain, address }: { chain: string; address: string }) =>
+      fetch(`${API}/analysis/refresh/${chain}/${address}`, { method: 'POST' }).then((r) =>
+        r.json() as Promise<PoolAnalysis>,
+      ),
+    onSuccess: (_data, { chain, address }) => {
+      qc.invalidateQueries({ queryKey: ['analysis', chain, address] })
+      qc.invalidateQueries({ queryKey: ['history', chain, address] })
+    },
+  })
+}
