@@ -67,6 +67,13 @@ export default function PoolCard({ analysis, onClick, onRefresh, loading }: Prop
             <span className="text-xs bg-indigo-900 text-indigo-300 px-1.5 py-0.5 rounded">
               {CHAIN_LABEL[chain] ?? chain}
             </span>
+            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+              analysis.version === 'v4'
+                ? 'bg-violet-900 text-violet-300'
+                : 'bg-gray-700 text-gray-300'
+            }`}>
+              {analysis.version === 'v4' ? 'V4' : 'V3'}
+            </span>
           </div>
           <div className="text-xs text-gray-500 mt-0.5 font-mono">
             {analysis.poolAddress.slice(0, 10)}…

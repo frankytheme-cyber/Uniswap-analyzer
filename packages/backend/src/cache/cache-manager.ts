@@ -17,21 +17,33 @@ export type TtlKey = keyof typeof TTL
 
 export class CacheManager {
   private store: NodeCache
+  private pending = new Map<string, Promise<unknown>>()
 
   constructor() {
     this.store = new NodeCache({ useClones: false })
   }
 
-  // Returns cached value, or calls fetchFn and stores the result
+  // Returns cached value, or calls fetchFn and stores the result.
+  // Deduplicates concurrent in-flight requests for the same key.
   async get<T>(key: string, ttlKey: TtlKey, fetchFn: () => Promise<T>): Promise<T> {
     const cached = this.store.get<T>(key)
-    if (cached !== undefined) {
-      return cached
-    }
+    if (cached !== undefined) return cached
 
-    const value = await fetchFn()
-    this.store.set(key, value, TTL[ttlKey])
-    return value
+    if (this.pending.has(key)) return this.pending.get(key) as Promise<T>
+
+    const promise = fetchFn()
+      .then((value) => {
+        this.store.set(key, value, TTL[ttlKey])
+        this.pending.delete(key)
+        return value
+      })
+      .catch((err) => {
+        this.pending.delete(key)
+        throw err
+      })
+
+    this.pending.set(key, promise)
+    return promise
   }
 
   // Force-invalidates a key so the next get() will re-fetch

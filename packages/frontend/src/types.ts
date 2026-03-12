@@ -15,6 +15,8 @@ export interface PoolAnalysis {
   token0:        string
   token1:        string
   feeTier:       number
+  version:       'v3' | 'v4'
+  hooks?:        string    // solo V4: indirizzo contratto hook
   parameters:    ParameterScore[]
   overallScore:  number
   overallStatus: 'healthy' | 'caution' | 'risk'
@@ -70,4 +72,62 @@ export interface ILPoint {
 export interface ILResult {
   points: ILPoint[]
   currentFeeAPR: number
+}
+
+// ── Strategy Advisor ──────────────────────────────────────────────────────────
+
+export interface Strategy {
+  id:                   'passive' | 'narrow' | 'asymmetric-up' | 'defensive'
+  name:                 string
+  regime:               'any' | 'sideways' | 'bullish' | 'bearish'
+  rangeMinPercent:      number
+  rangeMaxPercent:      number
+  description:          string
+  risks:                string[]
+  rebalancingFrequency: 'never' | 'monthly' | 'on-10pct-move'
+}
+
+export interface StrategyAnalysis {
+  detectedRegime:      'bullish' | 'bearish' | 'sideways'
+  ema7:                number
+  ema30:               number
+  volatility30d:       number
+  recommendedStrategy: Strategy
+  allStrategies:       Strategy[]
+}
+
+// ── IL Simulator (multi-strategia) ───────────────────────────────────────────
+
+export interface ILDataPoint {
+  priceMultiplier:    number
+  priceChangePercent: number
+  ilPercent:          number
+  feeOffsetDays:      number
+  inRange:            boolean
+  token0Percent:      number
+  token1Percent:      number
+}
+
+export interface ILPerStrategy {
+  strategyId:      string
+  strategyName:    string
+  rangeMinPercent: number
+  rangeMaxPercent: number
+  currentFeeAPR:   number
+  points:          ILDataPoint[]
+}
+
+// ── Backtesting ───────────────────────────────────────────────────────────────
+
+export interface BacktestResult {
+  strategyId:                string
+  periodDays:                number
+  totalFeesUSD:              number
+  totalILPercent:            number
+  totalGasCostEstimateUSD:   number
+  netPnlPercent:             number
+  hodlReturnPercent:         number
+  timeInRangePercent:        number
+  rebalancingCount:          number
+  rebalancingWarning:        string | null
 }

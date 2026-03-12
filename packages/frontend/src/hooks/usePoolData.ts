@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult } from '../types.ts'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult } from '../types.ts'
+import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = '/api'
 
@@ -15,14 +17,29 @@ async function fetchJson<T>(url: string): Promise<T> {
 // ── Watchlist ─────────────────────────────────────────────────────────────────
 
 export function useWatchlist() {
-  return useQuery<WatchlistEntry[]>({
-    queryKey: ['watchlist'],
-    queryFn:  () => fetchJson(`${API}/watchlist`),
+  const localEntries = useWatchlistStore((s) => s.entries)
+  const setEntries   = useWatchlistStore((s) => s.setEntries)
+
+  const query = useQuery<WatchlistEntry[]>({
+    queryKey:    ['watchlist'],
+    queryFn:     () => fetchJson(`${API}/watchlist`),
+    // Mostra subito i dati da localStorage mentre il backend risponde
+    initialData: localEntries.length > 0 ? localEntries : undefined,
   })
+
+  // Sincronizza localStorage con la risposta del backend (solo se non vuota)
+  useEffect(() => {
+    if (query.data && query.data.length > 0) {
+      setEntries(query.data)
+    }
+  }, [query.data, setEntries])
+
+  return query
 }
 
 export function useAddToWatchlist() {
-  const qc = useQueryClient()
+  const qc       = useQueryClient()
+  const addEntry = useWatchlistStore((s) => s.addEntry)
   return useMutation({
     mutationFn: (body: { chain: string; address: string }) =>
       fetch(`${API}/watchlist`, {
@@ -33,16 +50,23 @@ export function useAddToWatchlist() {
         if (!r.ok) return r.json().then((e) => Promise.reject(e.error))
         return r.json() as Promise<WatchlistEntry>
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['watchlist'] }),
+    onSuccess: (entry) => {
+      addEntry(entry)
+      qc.invalidateQueries({ queryKey: ['watchlist'] })
+    },
   })
 }
 
 export function useRemoveFromWatchlist() {
-  const qc = useQueryClient()
+  const qc          = useQueryClient()
+  const removeEntry = useWatchlistStore((s) => s.removeEntry)
   return useMutation({
     mutationFn: (id: string) =>
       fetch(`${API}/watchlist/${id}`, { method: 'DELETE' }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['watchlist'] }),
+    onSuccess: (_, id) => {
+      removeEntry(id)
+      qc.invalidateQueries({ queryKey: ['watchlist'] })
+    },
   })
 }
 
@@ -87,6 +111,33 @@ export function useILData(chain: string, address: string) {
     queryKey: ['il', chain, address],
     queryFn:  () => fetchJson(`${API}/analysis/${chain}/${address}/il`),
     enabled:  !!chain && !!address,
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+export function useStrategyData(chain: string, address: string) {
+  return useQuery<StrategyAnalysis>({
+    queryKey:  ['strategy', chain, address],
+    queryFn:   () => fetchJson(`${API}/analysis/${chain}/${address}/strategy`),
+    enabled:   !!chain && !!address,
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+export function useILSimulatorData(chain: string, address: string) {
+  return useQuery<ILPerStrategy[]>({
+    queryKey:  ['il-simulator', chain, address],
+    queryFn:   () => fetchJson(`${API}/analysis/${chain}/${address}/il-simulator`),
+    enabled:   !!chain && !!address,
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+export function useBacktestData(chain: string, address: string) {
+  return useQuery<BacktestResult[]>({
+    queryKey:  ['backtest', chain, address],
+    queryFn:   () => fetchJson(`${API}/analysis/${chain}/${address}/backtest`),
+    enabled:   !!chain && !!address,
     staleTime: 15 * 60 * 1000,
   })
 }

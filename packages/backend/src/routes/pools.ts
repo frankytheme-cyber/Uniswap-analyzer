@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { GraphFetcher } from '../fetchers/graph-fetcher.ts'
+import { GraphFetcher, GraphFetcherV4, detectPoolVersion } from '../fetchers/graph-fetcher.ts'
 import { cache, CACHE_KEYS } from '../cache/cache-manager.ts'
 
 const router = Router()
@@ -11,7 +11,8 @@ router.get('/:chain/:address', async (req, res) => {
   const context = { route: 'GET /pools/:chain/:address', chain, poolId }
 
   try {
-    const fetcher = new GraphFetcher(chain)
+    const version = detectPoolVersion(poolId)
+    const fetcher = version === 'v4' ? new GraphFetcherV4(chain) : new GraphFetcher(chain)
     const pool = await cache.get(
       CACHE_KEYS.pool(chain, poolId),
       'POOL',
@@ -33,7 +34,8 @@ router.get('/:chain/:address/ticks', async (req, res) => {
   const context = { route: 'GET /pools/:chain/:address/ticks', chain, poolId }
 
   try {
-    const fetcher = new GraphFetcher(chain)
+    const version = detectPoolVersion(poolId)
+    const fetcher = version === 'v4' ? new GraphFetcherV4(chain) : new GraphFetcher(chain)
     const ticks = await cache.get(
       CACHE_KEYS.ticks(chain, poolId),
       'TICKS',

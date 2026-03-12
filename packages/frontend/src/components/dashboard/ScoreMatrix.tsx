@@ -5,6 +5,7 @@ import type { ParameterScore } from '../../types.ts'
 
 interface Props {
   parameters: ParameterScore[]
+  version?: 'v3' | 'v4'
 }
 
 // Dati API usati per il calcolo di ogni parametro
@@ -35,7 +36,7 @@ const STATUS_DOT: Record<string, string> = {
   bad:  'bg-red-500',
 }
 
-export default function ScoreMatrix({ parameters }: Props) {
+export default function ScoreMatrix({ parameters, version }: Props) {
   const radarData = parameters.map((p) => ({
     label: p.label,
     value: p.score === 1 ? 100 : p.status === 'warn' ? 50 : 10,
@@ -45,7 +46,18 @@ export default function ScoreMatrix({ parameters }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Radar chart */}
       <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-        <h3 className="text-sm font-medium text-gray-400 mb-3">Score Radar</h3>
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="text-sm font-medium text-gray-400">Score Radar</h3>
+          {version && (
+            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+              version === 'v4'
+                ? 'bg-violet-900 text-violet-300'
+                : 'bg-gray-700 text-gray-300'
+            }`}>
+              Uniswap {version === 'v4' ? 'V4' : 'V3'}
+            </span>
+          )}
+        </div>
         <ResponsiveContainer width="100%" height={260}>
           <RadarChart data={radarData}>
             <PolarGrid stroke="#374151" />

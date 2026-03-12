@@ -133,7 +133,7 @@ function buildScore(
     score,
     value:        inRangeRatio,
     displayValue,
-    label:        'Efficienza Capitale V3',
+    label:        'Efficienza Capitale',
     status,
     detail,
     rawData: {
@@ -151,7 +151,7 @@ function noDataScore(): ParameterScore {
     score:        0,
     value:        0,
     displayValue: 'N/D',
-    label:        'Efficienza Capitale V3',
+    label:        'Efficienza Capitale',
     status:       'warn',
     detail:       'Dati orari non disponibili',
   }

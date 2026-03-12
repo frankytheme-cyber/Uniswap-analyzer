@@ -182,10 +182,39 @@ feeCorrelation = correlate(tvlHistory, feeHistory)
 // ✓ Uniswap è fee-only → flag se spike TVL non correlato a spike fee
 ```
 
-### 7. Simulatore IL (`il-analyzer.ts`)
-// Dati necessari: token0Price, token1Price, feeAPR (da fees-analyzer)
-ilAtMultiplier = 2√(r) / (1+r) - 1  // r = price multiplier
-feeOffsetDays = (ilPercent / feeAPR) * 365
+### 7. Simulatore IL V3 con range concentrato (`il-analyzer.ts`)
+```typescript
+// Dati necessari: feeAPR (da fees-analyzer) + rangeMinPercent, rangeMaxPercent da Strategy
+// Formula derivata da Uniswap V3 whitepaper, normalizzata (IL=0 all'entry price):
+//   a = priceMin/entryPrice, b = priceMax/entryPrice, r = currentPrice/entryPrice
+//   v_LP   = 2√r - √a - r/√b            (in range)
+//   v_hold = r·(1 - 1/√b) + (1 - √a)
+//   IL = (v_LP / v_hold - 1) * 100
+// Out of range: posizione 100% token0 (sotto) o 100% token1 (sopra), formula clamped
+feeOffsetDays = |IL%| / (feeAPR/365)
+```
+
+### 8. Strategy Advisor (`strategy-advisor.ts`)
+```typescript
+// Dati necessari: poolDayDatas[30gg] per EMA7, EMA30, volatility30d
+// EMA(period, prices) con k=2/(period+1)
+// Regime: bullish se EMA7 > EMA30*1.02, bearish se EMA7 < EMA30*0.98, altrimenti sideways
+// Volatilità annualizzata = stddev(log-returns) * √365 * 100
+// → restituisce StrategyAnalysis: regime, ema7, ema30, volatility30d, recommendedStrategy
+```
+
+### 9. Backtesting (`backtesting-analyzer.ts`)
+```typescript
+// Dati necessari: StoredDayData[] da DuckDB (no API calls!)
+// Per ogni strategia × periodo {7,30,90}:
+//   totalFeesUSD = sum(feesUSD in period)
+//   totalILPercent = IL al prezzo finale con formula V3 corretta
+//   rebalancingCount: never=0, monthly=floor(days/30), on-10pct-move=simulate
+//   gasCost = count * perRebalancing (ETH=$15, L2=$0.50)
+//   netPnlPercent = fees% + IL% - gasCosts%
+//   hodlReturnPercent = (closeExit/closeEntry - 1) * 100
+// NOTA: ricerca reale (Spinoglio 2024) — rebalancing freq. moltiplica IL x5, fee solo x1.5
+```
 
 ---
 
@@ -212,7 +241,21 @@ overallScore = (parametri_positivi / 6) * 100
 | `TickHeatmap` | Bar orizzontale | Liquidità per tick range | Recharts BarChart |
 | `ScoreMatrix` | Radar | 6 parametri normalizzati | Recharts RadarChart |
 | `CapitalEfficiency` | Area | % tempo in-range (7gg hourly) | Recharts AreaChart |
-| `ILSimulator` | Line dual-axis | IL% + fee offset giorni | Recharts LineChart |
+| `ILSimulator` | Line multi-strategia dual-axis | ILDataPoint[] per 4 strategie + ReferenceArea out-of-range | Recharts LineChart |
+| `StrategyAdvisor` | Card grid | StrategyAnalysis (regime EMA, volatilità, 4 strategie) | Tailwind UI |
+| `BacktestChart` | ComposedChart | BacktestResult[] (fee bar + IL bar + PnL line + HODL line) | Recharts ComposedChart |
+---
+
+## Strategie LP Implementate (`strategy-advisor.ts`)
+
+| ID | Nome | Regime | Range | Rebalancing |
+|---|---|---|---|---|
+| `passive` | Full Range (Passiva) | any | [-∞, +∞] | Mai |
+| `narrow` | Range Stretto | sideways | [-10%, +10%] | Ogni ±10% di prezzo |
+| `asymmetric-up` | Asimmetrica Rialzista | bullish | [0%, +40%] | Mensile |
+| `defensive` | Difensiva | bearish | [-40%, +30%] | Mensile |
+
+Ref: Spinoglio 2024 — backtesting reale ETH/USDC Uniswap V3.
 ---
 
 ## API Routes Backend
@@ -228,6 +271,10 @@ GET  /api/analysis/:chain/:address/history?days=30  → dati storici per grafici
 
 GET  /api/health                       → status server + cache stats
 POST /api/refresh/:chain/:address      → forza refresh manuale
+
+GET  /api/analysis/:chain/:address/il-simulator  → ILPerStrategy[] (4 strategie)
+GET  /api/analysis/:chain/:address/strategy      → StrategyAnalysis (regime EMA + raccomandazione)
+GET  /api/analysis/:chain/:address/backtest      → BacktestResult[] (4 strategie × 7/30/90gg)
 ```
 
 ---
@@ -270,8 +317,16 @@ REFRESH_INTERVAL_MINUTES=15
 
 ## TODO Attivi
 
-- [ ] Setup monorepo (Sessione 1)
-- [ ] il-analyzer.ts + ILSimulator.tsx
+- [x] Setup monorepo
+- [x] il-analyzer.ts — formula V3 con range concentrato (Spinoglio 2024)
+- [x] ILSimulator.tsx — multi-strategia con ReferenceArea out-of-range
+- [x] strategy-advisor.ts — 4 strategie + EMA7/30 + volatility30d
+- [x] backtesting-analyzer.ts — backtesting su StoredDayData[] da DuckDB
+- [x] StrategyAdvisor.tsx — badge regime + card strategie
+- [x] BacktestChart.tsx — ComposedChart fee/IL/PnL/HODL
+- [x] PoolDetail.tsx — tab "Strategie LP" con i 3 nuovi componenti
+- [ ] geckoterminal-fetcher.ts — integrare dati competitor (rate-limiter.ts pronto)
+- [ ] defillama-fetcher.ts — storico fee protocollo
 
 ---
 

@@ -61,6 +61,30 @@ cron.schedule(`*/${REFRESH_INTERVAL} * * * *`, async () => {
   log('Cron: watchlist refresh complete', { pools: watchlist.length })
 })
 
+// ── Cache warm-up: pre-fetch all watchlist pools on startup ───────────────────
+
+async function warmupCache(): Promise<void> {
+  const log = (msg: string, extra?: object) =>
+    console.log(JSON.stringify({ message: msg, ...extra, timestamp: new Date().toISOString() }))
+
+  const watchlist = await db.getWatchlist()
+  if (watchlist.length === 0) return
+
+  log('Warm-up: pre-fetching watchlist pools', { pools: watchlist.length })
+
+  for (const entry of watchlist) {
+    try {
+      await runAnalysis(entry.chain, entry.address)
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(JSON.stringify({ error: message, context: { warmup: true, chain: entry.chain, address: entry.address }, timestamp: new Date().toISOString() }))
+    }
+  }
+
+  log('Warm-up: complete', { pools: watchlist.length })
+}
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 async function start() {
@@ -72,6 +96,8 @@ async function start() {
       timestamp: new Date().toISOString(),
     }))
   })
+  // Warm up cache after startup (non-blocking, errors are logged not thrown)
+  setTimeout(() => warmupCache().catch(() => {}), 5000)
 }
 
 start().catch((err) => {

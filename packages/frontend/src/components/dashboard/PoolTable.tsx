@@ -24,7 +24,9 @@ function PoolRow({ entry, onSelect, onRemove, removing }: {
       ? `${pool.token0.symbol}/${pool.token1.symbol}`
       : '—'
 
-  const feeTier = pool ? ` ${(parseInt(pool.feeTier, 10) / 10000).toFixed(2)}%` : ''
+  const feeTierNum = pool ? parseInt(pool.feeTier, 10) : 0
+  const feeTier    = pool && feeTierNum > 0 ? ` ${(feeTierNum / 10000).toFixed(2)}%` : ''
+  const version = entry.address.length === 66 ? 'V4' : 'V3'
 
   return (
     <tr
@@ -35,6 +37,13 @@ function PoolRow({ entry, onSelect, onRemove, removing }: {
         <div className="flex items-center gap-2">
           <span className="bg-indigo-900 text-indigo-300 text-xs px-2 py-0.5 rounded">
             {entry.chain}
+          </span>
+          <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+            version === 'V4'
+              ? 'bg-violet-900 text-violet-300'
+              : 'bg-gray-700 text-gray-300'
+          }`}>
+            {version}
           </span>
           <span className="text-white text-sm font-medium">{poolName}</span>
           {feeTier && (
@@ -71,8 +80,10 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
 
   function handleAdd() {
     setError('')
-    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
-      setError('Indirizzo non valido (deve essere 0x + 40 caratteri hex)')
+    const isV3 = /^0x[0-9a-fA-F]{40}$/.test(address)
+    const isV4 = /^0x[0-9a-fA-F]{64}$/.test(address)
+    if (!isV3 && !isV4) {
+      setError('Indirizzo non valido — V3: 0x + 40 hex | V4 PoolId: 0x + 64 hex')
       return
     }
     addMutation.mutate(
@@ -102,7 +113,7 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
 
           <input
             type="text"
-            placeholder="0x indirizzo pool…"
+            placeholder="0x indirizzo pool (V3: 40 hex, V4 PoolId: 64 hex)…"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}

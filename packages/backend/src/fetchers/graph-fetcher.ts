@@ -22,6 +22,14 @@ const CHAIN_TO_SUBGRAPH_ID_V4: Record<string, string> = {
 
 const GRAPH_GATEWAY = 'https://gateway.thegraph.com/api'
 
+// Fallback hosted-service URLs (legacy, ~1000 req/day free, use only without GRAPH_API_KEY)
+const CHAIN_TO_HOSTED_URL: Record<string, string> = {
+  ethereum: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
+  arbitrum: 'https://api.thegraph.com/subgraphs/name/ianlapham/arbitrum-minimal',
+  base:     'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3-base',
+  polygon:  'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v3-polygon',
+}
+
 // ── TypeScript Interfaces ───────────────────────────────────────────────────
 
 export interface Token {
@@ -78,7 +86,7 @@ export interface Swap {
   id: string
   timestamp: string
   sender: string
-  recipient: string
+  recipient?: string   // absent in V4 (ERC-6909 accounting model)
   amountUSD: string
   amount0: string
   amount1: string
@@ -207,6 +215,30 @@ const GET_RECENT_SWAPS = gql`
   }
 `
 
+/**
+ * V4 Swap schema differs from V3: no `recipient` field.
+ * In V4, token flows use ERC-6909 claims through the singleton PoolManager,
+ * so the recipient concept doesn't map to a single address field.
+ */
+const GET_RECENT_SWAPS_V4 = gql`
+  query GetRecentSwapsV4($poolId: String!, $since: Int!) {
+    swaps(
+      first: 500
+      orderBy: timestamp
+      orderDirection: desc
+      where: { pool: $poolId, timestamp_gt: $since }
+    ) {
+      id
+      timestamp
+      sender
+      amountUSD
+      amount0
+      amount1
+      transaction { id }
+    }
+  }
+`
+
 const GET_POOL_TICKS = gql`
   query GetPoolTicks($poolId: String!, $skip: Int!) {
     ticks(
@@ -254,11 +286,23 @@ export class GraphFetcher {
     }
 
     const apiKey = process.env.GRAPH_API_KEY
-    if (!apiKey) {
-      throw new Error('GRAPH_API_KEY is required. Get a free key at https://thegraph.com/studio/')
+    let url: string
+
+    if (apiKey) {
+      url = `${GRAPH_GATEWAY}/${apiKey}/subgraphs/id/${subgraphId}`
+    } else {
+      const fallback = CHAIN_TO_HOSTED_URL[chain]
+      if (!fallback) {
+        throw new Error(`GRAPH_API_KEY not set and no fallback URL for chain: ${chain}`)
+      }
+      console.warn(JSON.stringify({
+        warning: 'GRAPH_API_KEY not set — using legacy hosted service (~1000 req/day). Set GRAPH_API_KEY for production.',
+        chain,
+        timestamp: new Date().toISOString(),
+      }))
+      url = fallback
     }
 
-    const url = `${GRAPH_GATEWAY}/${apiKey}/subgraphs/id/${subgraphId}`
     this.client = new GraphQLClient(url)
   }
 
@@ -385,6 +429,23 @@ export class GraphFetcherV4 extends GraphFetcher {
         throw new Error(`Pool not found: ${poolId}`)
       }
       return data.pool
+    } catch (error) {
+      throw this.wrapError(error, context)
+    }
+  }
+
+  /**
+   * V4 Swap type has no `recipient` field — uses a dedicated query.
+   */
+  async getRecentSwaps(poolId: string, sinceDaysAgo: number = 1): Promise<Swap[]> {
+    const since = Math.floor(Date.now() / 1000) - sinceDaysAgo * 86400
+    const context = { method: 'getRecentSwaps', poolId, since, version: 'v4' }
+    try {
+      const data = await this.client.request<{ swaps: Swap[] }>(
+        GET_RECENT_SWAPS_V4,
+        { poolId, since }
+      )
+      return data.swaps
     } catch (error) {
       throw this.wrapError(error, context)
     }

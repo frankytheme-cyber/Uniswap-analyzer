@@ -31,8 +31,9 @@ router.post('/', async (req, res) => {
     return
   }
 
-  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
-    res.status(400).json({ error: 'Invalid pool address format' })
+  // V3: 0x + 40 hex (contract address) — V4: 0x + 64 hex (poolId hash)
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address) && !/^0x[0-9a-fA-F]{64}$/.test(address)) {
+    res.status(400).json({ error: 'Invalid pool address format (expected 0x + 40 hex for V3, or 0x + 64 hex for V4)' })
     return
   }
 
