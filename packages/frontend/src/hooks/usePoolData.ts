@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult } from '../types.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
 
 async function fetchJson<T>(url: string): Promise<T> {
   const r = await fetch(url)
