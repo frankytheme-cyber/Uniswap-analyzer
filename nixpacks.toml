@@ -1,0 +1,8 @@
+[phases.install]
+cmds = ["npm install --workspace=packages/backend"]
+
+[phases.build]
+cmds = ["npm run build --workspace=packages/backend"]
+
+[start]
+cmd = "node packages/backend/dist/server.js"
