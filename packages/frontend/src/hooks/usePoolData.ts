@@ -4,7 +4,7 @@ import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, St
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
-console.log('[API URL TEST v2]', API, '| VITE_API_URL:', import.meta.env.VITE_API_URL)
+console.log('[API URL TEST v3]', API, '| VITE_API_URL:', import.meta.env.VITE_API_URL)
 
 async function fetchJson<T>(url: string): Promise<T> {
   const r = await fetch(url)
