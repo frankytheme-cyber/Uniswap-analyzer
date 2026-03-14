@@ -117,6 +117,16 @@ export interface ILPerStrategy {
   points:          ILDataPoint[]
 }
 
+// ── Discovery ─────────────────────────────────────────────────────────────────
+
+export interface DiscoveryResult {
+  chain:           string
+  pools:           PoolAnalysis[]
+  totalCandidates: number
+  analyzedCount:   number
+  lastUpdated:     string
+}
+
 // ── Backtesting ───────────────────────────────────────────────────────────────
 
 export interface BacktestResult {

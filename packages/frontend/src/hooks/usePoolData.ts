@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult } from '../types.ts'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult } from '../types.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -142,6 +142,19 @@ export function useBacktestData(chain: string, address: string) {
     staleTime: 15 * 60 * 1000,
   })
 }
+
+// ── Discovery ─────────────────────────────────────────────────────────────────
+
+export function useDiscoverPools(chain: string, limit = 10, enabled = true) {
+  return useQuery<DiscoveryResult>({
+    queryKey:  ['discover', chain, limit],
+    queryFn:   () => fetchJson(`${API}/discover/${chain}?limit=${limit}`),
+    enabled:   enabled && !!chain,
+    staleTime: 30 * 60 * 1000, // 30 min — match backend DISCOVERY TTL
+  })
+}
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
 
 export function useRefreshPool() {
   const qc = useQueryClient()

@@ -9,6 +9,7 @@ export const TTL = {
   DAY_DATAS:      60 * 60,   // 60 min — poolDayDatas (daily, stable)
   DEFILLAMA:      60 * 60,   // 60 min — aggregated external data
   COMPETITORS:    60 * 60,   // 60 min — top pools by fee tier
+  DISCOVERY:      30 * 60,   // 30 min — discovery ranked results
 } as const
 
 export type TtlKey = keyof typeof TTL
@@ -78,6 +79,7 @@ export const CACHE_KEYS = {
   swaps:       (chain: string, poolId: string) => cacheKey(chain, poolId, 'swaps'),
   ticks:       (chain: string, poolId: string) => cacheKey(chain, poolId, 'ticks'),
   competitors: (chain: string, feeTier: string) => `${chain}:competitors:${feeTier}`,
+  discovery:   (chain: string) => `${chain}:discovery`,
 } as const
 
 // ── Singleton ─────────────────────────────────────────────────────────────────

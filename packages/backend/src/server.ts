@@ -13,7 +13,8 @@ import { cache } from './cache/cache-manager.ts'
 import { runAnalysis } from './services/analysis-service.ts'
 import poolsRouter    from './routes/pools.ts'
 import analysisRouter from './routes/analysis.ts'
-import watchlistRouter from './routes/watchlist.ts'
+import watchlistRouter  from './routes/watchlist.ts'
+import discoveryRouter  from './routes/discovery.ts'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -27,6 +28,7 @@ app.use(express.json())
 app.use('/api/pools',     poolsRouter)
 app.use('/api/analysis',  analysisRouter)
 app.use('/api/watchlist', watchlistRouter)
+app.use('/api/discover', discoveryRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({
