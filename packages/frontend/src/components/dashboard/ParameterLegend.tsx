@@ -2,8 +2,9 @@ const PARAMETERS = [
   {
     id:      'TVL',
     label:   'TVL Reale?',
-    color:   'text-indigo-400',
-    border:  'border-indigo-900',
+    color:   'text-indigo-600',
+    bg:      'bg-indigo-50 border-indigo-200',
+    idBg:    'bg-indigo-100 text-indigo-600',
     how:     'Calcola la liquidità attiva (AVL) nei tick entro ±1–10% dal prezzo corrente rispetto al TVL totale.',
     formula: 'AVL ratio = liquidità attiva / TVL totale',
     api:     'pool.tick · ticks[].liquidityGross · pool.totalValueLockedUSD',
@@ -14,9 +15,10 @@ const PARAMETERS = [
   {
     id:      'Vol',
     label:   'Volume Organico?',
-    color:   'text-blue-400',
-    border:  'border-blue-900',
-    how:     'Analizza la concentrazione degli swap per wallet tramite l\'indice di Herfindahl (HHI). Un indice vicino a 0 indica volume distribuito; vicino a 1 indica che un wallet domina.',
+    color:   'text-sky-600',
+    bg:      'bg-sky-50 border-sky-200',
+    idBg:    'bg-sky-100 text-sky-600',
+    how:     "Analizza la concentrazione degli swap per wallet tramite l'indice di Herfindahl (HHI). Un indice vicino a 0 indica volume distribuito; vicino a 1 indica che un wallet domina.",
     formula: 'HHI = Σ(quota_wallet²)',
     api:     'swaps[500].amountUSD · swaps[500].sender · poolDayDatas[1].volumeUSD',
     good:    'HHI < 0.15 e volume/wallet > $5k',
@@ -26,9 +28,10 @@ const PARAMETERS = [
   {
     id:      'Fee',
     label:   'Fee APR',
-    color:   'text-green-400',
-    border:  'border-green-900',
-    how:     'Annualizza le fee generate dalla pool negli ultimi 365 giorni rispetto al TVL medio. Se la pool è più giovane, il dato viene estrapolato.',
+    color:   'text-emerald-600',
+    bg:      'bg-emerald-50 border-emerald-200',
+    idBg:    'bg-emerald-100 text-emerald-700',
+    how:     'Annualizza le fee generate dalla pool negli ultimi 365 giorni rispetto al TVL medio.',
     formula: 'Fee APR = (fee_365gg / TVL_medio) × 100',
     api:     'poolDayDatas[365].feesUSD · poolDayDatas[365].tvlUSD',
     good:    '> 20% — fee giustificano ampiamente il capitale bloccato',
@@ -38,8 +41,9 @@ const PARAMETERS = [
   {
     id:      'Comp',
     label:   'Fee Competitiva?',
-    color:   'text-yellow-400',
-    border:  'border-yellow-900',
+    color:   'text-amber-600',
+    bg:      'bg-amber-50 border-amber-200',
+    idBg:    'bg-amber-100 text-amber-700',
     how:     'Confronta il Fee APR della pool con la mediana delle top 20 pool dello stesso fee tier sulla stessa chain.',
     formula: 'Score = Fee APR pool / mediana competitor',
     api:     'pools[stesso feeTier].feesUSD · pools[stesso feeTier].totalValueLockedUSD',
@@ -50,9 +54,10 @@ const PARAMETERS = [
   {
     id:      'Eff',
     label:   'Efficienza Capitale V3',
-    color:   'text-purple-400',
-    border:  'border-purple-900',
-    how:     'Misura quante ore nelle ultime 168 (7 giorni) il prezzo è rimasto dentro un range standard (±1% stablecoin, ±5% major, ±10% altcoin).',
+    color:   'text-violet-600',
+    bg:      'bg-violet-50 border-violet-200',
+    idBg:    'bg-violet-100 text-violet-700',
+    how:     'Misura quante ore nelle ultime 168 (7 giorni) il prezzo è rimasto dentro un range standard.',
     formula: 'In-range ratio = ore nel range / 168',
     api:     'poolHourDatas[168].tick · poolHourDatas[168].liquidity',
     good:    '> 75% — il capitale è produttivo la maggior parte del tempo',
@@ -62,61 +67,75 @@ const PARAMETERS = [
   {
     id:      'Inc',
     label:   'Incentivi Artificiali?',
-    color:   'text-rose-400',
-    border:  'border-rose-900',
-    how:     'Rileva spike improvvisi di TVL (+50% in 24h) e misura la correlazione di Pearson tra TVL e fee. Su Uniswap le fee sono l\'unica fonte di rendimento: se il TVL cresce ma le fee no, c\'è qualcosa di artificiale.',
+    color:   'text-rose-600',
+    bg:      'bg-rose-50 border-rose-200',
+    idBg:    'bg-rose-100 text-rose-600',
+    how:     "Rileva spike improvvisi di TVL (+50% in 24h) e misura la correlazione di Pearson tra TVL e fee.",
     formula: 'r = correlazione Pearson(TVL, fee) su 90gg',
     api:     'poolDayDatas[90].tvlUSD · poolDayDatas[90].feesUSD',
     good:    'Nessuno spike e r > 0.6 — fee e TVL crescono insieme',
     warn:    '≤ 2 spike o r > 0.4 — monitorare',
     bad:     'Spike frequenti o r ≤ 0.4 — possibili incentivi esterni',
   },
+  {
+    id:      'Mat',
+    label:   'Maturità Pool',
+    color:   'text-cyan-600',
+    bg:      'bg-cyan-50 border-cyan-200',
+    idBg:    'bg-cyan-100 text-cyan-700',
+    how:     'Valuta l\'età della pool e la stabilità storica di fee APR, volume e TVL tramite il coefficiente di variazione (CV = stddev/media).',
+    formula: 'CV = σ / μ — su fee APR, volume e TVL giornalieri',
+    api:     'pool.createdAtTimestamp · poolDayDatas[365].feesUSD · volumeUSD · tvlUSD',
+    good:    '> 180gg e CV(fee) < 0.5, CV(vol) < 1.0, CV(TVL) < 0.3 — pool matura e stabile',
+    warn:    '30–180gg o CV moderato — pool giovane o variabile',
+    bad:     '< 30gg o CV molto alto — dati insufficienti o rendimenti instabili',
+  },
 ]
 
 export default function ParameterLegend() {
   return (
-    <section className="mt-12 border-t border-gray-800 pt-8">
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">
+    <section className="mt-12 border-t border-slate-200 pt-8">
+      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
         Come funziona l'analisi
       </h2>
-      <p className="text-xs text-gray-600 mb-6">
-        Ogni pool viene valutata su 6 parametri indipendenti. Ogni parametro vale 1 punto.
-        Il punteggio finale è <span className="text-gray-400">(parametri positivi / 6) × 100</span>.
+      <p className="text-xs text-slate-400 mb-6">
+        Ogni pool viene valutata su 7 parametri indipendenti. Ogni parametro vale 1 punto.
+        Il punteggio finale è <span className="text-slate-600">(parametri positivi / 7) × 100</span>.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {PARAMETERS.map((p) => (
-          <div key={p.id} className={`bg-gray-900 border ${p.border} rounded-xl p-4 space-y-2`}>
+          <div key={p.id} className={`bg-white border ${p.bg} rounded-lg p-4 space-y-2 shadow-card`}>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold px-1.5 py-0.5 rounded bg-gray-800 ${p.color}`}>
+              <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${p.idBg}`}>
                 {p.id}
               </span>
-              <span className="text-sm font-semibold text-white">{p.label}</span>
+              <span className="text-sm font-semibold text-slate-800">{p.label}</span>
             </div>
 
-            <p className="text-xs text-gray-400 leading-relaxed">{p.how}</p>
+            <p className="text-xs text-slate-500 leading-relaxed">{p.how}</p>
 
-            <div className="bg-gray-800 rounded px-2.5 py-1.5">
-              <code className="text-xs text-gray-300">{p.formula}</code>
+            <div className="bg-slate-50 border border-slate-100 rounded px-2.5 py-1.5">
+              <code className="text-xs text-slate-600">{p.formula}</code>
             </div>
 
-            <div className="bg-gray-800/50 rounded px-2.5 py-1.5 flex gap-1.5 items-start">
-              <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide flex-shrink-0 mt-px">API</span>
-              <code className="text-[10px] text-gray-400 leading-relaxed break-all">{p.api}</code>
+            <div className="bg-slate-50 border border-slate-100 rounded px-2.5 py-1.5 flex gap-1.5 items-start">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide flex-shrink-0 mt-px">API</span>
+              <code className="text-[10px] text-slate-500 leading-relaxed break-all">{p.api}</code>
             </div>
 
             <div className="space-y-0.5 text-xs">
               <div className="flex gap-1.5">
-                <span className="text-green-500 flex-shrink-0">verde</span>
-                <span className="text-gray-500">{p.good}</span>
+                <span className="text-emerald-600 flex-shrink-0">verde</span>
+                <span className="text-slate-400">{p.good}</span>
               </div>
               <div className="flex gap-1.5">
                 <span className="text-amber-500 flex-shrink-0">giallo</span>
-                <span className="text-gray-500">{p.warn}</span>
+                <span className="text-slate-400">{p.warn}</span>
               </div>
               <div className="flex gap-1.5">
                 <span className="text-red-500 flex-shrink-0">rosso</span>
-                <span className="text-gray-500">{p.bad}</span>
+                <span className="text-slate-400">{p.bad}</span>
               </div>
             </div>
           </div>

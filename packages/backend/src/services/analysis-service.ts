@@ -5,6 +5,7 @@ import { analyzeFeeApr, analyzeCompetitiveFees, calculateFeeApr } from '../analy
 import { analyzeVolume } from '../analyzers/volume-analyzer.ts'
 import { analyzeCapitalEfficiency } from '../analyzers/capital-efficiency-analyzer.ts'
 import { analyzeIncentives } from '../analyzers/incentives-analyzer.ts'
+import { analyzeMaturity } from '../analyzers/maturity-analyzer.ts'
 import { db } from '../db/duckdb-store.ts'
 import type { ParameterScore } from '../analyzers/tvl-analyzer.ts'
 import type { PoolDayData } from '../fetchers/graph-fetcher.ts'
@@ -135,6 +136,8 @@ export async function runAnalysis(chain: string, poolAddress: string): Promise<P
 
   const incentivesScore = analyzeIncentives({ poolId, dayDatas: dayDatas90 })
 
+  const maturityScore = analyzeMaturity({ pool, dayDatas: dayDatas365 })
+
   // ── Aggregate ───────────────────────────────────────────────────────────
   const parameters: ParameterScore[] = [
     tvlScore,
@@ -143,10 +146,11 @@ export async function runAnalysis(chain: string, poolAddress: string): Promise<P
     competitiveScore,
     efficiencyScore,
     incentivesScore,
+    maturityScore,
   ]
 
   const positiveCount  = parameters.filter((p) => p.score === 1).length
-  const overallScore   = Math.round((positiveCount / 6) * 100)
+  const overallScore   = Math.round((positiveCount / parameters.length) * 100)
   const overallStatus  = overallScore >= 80 ? 'healthy' : overallScore >= 50 ? 'caution' : 'risk'
 
   // V4: extract hooks address; zero address means no hooks attached

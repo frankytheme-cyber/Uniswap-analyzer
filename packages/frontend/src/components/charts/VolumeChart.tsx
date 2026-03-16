@@ -5,7 +5,7 @@ import {
 import type { DayData } from '../../types.ts'
 
 interface Props {
-  dayDatas: DayData[]   // ultimi 30gg
+  dayDatas: DayData[]
 }
 
 function formatDate(ts: number): string {
@@ -27,38 +27,36 @@ export default function VolumeChart({ dayDatas }: Props) {
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-gray-400 mb-3">Volume + Transazioni (30gg)</h3>
+      <h3 className="text-sm font-medium text-slate-600 mb-3">Volume + Transazioni (30gg)</h3>
       <ResponsiveContainer width="100%" height={240}>
         <ComposedChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis
             dataKey="label"
-            tick={{ fill: '#6b7280', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickLine={false}
             interval="preserveStartEnd"
           />
-          {/* Asse sinistro: volume */}
           <YAxis
             yAxisId="volume"
             tickFormatter={formatUsd}
-            tick={{ fill: '#6b7280', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickLine={false}
             axisLine={false}
             width={52}
           />
-          {/* Asse destro: txCount */}
           <YAxis
             yAxisId="tx"
             orientation="right"
             tickFormatter={(v) => v.toLocaleString()}
-            tick={{ fill: '#6b7280', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickLine={false}
             axisLine={false}
             width={40}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-            labelStyle={{ color: '#9ca3af', fontSize: 11 }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12 }}
+            labelStyle={{ color: '#64748b' }}
             formatter={(value: number, name: string) =>
               name === 'volumeUSD'
                 ? [formatUsd(value), 'Volume']
@@ -67,26 +65,15 @@ export default function VolumeChart({ dayDatas }: Props) {
           />
           <Legend
             formatter={(value) => (
-              <span style={{ color: '#9ca3af', fontSize: 11 }}>
+              <span style={{ color: '#64748b', fontSize: 11 }}>
                 {value === 'volumeUSD' ? 'Volume USD' : 'Transazioni'}
               </span>
             )}
           />
-          <Bar
-            yAxisId="volume"
-            dataKey="volumeUSD"
-            fill="#6366f1"
-            opacity={0.7}
-            radius={[2, 2, 0, 0]}
-          />
-          <Line
-            yAxisId="tx"
-            type="monotone"
-            dataKey="txCount"
-            stroke="#f59e0b"
-            strokeWidth={2}
-            dot={false}
-          />
+          {/* Pastel indigo bars */}
+          <Bar yAxisId="volume" dataKey="volumeUSD" fill="#a5b4fc" opacity={0.85} radius={[2, 2, 0, 0]} />
+          {/* Pastel amber line */}
+          <Line yAxisId="tx" type="monotone" dataKey="txCount" stroke="#fcd34d" strokeWidth={2} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

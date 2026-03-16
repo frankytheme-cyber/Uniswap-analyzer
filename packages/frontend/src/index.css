@@ -2,8 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Font scale ──────────────────────────────────────────────────────────── */
+/* All Tailwind rem-based sizes (text-sm, text-base …) scale with html font-size */
+html.font-lg { font-size: 112.5%; } /* 18px vs default 16px */
+
 @layer base {
-  body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+  body { @apply bg-slate-50 text-slate-900 antialiased; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-slate-200 rounded-lg;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors;
+  }
+  .btn-ghost {
+    @apply text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-sm font-medium px-3 py-2 rounded-lg transition-colors;
   }
 }
+
+/* ─── Dark mode overrides ─────────────────────────────────────────────────── */
+/* html.dark .class has higher specificity (0,1,1) than .class (0,0,1)        */
+/* so no !important needed for most rules                                       */
+
+html.dark body { background-color: #0f172a; color: #f1f5f9; }
+
+/* Surfaces */
+html.dark .bg-white       { background-color: #1e293b; }
+html.dark .bg-white\/90   { background-color: rgb(30 41 59 / 0.9); }
+html.dark .bg-slate-50    { background-color: #0f172a; }
+html.dark .bg-slate-100   { background-color: #1e293b; }
+
+/* Borders */
+html.dark .border-slate-200    { border-color: #334155; }
+html.dark .border-slate-100    { border-color: #1e293b; }
+html.dark .divide-slate-200 > * { border-color: #334155; }
+
+/* Text — note: slate-400 and slate-500 are boosted in tailwind.config.js for light mode;
+   in dark mode we remap them to legible light values */
+html.dark .text-slate-900 { color: #f8fafc; }
+html.dark .text-slate-800 { color: #f1f5f9; }
+html.dark .text-slate-700 { color: #e2e8f0; }
+html.dark .text-slate-600 { color: #cbd5e1; }
+html.dark .text-slate-500 { color: #94a3b8; }
+html.dark .text-slate-400 { color: #94a3b8; }
+
+/* Hover text */
+html.dark .hover\:text-slate-700:hover { color: #f1f5f9; }
+html.dark .hover\:text-slate-600:hover { color: #e2e8f0; }
+
+/* Hover backgrounds */
+html.dark .hover\:bg-slate-50:hover  { background-color: #1e293b; }
+html.dark .hover\:bg-slate-100:hover { background-color: #334155; }
+
+/* Active nav items */
+html.dark .bg-slate-100 { background-color: #334155; }
+
+/* .card component class */
+html.dark .card {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+}
+
+/* .btn-ghost component class */
+html.dark .btn-ghost { color: #94a3b8; }
+html.dark .btn-ghost:hover { color: #e2e8f0; background-color: #334155; }
+
+/* Indigo */
+html.dark .bg-indigo-50         { background-color: #1e1b4b; }
+html.dark .border-indigo-200    { border-color: #3730a3; }
+html.dark .border-indigo-100    { border-color: #312e81; }
+html.dark .text-indigo-600      { color: #818cf8; }
+html.dark .text-indigo-500      { color: #a5b4fc; }
+html.dark .text-indigo-700      { color: #6366f1; }
+html.dark .hover\:text-indigo-600:hover { color: #818cf8; }
+html.dark .hover\:text-indigo-700:hover { color: #6366f1; }
+
+/* Emerald */
+html.dark .bg-emerald-50        { background-color: #022c22; }
+html.dark .border-emerald-200   { border-color: #065f46; }
+html.dark .text-emerald-700     { color: #6ee7b7; }
+html.dark .text-emerald-600     { color: #34d399; }
+
+/* Amber */
+html.dark .bg-amber-50          { background-color: #431407; }
+html.dark .border-amber-200     { border-color: #92400e; }
+html.dark .text-amber-700       { color: #fbbf24; }
+html.dark .text-amber-600       { color: #fcd34d; }
+html.dark .text-amber-500       { color: #fcd34d; }
+html.dark .text-amber-400       { color: #fde68a; }
+
+/* Red */
+html.dark .bg-red-50            { background-color: #450a0a; }
+html.dark .border-red-200       { border-color: #991b1b; }
+html.dark .text-red-600         { color: #fca5a5; }
+html.dark .text-red-500         { color: #f87171; }
+
+/* Violet */
+html.dark .bg-violet-50         { background-color: #2e1065; }
+html.dark .border-violet-200    { border-color: #5b21b6; }
+html.dark .text-violet-700      { color: #c4b5fd; }
+html.dark .text-violet-600      { color: #a78bfa; }
+html.dark .text-violet-500      { color: #c4b5fd; }
+html.dark .text-violet-400      { color: #ddd6fe; }
+
+/* Blue */
+html.dark .bg-blue-50           { background-color: #172554; }
+html.dark .border-blue-200      { border-color: #1e40af; }
+html.dark .text-blue-600        { color: #93c5fd; }
+
+/* Inputs & selects */
+html.dark input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+html.dark input:focus,
+html.dark select:focus {
+  border-color: #6366f1;
+}
+
+/* Recharts default tooltip (inline styles → need !important) */
+html.dark .recharts-default-tooltip {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+html.dark .recharts-tooltip-label   { color: #94a3b8 !important; }
+html.dark .recharts-tooltip-item    { color: #e2e8f0 !important; }
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar-thumb { background-color: #475569; }

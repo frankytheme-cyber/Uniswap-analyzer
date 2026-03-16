@@ -29,7 +29,7 @@ export async function discoverTopPools(
   minTvlUsd = 100_000,
 ): Promise<DiscoveryResult> {
   // Check cache first — full discovery result
-  const cacheKey = CACHE_KEYS.discovery(chain)
+  const cacheKey = CACHE_KEYS.discovery(chain, limit)
   return cache.get(cacheKey, 'DISCOVERY', () => runDiscovery(chain, limit, minTvlUsd))
 }
 
