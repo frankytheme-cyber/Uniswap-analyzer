@@ -4,6 +4,7 @@ import {
   useRawPool, useStrategyData, useILSimulatorData, useBacktestData,
 } from '../hooks/usePoolData.ts'
 import ScoreMatrix      from '../components/dashboard/ScoreMatrix.tsx'
+import CopyAddress      from '../components/CopyAddress.tsx'
 import TVLChart         from '../components/charts/TVLChart.tsx'
 import VolumeChart      from '../components/charts/VolumeChart.tsx'
 import FeeChart         from '../components/charts/FeeChart.tsx'
@@ -20,9 +21,9 @@ interface Props {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  healthy: 'text-green-400',
-  caution: 'text-amber-400',
-  risk:    'text-red-400',
+  healthy: 'text-emerald-600',
+  caution: 'text-amber-500',
+  risk:    'text-red-500',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -58,7 +59,6 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
   const currentTick = rawPool ? parseInt(rawPool.tick, 10) : 0
   const currentPrice = history30.length > 0 ? parseFloat(history30[0].close) : undefined
 
-  // Inizializza la strategia selezionata con quella raccomandata
   useEffect(() => {
     if (strategyAnalysis) {
       setSelectedStrategy(strategyAnalysis.recommendedStrategy.id)
@@ -70,20 +70,20 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
       {/* Back */}
       <button
         onClick={onBack}
-        className="text-sm text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1"
+        className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
       >
         ← Dashboard
       </button>
 
       {isLoading && (
         <div className="space-y-4 animate-pulse">
-          <div className="h-8 bg-gray-800 rounded w-48" />
-          <div className="h-64 bg-gray-900 border border-gray-800 rounded-xl" />
+          <div className="h-8 bg-slate-200 rounded w-48" />
+          <div className="h-64 bg-white border border-slate-200 rounded-lg" />
         </div>
       )}
 
       {isError && (
-        <div className="bg-red-900/20 border border-red-700 rounded-xl p-6 text-red-400">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-600">
           Errore nel caricare i dati della pool.
         </div>
       )}
@@ -93,31 +93,29 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
           {/* Pool header */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-slate-900">
                 {data.token0}/{data.token1}
-                <span className="ml-2 text-base font-normal text-gray-500">
+                <span className="ml-2 text-base font-normal text-slate-400">
                   {(data.feeTier / 10000).toFixed(2)}%
                 </span>
               </h1>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded">
+                <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-0.5 rounded">
                   {chain}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                <span className={`text-xs px-2 py-0.5 rounded font-medium border ${
                   data.version === 'v4'
-                    ? 'bg-violet-900 text-violet-300'
-                    : 'bg-gray-700 text-gray-300'
+                    ? 'bg-violet-50 text-violet-600 border-violet-200'
+                    : 'bg-slate-100 text-slate-500 border-slate-200'
                 }`}>
                   {data.version === 'v4' ? 'V4' : 'V3'}
                 </span>
-                <span className="text-xs font-mono text-gray-500">
-                  {data.poolAddress.slice(0, 10)}…{data.poolAddress.slice(-8)}
-                </span>
+                <CopyAddress address={data.poolAddress} prefixLen={10} suffixLen={8} className="text-xs" />
               </div>
               {data.version === 'v4' && data.hooks && data.hooks !== '0x0000000000000000000000000000000000000000' && (
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-violet-400">hooks:</span>
-                  <span className="text-xs font-mono text-gray-500">{data.hooks}</span>
+                  <span className="text-xs text-violet-500">hooks:</span>
+                  <span className="text-xs font-mono text-slate-400">{data.hooks}</span>
                 </div>
               )}
             </div>
@@ -125,7 +123,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
             <div className="text-right">
               <div className={`text-3xl font-bold ${STATUS_COLOR[data.overallStatus]}`}>
                 {data.overallScore}
-                <span className="text-base text-gray-500">/100</span>
+                <span className="text-base text-slate-400">/100</span>
               </div>
               <div className={`text-sm font-medium ${STATUS_COLOR[data.overallStatus]}`}>
                 {STATUS_LABEL[data.overallStatus]}
@@ -134,15 +132,15 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 border-b border-gray-800">
+          <div className="flex gap-1 border-b border-slate-200">
             {(['overview', 'charts', 'strategy'] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${
                   tab === t
-                    ? 'text-white border-b-2 border-indigo-500'
-                    : 'text-gray-500 hover:text-gray-300'
+                    ? 'text-slate-900 border-b-2 border-indigo-500'
+                    : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
                 {TAB_LABELS[t]}
@@ -152,14 +150,14 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
 
           {/* Overview tab */}
           {tab === 'overview' && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-semibold text-gray-300">Analisi Parametri</h2>
-                  <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                  <h2 className="text-sm font-semibold text-slate-700">Analisi Parametri</h2>
+                  <span className={`text-xs px-2 py-0.5 rounded font-medium border ${
                     data.version === 'v4'
-                      ? 'bg-violet-900 text-violet-300'
-                      : 'bg-gray-700 text-gray-300'
+                      ? 'bg-violet-50 text-violet-600 border-violet-200'
+                      : 'bg-slate-100 text-slate-500 border-slate-200'
                   }`}>
                     Uniswap {data.version === 'v4' ? 'V4' : 'V3'}
                   </span>
@@ -167,7 +165,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
                 <button
                   onClick={() => refresh.mutate({ chain, address })}
                   disabled={refresh.isPending}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-50 transition-colors"
+                  className="text-xs text-indigo-500 hover:text-indigo-700 disabled:opacity-50 transition-colors"
                 >
                   {refresh.isPending ? 'Aggiornamento…' : 'Forza aggiornamento'}
                 </button>
@@ -179,20 +177,20 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
           {/* Charts tab */}
           {tab === 'charts' && (
             <div className="space-y-6">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 <TVLChart dayDatas={history90} avlRatio={avlRatio} />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                   <VolumeChart dayDatas={history30} />
                 </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                   <FeeChart dayDatas={history365} />
                 </div>
               </div>
 
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 <TickHeatmap ticks={ticks} currentTick={currentTick} />
               </div>
             </div>
@@ -203,7 +201,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
             <div className="space-y-6">
 
               {/* 1. StrategyAdvisor */}
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 {strategyAnalysis ? (
                   <StrategyAdvisor
                     strategyAnalysis={strategyAnalysis}
@@ -211,14 +209,14 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
                     onSelectStrategy={setSelectedStrategy}
                   />
                 ) : (
-                  <div className="h-32 flex items-center justify-center text-gray-600 text-sm">
+                  <div className="h-32 flex items-center justify-center text-slate-400 text-sm">
                     Caricamento analisi regime…
                   </div>
                 )}
               </div>
 
               {/* 2. ILSimulator */}
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 <ILSimulator
                   strategies={ilSimulatorData}
                   selectedStrategyId={selectedStrategyId}
@@ -230,7 +228,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
               </div>
 
               {/* 3. BacktestChart */}
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 <BacktestChart
                   results={backtestResults}
                   selectedStrategyId={selectedStrategyId}
@@ -239,7 +237,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
               </div>
 
               {/* 4. ILManualSimulator */}
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-card">
                 <ILManualSimulator
                   initialFeeAPR={ilSimulatorData[0]?.currentFeeAPR ?? 0}
                   currentPrice={currentPrice}
@@ -251,7 +249,7 @@ export default function PoolDetail({ chain, address, onBack }: Props) {
           )}
 
           {/* Last updated */}
-          <p className="text-xs text-gray-600 text-right">
+          <p className="text-xs text-slate-400 text-right">
             Aggiornato: {new Date(data.lastUpdated).toLocaleString('it-IT')}
           </p>
         </>

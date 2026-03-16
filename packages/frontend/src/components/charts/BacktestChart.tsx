@@ -28,8 +28,8 @@ function formatUsd(v: number): string {
 
 function MetricCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-gray-800 rounded-lg p-3">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+      <p className="text-xs text-slate-400 mb-1">{label}</p>
       <p className={`text-base font-bold ${color}`}>{value}</p>
     </div>
   )
@@ -40,30 +40,26 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
 
   if (results.length === 0) {
     return (
-      <div className="h-48 flex items-center justify-center text-gray-600 text-sm">
+      <div className="h-48 flex items-center justify-center text-slate-400 text-sm">
         Dati backtesting non disponibili (richiede storico in DuckDB).
       </div>
     )
   }
 
-  // Filtra i risultati per il periodo selezionato
   const periodResults = results.filter((r) => r.periodDays === period)
 
-  // Costruisce i dati grafico: una barra per strategia
   const chartData = periodResults.map((r) => ({
     name:      STRATEGY_NAMES[r.strategyId] ?? r.strategyId,
     strategyId: r.strategyId,
     fees:      parseFloat((r.totalFeesUSD).toFixed(2)),
-    il:        parseFloat((r.totalILPercent).toFixed(2)),        // negativo
+    il:        parseFloat((r.totalILPercent).toFixed(2)),
     pnl:       parseFloat((r.netPnlPercent).toFixed(2)),
     hodl:      parseFloat((r.hodlReturnPercent).toFixed(2)),
     inRange:   r.timeInRangePercent,
   }))
 
-  // Dati della strategia selezionata nel periodo corrente
   const selectedResult = periodResults.find((r) => r.strategyId === selectedStrategyId)
 
-  // Warning da qualsiasi strategia nel periodo
   const warnings = periodResults
     .filter((r) => r.rebalancingWarning)
     .map((r) => ({ name: STRATEGY_NAMES[r.strategyId], warning: r.rebalancingWarning! }))
@@ -72,9 +68,8 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
     <div className="space-y-5">
       {/* Header + selettori */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-sm font-medium text-gray-400">Backtesting Storico (dati reali)</h3>
+        <h3 className="text-sm font-medium text-slate-600">Backtesting Storico (dati reali)</h3>
         <div className="flex gap-2 flex-wrap">
-          {/* Periodo */}
           <div className="flex gap-1">
             {PERIODS.map((p) => (
               <button
@@ -82,19 +77,18 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
                 onClick={() => setPeriod(p)}
                 className={`text-xs px-2.5 py-1 rounded transition-colors ${
                   period === p
-                    ? 'bg-indigo-900 text-indigo-300 border border-indigo-600'
-                    : 'text-gray-500 border border-gray-700 hover:text-gray-300'
+                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-300'
+                    : 'text-slate-400 border border-slate-200 hover:text-slate-600'
                 }`}
               >
                 {p}gg
               </button>
             ))}
           </div>
-          {/* Strategia */}
           <select
             value={selectedStrategyId}
             onChange={(e) => onStrategyChange(e.target.value)}
-            className="text-xs bg-gray-800 border border-gray-700 text-gray-300 rounded px-2 py-1 focus:outline-none focus:border-indigo-500"
+            className="text-xs bg-white border border-slate-200 text-slate-600 rounded px-2 py-1 focus:outline-none focus:border-indigo-400"
           >
             {Object.entries(STRATEGY_NAMES).map(([id, name]) => (
               <option key={id} value={id}>{name}</option>
@@ -107,9 +101,9 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
       {warnings.length > 0 && (
         <div className="space-y-1">
           {warnings.map((w, i) => (
-            <div key={i} className="flex items-start gap-2 bg-amber-950 border border-amber-700 rounded-lg px-3 py-2">
-              <span className="text-amber-400 shrink-0 mt-0.5">⚠</span>
-              <p className="text-xs text-amber-300">
+            <div key={i} className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <span className="text-amber-500 shrink-0 mt-0.5">⚠</span>
+              <p className="text-xs text-amber-700">
                 <span className="font-medium">{w.name}:</span> {w.warning}
               </p>
             </div>
@@ -117,28 +111,28 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
         </div>
       )}
 
-      {/* Grafico comparativo (tutte le strategie nel periodo) */}
+      {/* Grafico comparativo */}
       <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-          <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+          <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} tickLine={false} />
           <YAxis
             yAxisId="pct"
             tickFormatter={(v: number) => `${v.toFixed(0)}%`}
-            tick={{ fill: '#6b7280', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickLine={false} axisLine={false} width={44}
           />
           <YAxis
             yAxisId="usd"
             orientation="right"
             tickFormatter={formatUsd}
-            tick={{ fill: '#6b7280', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickLine={false} axisLine={false} width={52}
           />
 
           <Tooltip
-            contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-            labelStyle={{ color: '#9ca3af', fontSize: 11 }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8 }}
+            labelStyle={{ color: '#64748b', fontSize: 11 }}
             formatter={(value: number, name: string) => {
               if (name === 'fees')  return [formatUsd(value), 'Fee accumulate']
               if (name === 'il')    return [`${value.toFixed(2)}%`, 'IL totale']
@@ -158,94 +152,94 @@ export default function BacktestChart({ results, selectedStrategyId, onStrategyC
                 hodl:    'HODL (%)',
                 inRange: 'In range (%)',
               }
-              return <span style={{ color: '#9ca3af', fontSize: 10 }}>{labels[value as string] ?? value}</span>
+              return <span style={{ color: '#64748b', fontSize: 10 }}>{labels[value as string] ?? value}</span>
             }}
           />
 
-          <ReferenceLine yAxisId="pct" y={0} stroke="#374151" />
+          <ReferenceLine yAxisId="pct" y={0} stroke="#e2e8f0" />
 
           {/* Fee (barre verdi, asse USD) */}
-          <Bar yAxisId="usd" dataKey="fees" fill="#22c55e" fillOpacity={0.7} radius={[3, 3, 0, 0]}>
+          <Bar yAxisId="usd" dataKey="fees" fill="#6ee7b7" fillOpacity={0.7} radius={[3, 3, 0, 0]}>
             {chartData.map((entry) => (
               <Cell
                 key={entry.strategyId}
-                fill="#22c55e"
+                fill="#6ee7b7"
                 fillOpacity={entry.strategyId === selectedStrategyId ? 0.9 : 0.4}
               />
             ))}
           </Bar>
 
           {/* IL (barre rosse, asse %) */}
-          <Bar yAxisId="pct" dataKey="il" fill="#ef4444" fillOpacity={0.7} radius={[3, 3, 0, 0]}>
+          <Bar yAxisId="pct" dataKey="il" fill="#fca5a5" fillOpacity={0.7} radius={[3, 3, 0, 0]}>
             {chartData.map((entry) => (
               <Cell
                 key={entry.strategyId}
-                fill="#ef4444"
+                fill="#fca5a5"
                 fillOpacity={entry.strategyId === selectedStrategyId ? 0.9 : 0.4}
               />
             ))}
           </Bar>
 
-          {/* PnL netto (linea bianca) */}
+          {/* PnL netto (linea scura) */}
           <Line
             yAxisId="pct" type="monotone" dataKey="pnl"
-            stroke="#f9fafb" strokeWidth={2}
-            dot={{ fill: '#f9fafb', r: 3 }}
+            stroke="#334155" strokeWidth={2}
+            dot={{ fill: '#334155', r: 3 }}
             activeDot={{ r: 5 }}
           />
 
-          {/* HODL (linea grigia tratteggiata — benchmark) */}
+          {/* HODL (linea slate tratteggiata) */}
           <Line
             yAxisId="pct" type="monotone" dataKey="hodl"
-            stroke="#6b7280" strokeWidth={1.5} strokeDasharray="6 3"
-            dot={false} activeDot={{ r: 3, fill: '#6b7280' }}
+            stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="6 3"
+            dot={false} activeDot={{ r: 3, fill: '#94a3b8' }}
           />
         </ComposedChart>
       </ResponsiveContainer>
 
       {/* Metriche della strategia selezionata */}
       {selectedResult && (
-        <div className="border-t border-gray-800 pt-4">
-          <p className="text-xs text-gray-500 mb-3">
-            Dettaglio — <span className="text-gray-300">{STRATEGY_NAMES[selectedResult.strategyId]}</span> · {period}gg
+        <div className="border-t border-slate-200 pt-4">
+          <p className="text-xs text-slate-400 mb-3">
+            Dettaglio — <span className="text-slate-700">{STRATEGY_NAMES[selectedResult.strategyId]}</span> · {period}gg
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetricCard
               label="Fee accumulate"
               value={formatUsd(selectedResult.totalFeesUSD)}
-              color="text-green-400"
+              color="text-emerald-600"
             />
             <MetricCard
               label="Impermanent Loss"
               value={`${selectedResult.totalILPercent.toFixed(2)}%`}
-              color={selectedResult.totalILPercent < -1 ? 'text-red-400' : 'text-gray-300'}
+              color={selectedResult.totalILPercent < -1 ? 'text-red-500' : 'text-slate-600'}
             />
             <MetricCard
               label="PnL netto"
               value={`${selectedResult.netPnlPercent > 0 ? '+' : ''}${selectedResult.netPnlPercent.toFixed(2)}%`}
-              color={selectedResult.netPnlPercent >= 0 ? 'text-green-400' : 'text-red-400'}
+              color={selectedResult.netPnlPercent >= 0 ? 'text-emerald-600' : 'text-red-500'}
             />
             <MetricCard
               label="Tempo in range"
               value={`${selectedResult.timeInRangePercent.toFixed(1)}%`}
-              color={selectedResult.timeInRangePercent >= 70 ? 'text-green-400' : selectedResult.timeInRangePercent >= 50 ? 'text-amber-400' : 'text-red-400'}
+              color={selectedResult.timeInRangePercent >= 70 ? 'text-emerald-600' : selectedResult.timeInRangePercent >= 50 ? 'text-amber-500' : 'text-red-500'}
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
             <MetricCard
               label="HODL benchmark"
               value={`${selectedResult.hodlReturnPercent > 0 ? '+' : ''}${selectedResult.hodlReturnPercent.toFixed(2)}%`}
-              color="text-gray-400"
+              color="text-slate-500"
             />
             <MetricCard
               label="Riposizionamenti"
               value={String(selectedResult.rebalancingCount)}
-              color={selectedResult.rebalancingCount > 2 ? 'text-amber-400' : 'text-gray-300'}
+              color={selectedResult.rebalancingCount > 2 ? 'text-amber-500' : 'text-slate-600'}
             />
             <MetricCard
               label="Costo gas stimato"
               value={formatUsd(selectedResult.totalGasCostEstimateUSD)}
-              color="text-gray-400"
+              color="text-slate-500"
             />
           </div>
         </div>

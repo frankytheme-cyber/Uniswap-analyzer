@@ -15,23 +15,21 @@ export default function Dashboard({ onSelectPool }: Props) {
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Uniswap Pool Analyzer</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-slate-900">Il Tuo Portafoglio</h1>
+        <p className="text-slate-500 text-sm mt-1">
           Analisi in tempo reale delle pool Uniswap V3 — aggiornamento ogni 15 minuti
         </p>
       </div>
 
-      {/* Watchlist table */}
       {isLoading ? (
-        <div className="text-gray-600 text-sm">Caricamento watchlist…</div>
+        <div className="text-slate-400 text-sm">Caricamento watchlist…</div>
       ) : (
         <PoolTable entries={watchlist} onSelectPool={onSelectPool} />
       )}
 
-      {/* Pool cards con score */}
       {watchlist.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
             Score Overview
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -66,16 +64,16 @@ function PoolCardWrapper({
 
   if (isLoading) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 animate-pulse">
-        <div className="h-4 bg-gray-800 rounded w-1/2 mb-2" />
-        <div className="h-3 bg-gray-800 rounded w-1/3" />
+      <div className="bg-white border border-slate-200 rounded-lg p-4 animate-pulse shadow-card">
+        <div className="h-4 bg-slate-100 rounded w-1/2 mb-2" />
+        <div className="h-3 bg-slate-100 rounded w-1/3" />
       </div>
     )
   }
 
   if (isError || !data) {
     return (
-      <div className="bg-gray-900 border border-red-900/50 rounded-xl p-4 text-red-400 text-xs">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-xs">
         Errore nel caricare {address.slice(0, 8)}…
       </div>
     )

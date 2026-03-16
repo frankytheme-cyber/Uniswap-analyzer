@@ -16,62 +16,109 @@ interface Props {
   onBack: () => void
 }
 
+type VersionFilter = 'all' | 'v3' | 'v4'
+
+const VERSION_FILTERS: { value: VersionFilter; label: string }[] = [
+  { value: 'all', label: 'Tutte' },
+  { value: 'v3',  label: 'V3' },
+  { value: 'v4',  label: 'V4' },
+]
+
+const POOL_LIMITS = [10, 25, 50] as const
+
 export default function Discover({ onSelectPool, onBack }: Props) {
-  const [chain, setChain] = useState<Chain>('ethereum')
-  const { data, isLoading, isFetching, error } = useDiscoverPools(chain)
+  const [chain, setChain]                   = useState<Chain>('ethereum')
+  const [versionFilter, setVersionFilter]   = useState<VersionFilter>('all')
+  const [limit, setLimit]                   = useState<number>(10)
+  const { data, isLoading, isFetching, error } = useDiscoverPools(chain, limit)
   const addToWatchlist = useAddToWatchlist()
   const watchlistEntries = useWatchlistStore((s) => s.entries)
+
+  const filteredPools = data?.pools.filter(
+    (p) => versionFilter === 'all' || p.version === versionFilter
+  ) ?? []
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <button
-            onClick={onBack}
-            className="text-gray-500 hover:text-gray-300 text-sm mb-2 transition-colors"
+      <div>
+        <button
+          onClick={onBack}
+          className="text-slate-400 hover:text-slate-600 text-sm mb-3 transition-colors"
+        >
+          ← Dashboard
+        </button>
+        <h1 className="text-2xl font-bold text-slate-900">Discover Top Pools</h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Le migliori pool Uniswap V3 e V4 ordinate per punteggio
+        </p>
+      </div>
+
+      {/* Chain selector + version filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex gap-2 flex-wrap">
+          {CHAINS.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setChain(c.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                chain === c.value
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="sm:ml-auto flex items-center gap-2">
+          <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+            {VERSION_FILTERS.map((v) => (
+              <button
+                key={v.value}
+                onClick={() => setVersionFilter(v.value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  versionFilter === v.value
+                    ? v.value === 'v4'
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="bg-white border border-slate-200 text-slate-600 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           >
-            &larr; Dashboard
-          </button>
-          <h1 className="text-2xl font-bold text-white">Discover Top Pools</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Le migliori pool Uniswap V3 ordinate per punteggio
-          </p>
+            {POOL_LIMITS.map((n) => (
+              <option key={n} value={n}>Top {n}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Chain selector */}
-      <div className="flex gap-2">
-        {CHAINS.map((c) => (
-          <button
-            key={c.value}
-            onClick={() => setChain(c.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              chain === c.value
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Loading / Error */}
+      {/* Loading */}
       {isLoading && (
         <div className="text-center py-16">
-          <div className="inline-block w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-gray-400 text-sm">
-            Analizzando le migliori pool su {CHAINS.find((c) => c.value === chain)?.label}...
+          <div className="inline-block w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-slate-500 text-sm">
+            Analizzando le migliori pool su {CHAINS.find((c) => c.value === chain)?.label}…
           </p>
-          <p className="text-gray-600 text-xs mt-1">
+          <p className="text-slate-400 text-xs mt-1">
             La prima analisi potrebbe richiedere fino a un minuto
           </p>
         </div>
       )}
 
+      {/* Error */}
       {error && (
-        <div className="bg-red-950 border border-red-800 rounded-lg p-4 text-red-300 text-sm">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-sm">
           Errore: {error instanceof Error ? error.message : String(error)}
         </div>
       )}
@@ -79,20 +126,23 @@ export default function Discover({ onSelectPool, onBack }: Props) {
       {/* Results */}
       {data && !isLoading && (
         <>
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-sm text-slate-400">
             <span>
-              Top {data.pools.length} pool su {data.totalCandidates} candidate analizzate ({data.analyzedCount} valutate)
+              {versionFilter === 'all'
+                ? `Top ${filteredPools.length} pool su ${data.totalCandidates} candidate (${data.analyzedCount} valutate)`
+                : `${filteredPools.length} pool ${versionFilter.toUpperCase()} su ${data.pools.length} totali`
+              }
             </span>
             {isFetching && (
-              <span className="text-indigo-400 text-xs">Aggiornamento...</span>
+              <span className="text-indigo-500 text-xs">Aggiornamento…</span>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.pools.map((analysis, i) => (
+            {filteredPools.map((analysis, i) => (
               <div key={analysis.poolAddress} className="relative pt-4">
                 {/* Rank badge */}
-                <div className="absolute top-1 -left-2 z-10 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">
+                <div className="absolute top-1 -left-1 z-10 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
                   {i + 1}
                 </div>
                 {/* Watchlist star */}
@@ -103,7 +153,7 @@ export default function Discover({ onSelectPool, onBack }: Props) {
                   return (
                     <button
                       className={`absolute top-1 right-0 z-10 text-lg leading-none transition-colors ${
-                        inWatchlist ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400'
+                        inWatchlist ? 'text-amber-400' : 'text-slate-300 hover:text-amber-400'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -118,20 +168,19 @@ export default function Discover({ onSelectPool, onBack }: Props) {
                 <PoolCard
                   analysis={analysis}
                   onClick={() => onSelectPool(analysis.chain, analysis.poolAddress)}
-                  onRefresh={() =>
-                    addToWatchlist.mutate(
-                      { chain: analysis.chain, address: analysis.poolAddress },
-                    )
-                  }
+                  onRefresh={() => addToWatchlist.mutate({ chain: analysis.chain, address: analysis.poolAddress })}
                   loading={addToWatchlist.isPending}
                 />
               </div>
             ))}
           </div>
 
-          {data.pools.length === 0 && (
-            <p className="text-gray-500 text-center py-8">
-              Nessuna pool trovata su questa chain.
+          {filteredPools.length === 0 && (
+            <p className="text-slate-400 text-center py-8">
+              {versionFilter === 'all'
+                ? 'Nessuna pool trovata su questa chain.'
+                : `Nessuna pool ${versionFilter.toUpperCase()} trovata su questa chain.`
+              }
             </p>
           )}
         </>
