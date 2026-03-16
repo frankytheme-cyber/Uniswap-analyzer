@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Dashboard  from './pages/Dashboard.tsx'
 import PoolDetail from './pages/PoolDetail.tsx'
 import Discover   from './pages/Discover.tsx'
@@ -7,6 +7,36 @@ import Learn      from './pages/Learn.tsx'
 import NavBar     from './components/NavBar.tsx'
 
 type View = 'home' | 'dashboard' | 'discover' | 'learn'
+
+function DisclaimerBanner() {
+  const [visible, setVisible] = useState(() => localStorage.getItem('disclaimer-dismissed') !== '1')
+
+  const dismiss = useCallback(() => {
+    localStorage.setItem('disclaimer-dismissed', '1')
+    setVisible(false)
+  }, [])
+
+  if (!visible) return null
+
+  return (
+    <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-start gap-3 text-xs text-amber-900">
+      <span className="shrink-0 text-amber-500 dark:text-amber-400 mt-0.5" aria-hidden>⚠</span>
+      <p className="flex-1 leading-relaxed">
+        <strong>Solo a scopo informativo.</strong>{' '}
+        Uniswap Pool Analyzer è uno strumento di analisi dati e non costituisce consulenza finanziaria,
+        di investimento o legale. I dati mostrati provengono da fonti terze e potrebbero contenere
+        imprecisioni. Qualsiasi decisione di investimento è di esclusiva responsabilità dell'utente.
+      </p>
+      <button
+        onClick={dismiss}
+        aria-label="Chiudi avviso"
+        className="shrink-0 text-amber-500 hover:text-amber-200 dark:text-amber-500 dark:hover:text-amber-300 transition-colors ml-1 leading-none text-base"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
 
 function useFontScale() {
   const [large, setLarge] = useState(() => localStorage.getItem('font-lg') === '1')
@@ -67,6 +97,7 @@ export default function App() {
   if (selected) {
     return (
       <div className="min-h-screen bg-slate-50">
+        <DisclaimerBanner />
         <PoolDetail
           chain={selected.chain}
           address={selected.address}
@@ -80,6 +111,7 @@ export default function App() {
   if (view === 'home') {
     return (
       <div className="min-h-screen bg-slate-50">
+        <DisclaimerBanner />
         <Home onNavigate={setView} />
         {controls}
       </div>
@@ -89,6 +121,7 @@ export default function App() {
   if (view === 'learn') {
     return (
       <div className="min-h-screen bg-slate-50">
+        <DisclaimerBanner />
         <Learn onBack={() => setView('home')} onNavigate={setView} />
         {controls}
       </div>
@@ -97,6 +130,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <DisclaimerBanner />
       <NavBar
         view={view}
         onNavigate={setView}
