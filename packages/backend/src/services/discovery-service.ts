@@ -105,7 +105,7 @@ async function runDiscovery(
     .sort((a, b) => b.quickScore - a.quickScore)
 
   // Take top limit*2 for full analysis (to account for failures)
-  const toAnalyze = scored.slice(0, limit * 2)
+  const toAnalyze = scored.slice(0, limit + 2)
 
   // ── Phase 2: Full analysis on best candidates ──────────────────────────
   const results: PoolAnalysis[] = []
