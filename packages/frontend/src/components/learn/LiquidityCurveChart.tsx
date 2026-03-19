@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   Scatter,
 } from 'recharts'
-import MathBlock from './MathBlock'
 
 // Pool at equilibrium: poolEth ETH at $2,000 each
 // K = poolEth * (poolEth * 2000)
