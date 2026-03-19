@@ -57,11 +57,19 @@ function calculateAvlUsd(
   for (const tick of ticks) {
     const tickIdx = parseInt(tick.tickIdx, 10)
     if (tickIdx >= lowerBound && tickIdx <= upperBound) {
-      activeLiquidity += BigInt(tick.liquidityGross)
+      try {
+        activeLiquidity += BigInt(tick.liquidityGross)
+      } catch {
+        // Skip ticks with malformed liquidityGross from subgraph
+        continue
+      }
     }
   }
 
-  const avlRatio = Number(activeLiquidity) / Number(totalLiquidity)
+  // Use BigInt division scaled by 1e18 to avoid Number precision loss for large values
+  const SCALE = 10n ** 18n
+  const scaledRatio = (activeLiquidity * SCALE) / totalLiquidity
+  const avlRatio = Number(scaledRatio) / 1e18
   return avlRatio * totalValueLockedUSD
 }
 

@@ -108,6 +108,7 @@ export interface CompetitorPool {
   totalValueLockedUSD: string
   feesUSD: string
   volumeUSD: string
+  createdAtTimestamp: string
 }
 
 // ── GraphQL Queries ─────────────────────────────────────────────────────────
@@ -270,6 +271,7 @@ const GET_TOP_POOLS_BY_FEE_TIER = gql`
       totalValueLockedUSD
       feesUSD
       volumeUSD
+      createdAtTimestamp
     }
   }
 `

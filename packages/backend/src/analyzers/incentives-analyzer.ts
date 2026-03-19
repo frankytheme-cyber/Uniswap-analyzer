@@ -12,6 +12,7 @@ export interface IncentivesAnalyzerResult {
   spikeCount: number
   correlation: number       // Pearson r tra TVL e fee
   spikeDates: number[]      // timestamp dei giorni con spike
+  zeroVariance: boolean     // true se TVL o fee costanti (pool stabile, non anomala)
 }
 
 // ── Spike Detection ───────────────────────────────────────────────────────────
@@ -48,9 +49,14 @@ function detectSpikes(dayDatas: PoolDayData[]): { count: number; dates: number[]
  * r → 1:  correlazione positiva (TVL alto → fee alte, segnale sano)
  * r → 0:  nessuna correlazione (segnale anomalo — possibili incentivi esterni)
  */
-function pearsonR(xs: number[], ys: number[]): number {
+interface PearsonResult {
+  r: number
+  zeroVariance: boolean  // true if one or both series have zero variance
+}
+
+function pearsonR(xs: number[], ys: number[]): PearsonResult {
   const n = xs.length
-  if (n < 2) return 0
+  if (n < 2) return { r: 0, zeroVariance: true }
 
   const meanX = xs.reduce((s, x) => s + x, 0) / n
   const meanY = ys.reduce((s, y) => s + y, 0) / n
@@ -68,7 +74,8 @@ function pearsonR(xs: number[], ys: number[]): number {
   }
 
   const denominator = Math.sqrt(denomX * denomY)
-  return denominator === 0 ? 0 : numerator / denominator
+  if (denominator === 0) return { r: 0, zeroVariance: true }
+  return { r: numerator / denominator, zeroVariance: false }
 }
 
 // ── Analyzer ──────────────────────────────────────────────────────────────────
@@ -86,9 +93,9 @@ export function analyzeIncentives(input: IncentivesAnalyzerInput): ParameterScor
 
     const tvlSeries  = dayDatas.map((d) => parseFloat(d.tvlUSD))
     const feeSeries  = dayDatas.map((d) => parseFloat(d.feesUSD))
-    const correlation = pearsonR(tvlSeries, feeSeries)
+    const { r: correlation, zeroVariance } = pearsonR(tvlSeries, feeSeries)
 
-    const result: IncentivesAnalyzerResult = { spikeCount, correlation, spikeDates }
+    const result: IncentivesAnalyzerResult = { spikeCount, correlation, spikeDates, zeroVariance }
 
     return buildScore(result)
   } catch (error) {
@@ -99,7 +106,7 @@ export function analyzeIncentives(input: IncentivesAnalyzerInput): ParameterScor
 }
 
 function buildScore(result: IncentivesAnalyzerResult): ParameterScore {
-  const { spikeCount, correlation, spikeDates } = result
+  const { spikeCount, correlation, spikeDates, zeroVariance } = result
   const corrDisplay = correlation.toFixed(2)
   const displayValue = `r=${corrDisplay}`
 
@@ -107,16 +114,21 @@ function buildScore(result: IncentivesAnalyzerResult): ParameterScore {
   let status: 'good' | 'warn' | 'bad'
   let detail: string
 
-  if (spikeCount === 0 && correlation > 0.6) {
+  // Zero-variance: TVL e/o fee costanti → pool stabile, non anomala
+  if (zeroVariance && spikeCount === 0) {
+    score  = 1
+    status = 'good'
+    detail = 'TVL e fee costanti nel periodo — nessun segnale di incentivi artificiali'
+  } else if (spikeCount === 0 && correlation > 0.6) {
     score  = 1
     status = 'good'
     detail = `Nessuno spike TVL, correlazione TVL-fee ${corrDisplay} — fee organiche`
-  } else if (spikeCount <= 2 && correlation > 0.4) {
+  } else if (spikeCount <= 2 && (correlation > 0.4 || zeroVariance)) {
     score  = 0
     status = 'warn'
     detail = `${spikeCount} spike TVL rilevati, correlazione ${corrDisplay} — monitorare`
   } else {
-    const reason = correlation <= 0.4
+    const reason = correlation <= 0.4 && !zeroVariance
       ? `correlazione TVL-fee bassa (${corrDisplay})`
       : `${spikeCount} spike TVL rilevati`
     score  = 0

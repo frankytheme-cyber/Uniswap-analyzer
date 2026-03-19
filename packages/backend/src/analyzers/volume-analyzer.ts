@@ -95,18 +95,24 @@ function buildScore(result: VolumeAnalyzerResult, _poolId: string): ParameterSco
   let status: 'good' | 'warn' | 'bad'
   let detail: string
 
-  if (volumePerWallet > 5000 && hhi < 0.15) {
+  // Normalise HHI threshold: with N wallets, minimum theoretical HHI = 1/N.
+  // A pool with 5 equal wallets has HHI=0.20 — that's perfectly organic.
+  // Use normalised HHI* = (HHI - 1/N) / (1 - 1/N) to compare fairly across wallet counts.
+  const minHhi      = uniqueWallets > 0 ? 1 / uniqueWallets : 1
+  const normalisedHhi = minHhi < 1 ? (hhi - minHhi) / (1 - minHhi) : 1
+
+  if (volumePerWallet > 5000 && normalisedHhi < 0.15) {
     score  = 1
     status = 'good'
-    detail = `Volume organico — ${uniqueWallets} wallet, HHI ${hhiDisplay}, ${vpwDisplay}/wallet`
-  } else if (volumePerWallet > 1000 && hhi < 0.30) {
+    detail = `Volume organico — ${uniqueWallets} wallet, HHI ${hhiDisplay} (norm. ${normalisedHhi.toFixed(3)}), ${vpwDisplay}/wallet`
+  } else if (volumePerWallet > 1000 && normalisedHhi < 0.30) {
     score  = 0
     status = 'warn'
     detail = `Volume parzialmente concentrato — HHI ${hhiDisplay}, ${vpwDisplay}/wallet`
   } else {
     score  = 0
     status = 'bad'
-    detail = hhi >= 0.30
+    detail = normalisedHhi >= 0.30
       ? `Possibile wash trading — HHI ${hhiDisplay} (alta concentrazione)`
       : `Volume basso per wallet — ${vpwDisplay}/wallet su ${uniqueWallets} wallet`
   }

@@ -12,14 +12,12 @@ export interface MaturityAnalyzerInput {
 
 function coefficientOfVariation(values: number[]): number {
   if (values.length < 2) return 0
-  const filtered = values.filter((v) => v > 0)
-  if (filtered.length < 2) return 0
 
-  const n    = filtered.length
-  const mean = filtered.reduce((s, v) => s + v, 0) / n
-  if (mean === 0) return 0
+  const n    = values.length
+  const mean = values.reduce((s, v) => s + v, 0) / n
+  if (mean === 0) return 0  // all zeros → no variation
 
-  const variance = filtered.reduce((s, v) => s + (v - mean) ** 2, 0) / n
+  const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / n
   return Math.sqrt(variance) / mean
 }
 

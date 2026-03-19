@@ -1,6 +1,5 @@
 import type { StoredDayData } from '../db/duckdb-store.ts'
 import type { Strategy } from './strategy-advisor.ts'
-import { calculateStrategyIL } from './il-analyzer.ts'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,26 +97,8 @@ function backtestStrategy(
   // ── Fees ────────────────────────────────────────────────────────────────
   const totalFeesUSD = chronological.reduce((acc, d) => acc + d.feesUSD, 0)
 
-  // ── IL al prezzo finale ──────────────────────────────────────────────────
+  // ── IL al prezzo finale (calcolo diretto, senza snap ai punti fissi) ─────
   const priceMultiplier = entryPrice > 0 ? exitPrice / entryPrice : 1
-  const [finalPoint] = [calculateStrategyIL({
-    poolId:          strategy.id,
-    feeAPR:          0,   // non serve per calcolo IL grezzo
-    rangeMinPercent: strategy.rangeMinPercent,
-    rangeMaxPercent: strategy.rangeMaxPercent,
-  }).find((p) => Math.abs(p.priceMultiplier - priceMultiplier) === Math.min(
-    ...calculateStrategyIL({
-      poolId: strategy.id, feeAPR: 0,
-      rangeMinPercent: strategy.rangeMinPercent,
-      rangeMaxPercent: strategy.rangeMaxPercent,
-    }).map((p) => Math.abs(p.priceMultiplier - priceMultiplier))
-  )) ?? calculateStrategyIL({
-    poolId: strategy.id, feeAPR: 0,
-    rangeMinPercent: strategy.rangeMinPercent,
-    rangeMaxPercent: strategy.rangeMaxPercent,
-  })[6]]  // default fallback: 1.25x point
-
-  // Calcolo diretto con il moltiplicatore esatto (senza snap ai punti fissi)
   const { ilPercent: totalILPercent } = (() => {
     const a = strategy.rangeMinPercent <= -99 ? 0.000001 : Math.max(1 + strategy.rangeMinPercent / 100, 0.000001)
     const b = strategy.rangeMaxPercent >= 899 ? 1_000_000 : 1 + strategy.rangeMaxPercent / 100

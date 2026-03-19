@@ -115,12 +115,16 @@ export function analyzeCompetitiveFees(input: CompetitiveInput): ParameterScore 
   try {
     const { poolFeeApr, competitors } = input
 
-    // Approximate competitor feeAPR from their all-time data (rough estimate)
+    // Annualise competitor feeAPR based on pool age
+    const nowSecs = Date.now() / 1000
     const competitorAprs = competitors
       .map((p) => {
         const tvl = parseFloat(p.totalValueLockedUSD)
         const fees = parseFloat(p.feesUSD)
-        return tvl > 0 ? (fees / tvl) * 100 : 0
+        if (tvl <= 0 || fees <= 0) return 0
+        const ageDays = Math.max((nowSecs - parseInt(p.createdAtTimestamp, 10)) / 86400, 1)
+        const annualisedFees = fees * (365 / ageDays)
+        return (annualisedFees / tvl) * 100
       })
       .filter((apr) => apr > 0)
 

@@ -44,10 +44,13 @@ function priceRangeToTicks(
 ): { tickLower: number; tickUpper: number } {
   const LOG_BASE = Math.log(1.0001)
 
+  // Clamp rangePercent to (0, 0.99] to avoid log(0) or log(negative)
+  const safeRange = Math.min(Math.max(rangePercent, 0.001), 0.99)
+
   // Prezzo corrente implicito dal tick
   const currentPrice = Math.pow(1.0001, currentTick)
-  const priceMin     = currentPrice * (1 - rangePercent)
-  const priceMax     = currentPrice * (1 + rangePercent)
+  const priceMin     = currentPrice * (1 - safeRange)
+  const priceMax     = currentPrice * (1 + safeRange)
 
   const tickLower = Math.floor(Math.log(priceMin) / LOG_BASE)
   const tickUpper = Math.floor(Math.log(priceMax) / LOG_BASE)
