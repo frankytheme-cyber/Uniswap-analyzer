@@ -132,7 +132,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
             <p className="text-slate-600 leading-relaxed mb-6">
               Quando compri ETH, ne togli dalla pool → x diminuisce → y deve aumentare per mantenere k costante → il
               prezzo di ETH sale. Più grande è l'ordine rispetto alla liquidità, maggiore è il{' '}
-              <span className="text-amber-600 font-medium">price impact</span>. Prova: compra 10 ETH e guarda il calcolo step-by-step.
+              <span className="text-amber-600 font-medium">price impact</span>. Prova a simulare un acquisto e segui il calcolo step-by-step per capire cosa succede.
             </p>
             <div className="card p-4">
               <LiquidityCurveChart />
@@ -277,7 +277,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
           <div className="border-t border-slate-200 pt-12 pb-8 text-center space-y-4">
             <p className="text-slate-500 text-sm">Pronto ad analizzare le pool reali?</p>
             <button
-              onClick={onBack}
+              onClick={() => onNavigate('dashboard')}
               className="btn-primary inline-flex items-center gap-2"
             >
               Vai al tool →

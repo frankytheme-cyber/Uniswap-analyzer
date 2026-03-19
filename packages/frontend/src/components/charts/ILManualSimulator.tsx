@@ -515,6 +515,55 @@ export default function ILManualSimulator({
         </div>
       </div>
 
+      {/* ── Spiegazione IL tabellare ──────────────────────────────────────────── */}
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Come si calcola l'Impermanent Loss</p>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-xs text-slate-400 uppercase">
+              <th className="text-left pb-2 pr-4 font-medium">Concetto</th>
+              <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
+              <th className="text-left pb-2 font-medium">Il tuo scenario</th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-500 font-semibold whitespace-nowrap">Entry</td>
+              <td className="py-2 pr-4 text-slate-600">Depositi i due token nella pool al prezzo corrente</td>
+              <td className="py-2 text-slate-700 font-mono">
+                {token0}: ${formatPrice(token0EntryUSD)} &nbsp; {token1}: ${formatPrice(token1EntryUSD)}
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-500 font-semibold whitespace-nowrap">Movimento</td>
+              <td className="py-2 pr-4 text-slate-600">Il prezzo cambia → l'AMM ribilancia automaticamente i token per mantenere la curva</td>
+              <td className="py-2 text-slate-700 font-mono">
+                <div>Ratio: {ratioPctChange >= 0 ? '+' : ''}{ratioPctChange.toFixed(1)}% ({r.toFixed(3)}x)</div>
+                <div>Posizione: {simResult.token0Pct}% {token0} / {simResult.token1Pct}% {token1}</div>
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-500 font-semibold whitespace-nowrap">IL</td>
+              <td className="py-2 pr-4 text-slate-600">Differenza tra il valore della posizione LP e il semplice HODL dei token</td>
+              <td className={`py-2 font-mono font-semibold ${simIL < -5 ? 'text-red-500' : simIL < -1 ? 'text-amber-500' : 'text-slate-600'}`}>
+                {simIL.toFixed(2)}% {simResult.inRange ? '' : '(fuori range)'}
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200 bg-slate-100/50">
+              <td className="py-2 pr-4 text-blue-500 font-semibold whitespace-nowrap">Recovery</td>
+              <td className="py-2 pr-4 text-slate-600">Giorni di fee necessari per compensare l'IL</td>
+              <td className="py-2 font-mono font-semibold text-blue-600">
+                {simFeeOffset != null ? `${simFeeOffset.toFixed(0)} giorni` : feeAPR <= 0 ? 'Imposta Fee APR' : 'Nessun IL da coprire'}
+                {feeAPR > 0 && <span className="text-slate-400 font-normal"> (APR {feeAPR.toFixed(1)}%)</span>}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="mt-3 text-xs text-slate-400 italic">
+          * In V3 con range concentrato, l'IL è amplificato rispetto a V2: range stretto = più fee ma più IL. La domanda chiave: le fee coprono l'IL?
+        </p>
+      </div>
+
       {/* ── Punti chiave ─────────────────────────────────────────────────────── */}
       <div className="border-t border-slate-200 pt-4">
         <p className="text-xs text-slate-400 mb-3">IL ai movimenti chiave del ratio pool</p>

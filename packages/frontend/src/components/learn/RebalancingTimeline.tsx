@@ -201,28 +201,49 @@ export default function RebalancingTimeline() {
         <p className="text-xs text-slate-400 mt-1 pl-1">⟳ = evento di rebalancing (chiudi posizione, riapri con nuovo range)</p>
       </div>
 
-      {/* Strategy detail cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {strategies
-          .filter((s) => activeStrategies.includes(s.id))
-          .map((s) => (
-            <div
-              key={s.id}
-              className="rounded-lg p-3 border"
-              style={{ background: s.color + '0d', borderColor: s.color + '33' }}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium" style={{ color: s.color }}>{s.label}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                  {s.rebalanceCount} rebalancing
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">{s.description}</p>
-              {s.rangeMax < 99999 && (
-                <p className="text-xs text-slate-400 mt-1">Range: ${s.rangeMin.toLocaleString()} – ${s.rangeMax.toLocaleString()}</p>
-              )}
-            </div>
-          ))}
+      {/* Strategy comparison table */}
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Confronto strategie — 30 giorni simulati</p>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-xs text-slate-400 uppercase">
+              <th className="text-left pb-2 pr-3 font-medium">Strategia</th>
+              <th className="text-left pb-2 pr-3 font-medium">Range</th>
+              <th className="text-center pb-2 pr-3 font-medium">Rebalancing</th>
+              <th className="text-left pb-2 pr-3 font-medium">Fee relative</th>
+              <th className="text-left pb-2 font-medium">Rischio</th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            {strategies.map((s) => (
+              <tr key={s.id} className={`border-t border-slate-200 ${activeStrategies.includes(s.id) ? '' : 'opacity-40'}`}>
+                <td className="py-2 pr-3 font-semibold whitespace-nowrap" style={{ color: s.color }}>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: s.color }} />
+                  {s.label}
+                </td>
+                <td className="py-2 pr-3 text-slate-600 font-mono text-xs">
+                  {s.rangeMax >= 99999 ? '$0 – ∞' : `$${s.rangeMin.toLocaleString()} – $${s.rangeMax.toLocaleString()}`}
+                </td>
+                <td className="py-2 pr-3 text-center text-slate-700 font-semibold">{s.rebalanceCount}</td>
+                <td className="py-2 pr-3 text-slate-600">
+                  {s.id === 'passive' && 'Basse (liquidità diluita)'}
+                  {s.id === 'narrow' && <span className="text-emerald-600 font-medium">Alte (range stretto)</span>}
+                  {s.id === 'asymmetric' && 'Medie (cattura rialzo)'}
+                  {s.id === 'defensive' && 'Basse-medie (range ampio)'}
+                </td>
+                <td className="py-2 text-slate-600">
+                  {s.id === 'passive' && <span className="text-emerald-600">Basso — mai fuori range</span>}
+                  {s.id === 'narrow' && <span className="text-amber-600">Alto — esce spesso, gas + IL amplificato</span>}
+                  {s.id === 'asymmetric' && <span className="text-amber-600">Medio — perde se ETH scende</span>}
+                  {s.id === 'defensive' && <span className="text-emerald-600">Basso — esce solo su movimenti estremi</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-3 text-xs text-slate-400 italic">
+          * Ricerca Spinoglio 2024 su ETH/USDC: il rebalancing frequente moltiplica l'IL fino a 5× ma le fee solo di 1.5×. Ribilanciare spesso raramente conviene.
+        </p>
       </div>
     </div>
   )

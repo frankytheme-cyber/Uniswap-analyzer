@@ -2,8 +2,6 @@ import { useState, useMemo } from 'react'
 import {
   ComposedChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import MathBlock from './MathBlock'
-
 const CENTER_PRICE = 2000
 
 function buildDepth(center: number) {
@@ -167,22 +165,51 @@ export default function PriceImpactChart() {
         </div>
       </div>
 
-      {/* Math walkthrough */}
-      <MathBlock
-        title="Calcolo step-by-step"
-        lines={[
-          { text: `Ordine: $${orderSize.toLocaleString()} di ETH`, bold: true },
-          { text: '' },
-          { text: `Prezzo spot: $${fmtN(CENTER_PRICE)}/ETH`, indent: 1 },
-          { text: `A prezzo spot: $${orderSize.toLocaleString()} / $${fmtN(CENTER_PRICE)} = ${fmtD(result.ethAtSpot)} ETH`, indent: 1 },
-          { text: '' },
-          { text: `Prezzo esecuzione: $${fmtD(result.execPrice)}/ETH`, indent: 1, highlight: 'result' },
-          { text: `ETH ricevuti: $${orderSize.toLocaleString()} / $${fmtD(result.execPrice)} = ${fmtD(result.ethAtExec)} ETH`, indent: 1, highlight: 'result' },
-          { text: '' },
-          { text: `Slippage pagato: ~$${fmtD(result.slippageUSD)} (${result.priceImpact.toFixed(3)}%)`, indent: 1, highlight: result.priceImpact > 1 ? 'note' : 'formula' },
-          { text: `Fee ${feeTier}%: $${fmtD(result.feesEarned)} -> distribuita agli LP attivi nel range`, indent: 1 },
-        ]}
-      />
+      {/* Math walkthrough — tabella */}
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Calcolo step-by-step: comprare ETH dalla pool</p>
+        <table className="w-full text-sm font-mono">
+          <thead>
+            <tr className="text-xs text-slate-400 uppercase">
+              <th className="text-left pb-2 pr-4 font-medium">Step</th>
+              <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
+              <th className="text-left pb-2 font-medium">Calcolo</th>
+            </tr>
+          </thead>
+          <tbody className="align-top">
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Ordine</td>
+              <td className="py-2 pr-4 text-slate-600">Vuoi comprare ETH con ${orderSize.toLocaleString()} USDC</td>
+              <td className="py-2 text-slate-700">
+                <div>Spot: 1 ETH = ${fmtN(CENTER_PRICE)}</div>
+                <div>A prezzo spot: ${orderSize.toLocaleString()} ÷ ${fmtN(CENTER_PRICE)} = <span className="text-indigo-600 font-semibold">{fmtD(result.ethAtSpot)} ETH</span></div>
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Slippage</td>
+              <td className="py-2 pr-4 text-slate-600">L'ordine consuma liquidità e sposta il prezzo verso l'alto durante l'esecuzione</td>
+              <td className="py-2 text-slate-700">
+                <div>Prezzo medio esecuzione: <span className="text-indigo-600 font-semibold">${fmtD(result.execPrice)}/ETH</span></div>
+                <div>Sovrapprezzo: ${fmtD(result.execPrice - CENTER_PRICE)} per ETH</div>
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Risultato</td>
+              <td className="py-2 pr-4 text-slate-600">Ricevi meno ETH di quanti ne avresti avuti a prezzo spot</td>
+              <td className="py-2 text-slate-700">
+                <div>ETH ricevuti: ${orderSize.toLocaleString()} ÷ ${fmtD(result.execPrice)} = <span className="text-indigo-600 font-semibold">{fmtD(result.ethAtExec)} ETH</span></div>
+                <div className={result.priceImpact > 1 ? 'text-amber-600 font-semibold' : ''}>Persi: {fmtD(result.ethAtSpot - result.ethAtExec)} ETH (~${fmtD(result.slippageUSD)})</div>
+                <div className={result.priceImpact > 1 ? 'text-amber-600 font-semibold' : 'text-indigo-600 font-semibold'}>Price impact: +{result.priceImpact.toFixed(3)}%</div>
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200 bg-slate-100/50">
+              <td className="py-2 pr-4 text-emerald-600 font-semibold whitespace-nowrap">Fee</td>
+              <td className="py-2 pr-4 text-slate-600">Il trader paga una fee che va agli LP attivi nel range</td>
+              <td className="py-2 text-emerald-700 font-semibold">{feeTier}% di ${orderSize.toLocaleString()} = ${fmtD(result.feesEarned)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <p className="text-xs text-slate-400 italic">
         * Modello semplificato. Il price impact reale dipende dalla distribuzione dei tick e dalla concentrazione della liquidita V3.

@@ -213,25 +213,53 @@ export default function LiquidityCurveChart() {
 
       {/* Reactive math walkthrough */}
       {tradeResult && (
-        <MathBlock
-          title="Calcolo step-by-step"
-          lines={[
-            { text: 'Pool ETH / USDC', bold: true },
-            { text: `${fmtN(poolEth)} ETH  ·  ${fmtN(tradeResult.usdcInPool)} USDC  =  k = ${fmtN(k)}`, highlight: 'formula' },
-            { text: '' },
-            { text: `Prezzo spot = USDC / ETH = ${fmtN(tradeResult.usdcInPool)} / ${fmtN(poolEth)} = ${fmtD(tradeResult.spotPrice)} USDC per ETH`, highlight: 'result' },
-            { text: '' },
-            { text: `Comprando ${fmtN(effectiveDx)} ETH:`, bold: true },
-            { text: `ETH nella pool: ${fmtN(poolEth)}  →  ${fmtN(tradeResult.ethAfter)}`, indent: 1 },
-            { text: `${fmtN(tradeResult.ethAfter)} · USDC = ${fmtN(k)}  →  USDC = ${fmtN(tradeResult.usdcAfter)}`, indent: 1 },
-            { text: '' },
-            { text: `Il trader paga: ${fmtN(tradeResult.usdcPaid)} USDC per ${fmtN(effectiveDx)} ETH`, highlight: 'result', indent: 1 },
-            { text: `Prezzo medio: ${fmtD(tradeResult.priceAvg)} USDC/ETH  (vs ${fmtD(tradeResult.spotPrice)} spot)`, indent: 1 },
-            { text: `Price impact: +${tradeResult.impact.toFixed(2)}%`, highlight: tradeResult.impact > 5 ? 'note' : 'result', indent: 1 },
-            { text: '' },
-            { text: `Nuovo prezzo spot: ${fmtN(tradeResult.usdcAfter)} / ${fmtN(tradeResult.ethAfter)} = ${fmtD(tradeResult.newSpotPrice)} USDC per ETH`, highlight: 'result' },
-          ]}
-        />
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Calcolo step-by-step: come funziona x · y = k</p>
+          <table className="w-full text-sm font-mono">
+            <thead>
+              <tr className="text-xs text-slate-400 uppercase">
+                <th className="text-left pb-2 pr-4 font-medium">Step</th>
+                <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
+                <th className="text-left pb-2 font-medium">Calcolo</th>
+              </tr>
+            </thead>
+            <tbody className="align-top">
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Prima</td>
+                <td className="py-2 pr-4 text-slate-600">La pool contiene due token in equilibrio</td>
+                <td className="py-2 text-slate-700">
+                  <div>ETH = {fmtN(poolEth)} &nbsp; USDC = {fmtN(tradeResult.usdcInPool)}</div>
+                  <div>k = {fmtN(poolEth)} × {fmtN(tradeResult.usdcInPool)} = <span className="text-indigo-600 font-semibold">{fmtN(k)}</span></div>
+                  <div>Spot = {fmtN(tradeResult.usdcInPool)} ÷ {fmtN(poolEth)} = <span className="text-indigo-600 font-semibold">{fmtD(tradeResult.spotPrice)} USDC/ETH</span></div>
+                </td>
+              </tr>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1</td>
+                <td className="py-2 pr-4 text-slate-600">Togli {fmtN(effectiveDx)} ETH dalla pool</td>
+                <td className="py-2 text-slate-700">{fmtN(poolEth)} - {fmtN(effectiveDx)} = <span className="font-semibold">{fmtN(tradeResult.ethAfter)} ETH</span></td>
+              </tr>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
+                <td className="py-2 pr-4 text-slate-600">k resta costante, la pool ricalcola gli USDC</td>
+                <td className="py-2 text-slate-700">{fmtN(k)} ÷ {fmtN(tradeResult.ethAfter)} = <span className="font-semibold">{fmtN(tradeResult.usdcAfter)} USDC</span></td>
+              </tr>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">3</td>
+                <td className="py-2 pr-4 text-slate-600">Il trader paga la differenza in USDC</td>
+                <td className="py-2 text-indigo-600 font-semibold">{fmtN(tradeResult.usdcAfter)} - {fmtN(tradeResult.usdcInPool)} = {fmtN(tradeResult.usdcPaid)} USDC</td>
+              </tr>
+              <tr className="border-t border-slate-200 bg-slate-100/50">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Dopo</td>
+                <td className="py-2 pr-4 text-slate-600">Il prezzo si è spostato</td>
+                <td className="py-2 text-slate-700">
+                  <div>Prezzo medio: {fmtN(tradeResult.usdcPaid)} ÷ {fmtN(effectiveDx)} = <span className="font-semibold">{fmtD(tradeResult.priceAvg)} USDC/ETH</span></div>
+                  <div className={tradeResult.impact > 5 ? 'text-amber-600 font-semibold' : 'text-indigo-600 font-semibold'}>Price impact: +{tradeResult.impact.toFixed(2)}%</div>
+                  <div>Nuovo spot: {fmtN(tradeResult.usdcAfter)} ÷ {fmtN(tradeResult.ethAfter)} = <span className="text-indigo-600 font-semibold">{fmtD(tradeResult.newSpotPrice)} USDC/ETH</span></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )
