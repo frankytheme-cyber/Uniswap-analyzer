@@ -158,40 +158,59 @@ export default function ConcentratedLiquidityChart() {
           </tbody>
         </table>
 
-        <p className="mt-3 text-xs text-slate-400 italic">
-          * In V3, la liquidità è <strong className="text-slate-500">uniforme</strong> in tutto il range scelto (le barre verdi hanno la stessa altezza).
-          L'efficienza dipende dalla larghezza: stesso capitale in un range più stretto = più liquidità per ogni tick di prezzo.
-          V2 = 100 come base di confronto.
-        </p>
-
         <div className="mt-3 pt-3 border-t border-slate-200">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Calcolo step-by-step: da dove arriva {peakConc}?</p>
           <table className="w-full text-sm font-mono">
             <thead>
               <tr className="text-xs text-slate-400 uppercase">
-                <th className="text-left pb-2 pr-4 font-medium">Metrica</th>
-                <th className="text-left pb-2 pr-4 font-medium">Cosa significa</th>
+                <th className="text-left pb-2 pr-4 font-medium">Step</th>
+                <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
                 <th className="text-left pb-2 font-medium">Calcolo</th>
               </tr>
             </thead>
             <tbody className="align-top">
               <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Efficienza</td>
-                <td className="py-2 pr-4 text-slate-600">Quante volte più profonda è la liquidità V3 rispetto a V2 allo stesso prezzo</td>
-                <td className="py-2 text-indigo-600 font-semibold">{peakConc} ÷ 100 = {efficiency}×</td>
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Base V2</td>
+                <td className="py-2 pr-4 text-slate-600">In V2 la liquidita copre da $0 a infinito. Fissiamo la profondita al prezzo corrente come riferimento</td>
+                <td className="py-2 text-slate-700">
+                  <div>Profondita V2 = <span className="text-indigo-600 font-semibold">100 unita</span> (baseline)</div>
+                </td>
               </tr>
               <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Fee generate</td>
-                <td className="py-2 pr-4 text-slate-600">Più profondità = più swap attraversano la tua liquidità = più fee incassate</td>
-                <td className="py-2 text-emerald-600 font-semibold">{efficiency}× rispetto a V2</td>
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1</td>
+                <td className="py-2 pr-4 text-slate-600">Scegli un range V3 di ±{rangePct}% attorno al prezzo corrente ($2,000)</td>
+                <td className="py-2 text-slate-700">
+                  <div>Limite basso: $2,000 × (1 - {rangePct}/100) = <span className="font-semibold">${rangeMin.toLocaleString()}</span></div>
+                  <div>Limite alto: $2,000 × (1 + {rangePct}/100) = <span className="font-semibold">${rangeMax.toLocaleString()}</span></div>
+                </td>
+              </tr>
+              <tr className="border-t border-slate-200">
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
+                <td className="py-2 pr-4 text-slate-600">V3 concentra <strong>tutto</strong> il capitale in quel range. Meno tick da coprire = piu liquidita per ogni tick</td>
+                <td className="py-2 text-slate-700">
+                  <div>Concentrazione = riferimento × (50 / range%)</div>
+                  <div>= 100 × (50 / {rangePct}) = 100 × {(50 / rangePct).toFixed(2)}</div>
+                  <div>= <span className="text-indigo-600 font-semibold">{peakConc} unita</span></div>
+                </td>
               </tr>
               <tr className="border-t border-slate-200 bg-slate-100/50">
-                <td className="py-2 pr-4 text-amber-600 font-semibold whitespace-nowrap">Trade-off</td>
-                <td className="py-2 pr-4 text-slate-600">Se ETH esce dal range, la posizione smette di guadagnare fee</td>
-                <td className="py-2 text-amber-600 font-semibold">Fuori da ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()} → fee = 0</td>
+                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Risultato</td>
+                <td className="py-2 pr-4 text-slate-600">Efficienza = quante volte piu profonda e la liquidita V3 rispetto a V2</td>
+                <td className="py-2 text-slate-700">
+                  <div className="text-indigo-600 font-semibold">{peakConc} ÷ 100 = {efficiency}× piu efficiente</div>
+                  <div className="text-emerald-600 font-semibold mt-1">Fee generate: {efficiency}× rispetto a V2</div>
+                  <div className="text-amber-600 font-semibold mt-1">Trade-off: fuori da ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()} → fee = 0</div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <p className="mt-3 text-xs text-slate-400 italic">
+          * Formula semplificata per scopi didattici. In V3, la liquidita e <strong className="text-slate-500">uniforme</strong> in tutto il range scelto (le barre verdi hanno la stessa altezza).
+          Il fattore 50 rappresenta un range V2 di riferimento: quando il range V3 e il 50% del totale (±50%), l'efficienza e 1× (uguale a V2).
+          Range piu stretto → divisore piu piccolo → efficienza piu alta.
+        </p>
       </div>
 
       {/* Explanation cards */}
