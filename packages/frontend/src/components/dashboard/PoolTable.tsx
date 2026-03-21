@@ -190,7 +190,7 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
 
         {/* Turnstile CAPTCHA */}
         {TURNSTILE_SITE_KEY && (
-          <div className="mt-3">
+          <div className="mt-3 h-0 overflow-hidden">
             <Turnstile
               ref={turnstileRef}
               siteKey={TURNSTILE_SITE_KEY}
