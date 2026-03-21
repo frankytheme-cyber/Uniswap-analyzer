@@ -63,7 +63,7 @@ const strategies: Strategy[] = [
     color: '#6366f1',
     rangeMin: 0,
     rangeMax: 99999,
-    description: 'Mai fuori range. Zero rebalancing, fee basse perche la liquidita e diluita su tutti i prezzi.',
+    description: 'Mai fuori range. Zero rebalancing, fee basse perché la liquidità è diluita su tutti i prezzi.',
     rebalanceCount: 0,
   },
   {
@@ -90,7 +90,7 @@ const strategies: Strategy[] = [
     color: '#ef4444',
     rangeMin: 1200,
     rangeMax: 2600,
-    description: 'Range ampio $1,200–$2,600. Esce solo al picco estremo ($2,680 giorno 15). Fee piu basse della narrow ma molto meno rebalancing.',
+    description: 'Range ampio $1,200–$2,600. Esce solo al picco estremo ($2,680 giorno 15). Fee più basse della narrow ma molto meno rebalancing.',
     rebalanceCount: 0,
   },
 ]
@@ -271,18 +271,18 @@ export default function RebalancingTimeline() {
               <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1–12</td>
               <td className="py-2 pr-4 text-slate-600">ETH oscilla nel range ($1,960 – $2,320)</td>
               <td className="py-2 text-slate-700">
-                <div>Finche il prezzo resta tra $1,800 e $2,200: <span className="text-emerald-600 font-semibold">accumuli fee</span></div>
-                <div className="text-xs text-slate-400 mt-0.5">Fee alte perche la liquidita e concentrata in un range stretto (efficienza V3)</div>
+                <div>Finché il prezzo resta tra $1,800 e $2,200: <span className="text-emerald-600 font-semibold">accumuli fee</span></div>
+                <div className="text-xs text-slate-400 mt-0.5">Fee alte perché la liquidità è concentrata in un range stretto (efficienza V3)</div>
               </td>
             </tr>
             <tr className="border-t border-slate-200 bg-amber-50/50">
               <td className="py-2 pr-4 text-amber-600 font-semibold whitespace-nowrap">13 ⟳</td>
               <td className="py-2 pr-4 text-slate-600">ETH sale a $2,440 — <strong className="text-amber-600">esce dal range sopra</strong></td>
               <td className="py-2 text-slate-700">
-                <div className="text-amber-600 font-semibold">Fee = 0 — la posizione non lavora piu</div>
-                <div>La posizione e ora 100% USDC (hai venduto tutto l'ETH durante la salita)</div>
+                <div className="text-amber-600 font-semibold">Fee = 0 — la posizione non lavora più</div>
+                <div>La posizione è ora 100% USDC (hai venduto tutto l'ETH durante la salita)</div>
                 <div className="mt-1"><span className="text-slate-400">Rebalancing:</span> chiudi la posizione, <span className="text-amber-600 font-semibold">realizzi l'IL</span>, riapri con nuovo range centrato su $2,440</div>
-                <div className="text-xs text-red-500 mt-0.5">Costo: gas fee + IL cristallizzato (non piu recuperabile)</div>
+                <div className="text-xs text-red-500 mt-0.5">Costo: gas fee + IL cristallizzato (non più recuperabile)</div>
               </td>
             </tr>
             <tr className="border-t border-slate-200">
@@ -290,7 +290,7 @@ export default function RebalancingTimeline() {
               <td className="py-2 pr-4 text-slate-600">ETH torna verso $1,900</td>
               <td className="py-2 text-slate-700">
                 <div>Nuovo range attivo, accumuli fee di nuovo</div>
-                <div className="text-xs text-slate-400 mt-0.5">Ma l'IL del primo rebalancing e gia perso — non si recupera</div>
+                <div className="text-xs text-slate-400 mt-0.5">Ma l'IL del primo rebalancing è già perso — non si recupera</div>
               </td>
             </tr>
             <tr className="border-t border-slate-200 bg-amber-50/50">
@@ -298,7 +298,7 @@ export default function RebalancingTimeline() {
               <td className="py-2 pr-4 text-slate-600">ETH scende a $1,860 — <strong className="text-amber-600">esce dal range sotto</strong></td>
               <td className="py-2 text-slate-700">
                 <div className="text-amber-600 font-semibold">Fee = 0 di nuovo</div>
-                <div>La posizione e ora 100% ETH (hai comprato ETH durante la discesa)</div>
+                <div>La posizione è ora 100% ETH (hai comprato ETH durante la discesa)</div>
                 <div className="mt-1"><span className="text-slate-400">Rebalancing:</span> chiudi e riapri — <span className="text-amber-600 font-semibold">altro IL cristallizzato</span></div>
               </td>
             </tr>
@@ -309,7 +309,7 @@ export default function RebalancingTimeline() {
                 <div><span className="text-emerald-600 font-semibold">Fee guadagnate:</span> alte (range stretto → efficienza V3)</div>
                 <div><span className="text-red-500 font-semibold">IL realizzato:</span> 2 rebalancing × IL cristallizzato</div>
                 <div><span className="text-red-500 font-semibold">Gas speso:</span> 2 × (chiudi + apri posizione)</div>
-                <div className="mt-1 text-amber-600 font-semibold">Spesso fee &lt; IL + gas — ecco perche il rebalancing frequente raramente conviene</div>
+                <div className="mt-1 text-amber-600 font-semibold">Spesso fee &lt; IL + gas — ecco perché il rebalancing frequente raramente conviene</div>
               </td>
             </tr>
           </tbody>
@@ -321,7 +321,7 @@ export default function RebalancingTimeline() {
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
           <div className="text-emerald-700 font-semibold text-sm mb-1">Senza rebalancing (Passiva)</div>
           <p className="text-slate-500 text-xs leading-relaxed">
-            L'IL e <span className="text-slate-700 font-medium">temporaneo</span> — se il prezzo torna al punto iniziale, l'IL si azzera.
+            L'IL è <span className="text-slate-700 font-medium">temporaneo</span> — se il prezzo torna al punto iniziale, l'IL si azzera.
             Fee basse ma nessun IL cristallizzato e nessun gas speso.
           </p>
         </div>
@@ -329,7 +329,7 @@ export default function RebalancingTimeline() {
           <div className="text-amber-700 font-semibold text-sm mb-1">Con rebalancing (Range Stretto)</div>
           <p className="text-slate-500 text-xs leading-relaxed">
             Ogni rebalancing <span className="text-amber-700 font-medium">cristallizza l'IL</span> — lo rende permanente.
-            Anche se il prezzo torna al punto iniziale, l'IL dei rebalancing precedenti e perso per sempre.
+            Anche se il prezzo torna al punto iniziale, l'IL dei rebalancing precedenti è perso per sempre.
           </p>
         </div>
       </div>

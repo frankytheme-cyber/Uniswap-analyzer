@@ -41,7 +41,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
   return (
     <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs shadow-card">
       <div className="text-slate-400 mb-1">Prezzo ETH: ${label}</div>
-      <div className="text-slate-700">Profondita: <span className="font-medium">{payload[0]?.value.toLocaleString()}</span></div>
+      <div className="text-slate-700">Profondità: <span className="font-medium">{payload[0]?.value.toLocaleString()}</span></div>
     </div>
   )
 }
@@ -82,7 +82,7 @@ export default function PriceImpactChart() {
             <YAxis
               dataKey="depth"
               tick={{ fill: '#94a3b8', fontSize: 10 }}
-              label={{ value: 'Liquidita disponibile', angle: -90, position: 'insideLeft', offset: 15, fill: '#94a3b8', fontSize: 10 }}
+              label={{ value: 'Liquidità disponibile', angle: -90, position: 'insideLeft', offset: 15, fill: '#94a3b8', fontSize: 10 }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -225,33 +225,33 @@ export default function PriceImpactChart() {
           <tbody className="align-top">
             <tr className="border-t border-slate-200">
               <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1</td>
-              <td className="py-2 pr-4 text-slate-600">La pool ha una <strong className="text-slate-700">profondita</strong> al prezzo corrente: quanta liquidita e disponibile per assorbire ordini</td>
+              <td className="py-2 pr-4 text-slate-600">La pool ha una <strong className="text-slate-700">profondità</strong> al prezzo corrente: quanta liquidità è disponibile per assorbire ordini</td>
               <td className="py-2 text-slate-700">
-                <div>Profondita al centro = <span className="text-indigo-600 font-semibold">400</span> (unita del grafico)</div>
-                <div className="text-xs text-slate-400 mt-0.5">E il picco della curva gaussiana nel grafico sopra</div>
+                <div>Profondità al centro = <span className="text-indigo-600 font-semibold">400</span> (unita del grafico)</div>
+                <div className="text-xs text-slate-400 mt-0.5">È il picco della curva gaussiana nel grafico sopra</div>
               </td>
             </tr>
             <tr className="border-t border-slate-200">
               <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
-              <td className="py-2 pr-4 text-slate-600">Ogni dollaro di ordine "consuma" una frazione della profondita e sposta il prezzo</td>
+              <td className="py-2 pr-4 text-slate-600">Ogni dollaro di ordine "consuma" una frazione della profondità e sposta il prezzo</td>
               <td className="py-2 text-slate-700">
-                <div>Slippage per unita = 0.015 / profondita</div>
+                <div>Slippage per unità = 0.015 / profondità</div>
                 <div>= 0.015 / 400 = <span className="text-indigo-600 font-semibold">0.0000375</span></div>
-                <div className="text-xs text-slate-400 mt-0.5">Piu profondita → meno slippage per dollaro</div>
+                <div className="text-xs text-slate-400 mt-0.5">Più profondità → meno slippage per dollaro</div>
               </td>
             </tr>
             <tr className="border-t border-slate-200">
               <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">3</td>
               <td className="py-2 pr-4 text-slate-600">Il price impact cresce linearmente con la dimensione dell'ordine</td>
               <td className="py-2 text-slate-700">
-                <div>Price impact = ordine × slippage per unita × 100</div>
+                <div>Price impact = ordine × slippage per unità × 100</div>
                 <div>= ${orderSize.toLocaleString()} × 0.0000375 × 100</div>
                 <div>= <span className="text-indigo-600 font-semibold">+{result.priceImpact.toFixed(3)}%</span></div>
               </td>
             </tr>
             <tr className="border-t border-slate-200">
               <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">4</td>
-              <td className="py-2 pr-4 text-slate-600">Il prezzo di esecuzione e il prezzo spot spostato dal price impact</td>
+              <td className="py-2 pr-4 text-slate-600">Il prezzo di esecuzione è il prezzo spot spostato dal price impact</td>
               <td className="py-2 text-slate-700">
                 <div>Prezzo exec = $2,000 × (1 + {result.priceImpact.toFixed(3)}% / 100)</div>
                 <div>= $2,000 × {(1 + result.priceImpact / 100).toFixed(6)}</div>
@@ -272,7 +272,7 @@ export default function PriceImpactChart() {
 
       <p className="text-xs text-slate-400 italic">
         * Modello semplificato con price impact lineare. Nelle pool reali il price impact segue una curva non lineare
-        che dipende dalla distribuzione dei tick e dalla concentrazione della liquidita V3 (vedi sezione x·y=k sopra).
+        che dipende dalla distribuzione dei tick e dalla concentrazione della liquidità V3 (vedi sezione x·y=k sopra).
       </p>
     </div>
   )

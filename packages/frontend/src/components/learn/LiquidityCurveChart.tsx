@@ -170,7 +170,7 @@ export default function LiquidityCurveChart() {
           ))}
         </div>
         <p className="text-xs text-slate-400 mt-1.5 italic">
-          Pool piu grande = piu liquidita = meno price impact a parita di ordine
+          Pool più grande = più liquidità = meno price impact a parità di ordine
         </p>
       </div>
 

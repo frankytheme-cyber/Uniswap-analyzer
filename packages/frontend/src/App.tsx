@@ -5,6 +5,7 @@ import Discover   from './pages/Discover.tsx'
 import Home       from './pages/Home.tsx'
 import Learn      from './pages/Learn.tsx'
 import NavBar     from './components/NavBar.tsx'
+import PasswordGate from './components/PasswordGate.tsx'
 
 type View = 'home' | 'dashboard' | 'discover' | 'learn'
 
@@ -147,10 +148,12 @@ export default function App() {
       {view === 'dashboard' ? (
         <Dashboard onSelectPool={(chain, address) => setSelected({ chain, address })} />
       ) : (
-        <Discover
-          onSelectPool={(chain, address) => setSelected({ chain, address })}
-          onBack={() => setView('dashboard')}
-        />
+        <PasswordGate>
+          <Discover
+            onSelectPool={(chain, address) => setSelected({ chain, address })}
+            onBack={() => setView('dashboard')}
+          />
+        </PasswordGate>
       )}
 
       {controls}

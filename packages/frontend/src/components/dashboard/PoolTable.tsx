@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import CopyAddress from '../CopyAddress.tsx'
 import type { WatchlistEntry } from '../../types.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist, useRawPool } from '../../hooks/usePoolData.ts'
 import type { Chain } from '../../types.ts'
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ''
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
 
@@ -110,6 +113,8 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
   const [address, setAddress] = useState('')
   const [chain, setChain]     = useState<Chain>('ethereum')
   const [error, setError]     = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const { detected, detecting } = useAutoDetectChain(address)
 
@@ -121,7 +126,7 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
   const addMutation    = useAddToWatchlist()
   const removeMutation = useRemoveFromWatchlist()
 
-  function handleAdd() {
+  const handleAdd = useCallback(() => {
     setError('')
     const isV3 = /^0x[0-9a-fA-F]{40}$/.test(address)
     const isV4 = /^0x[0-9a-fA-F]{64}$/.test(address)
@@ -129,14 +134,23 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
       setError('Indirizzo non valido — V3: 0x + 40 hex | V4 PoolId: 0x + 64 hex')
       return
     }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError('Completa la verifica CAPTCHA')
+      return
+    }
     addMutation.mutate(
-      { chain, address },
+      { chain, address, turnstileToken: turnstileToken || undefined },
       {
         onError: (e) => setError(String(e)),
-        onSuccess: () => { setAddress(''); setChain('ethereum') },
+        onSuccess: () => {
+          setAddress('')
+          setChain('ethereum')
+          setTurnstileToken('')
+          turnstileRef.current?.reset()
+        },
       },
     )
-  }
+  }, [address, chain, turnstileToken, addMutation])
 
   const isValidAddress = /^0x[0-9a-fA-F]{40}$/.test(address) || /^0x[0-9a-fA-F]{64}$/.test(address)
 
@@ -167,12 +181,25 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
 
           <button
             onClick={handleAdd}
-            disabled={addMutation.isPending}
+            disabled={addMutation.isPending || (!!TURNSTILE_SITE_KEY && !turnstileToken)}
             className="btn-primary disabled:opacity-50"
           >
             {addMutation.isPending ? 'Aggiunta…' : 'Aggiungi'}
           </button>
         </div>
+
+        {/* Turnstile CAPTCHA */}
+        {TURNSTILE_SITE_KEY && (
+          <div className="mt-3">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={TURNSTILE_SITE_KEY}
+              onSuccess={setTurnstileToken}
+              onExpire={() => setTurnstileToken('')}
+              options={{ theme: 'light', size: 'compact' }}
+            />
+          </div>
+        )}
 
         {/* Auto-detect status */}
         {isValidAddress && (

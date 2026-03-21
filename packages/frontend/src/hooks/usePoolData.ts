@@ -42,7 +42,7 @@ export function useAddToWatchlist() {
   const qc       = useQueryClient()
   const addEntry = useWatchlistStore((s) => s.addEntry)
   return useMutation({
-    mutationFn: (body: { chain: string; address: string }) =>
+    mutationFn: (body: { chain: string; address: string; turnstileToken?: string }) =>
       fetch(`${API}/watchlist`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

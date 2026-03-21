@@ -4,6 +4,25 @@ import { db } from '../db/duckdb-store.ts'
 
 const router = Router()
 
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY ?? ''
+
+async function verifyTurnstile(token: string): Promise<boolean> {
+  if (!TURNSTILE_SECRET) return true // skip if not configured
+  try {
+    const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret: TURNSTILE_SECRET, response: token }),
+    })
+    const data = await resp.json() as { success: boolean }
+    return data.success
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(JSON.stringify({ error: message, context: 'turnstile-verify', timestamp: new Date().toISOString() }))
+    return false
+  }
+}
+
 // GET /api/watchlist
 router.get('/', async (_req, res) => {
   try {
@@ -16,9 +35,22 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// POST /api/watchlist  { chain, address }
+// POST /api/watchlist  { chain, address, turnstileToken? }
 router.post('/', async (req, res) => {
-  const { chain, address } = req.body as { chain?: string; address?: string }
+  const { chain, address, turnstileToken } = req.body as { chain?: string; address?: string; turnstileToken?: string }
+
+  // Verify Turnstile CAPTCHA if secret key is configured
+  if (TURNSTILE_SECRET) {
+    if (!turnstileToken) {
+      res.status(403).json({ error: 'CAPTCHA verification required' })
+      return
+    }
+    const valid = await verifyTurnstile(turnstileToken)
+    if (!valid) {
+      res.status(403).json({ error: 'CAPTCHA verification failed' })
+      return
+    }
+  }
 
   if (!chain || !address) {
     res.status(400).json({ error: 'Missing required fields: chain, address' })

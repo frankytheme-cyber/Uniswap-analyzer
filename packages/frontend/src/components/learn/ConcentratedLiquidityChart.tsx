@@ -108,7 +108,7 @@ export default function ConcentratedLiquidityChart() {
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={ticks} margin={{ top: 10, right: 20, left: 0, bottom: 10 }} barCategoryGap="10%">
             <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} label={{ value: 'Liquidita', angle: -90, position: 'insideLeft', offset: 10, fill: '#94a3b8', fontSize: 11 }} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} label={{ value: 'Liquidità', angle: -90, position: 'insideLeft', offset: 10, fill: '#94a3b8', fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} />
             <Legend
               formatter={(value) => value === 'liquidityFull' ? 'Full Range (V2)' : 'Concentrata (V3)'}
@@ -131,6 +131,21 @@ export default function ConcentratedLiquidityChart() {
             )}
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Definition: profondità */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <p className="text-sm font-semibold text-indigo-700 mb-1">Cos'è la "profondità al prezzo corrente"?</p>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          La <strong className="text-indigo-700">profondità</strong> misura quanta liquidità è disponibile esattamente al prezzo di mercato attuale.
+          È il "muro" di capitale che un ordine deve attraversare per spostare il prezzo.
+          Più profondità = ordini più grandi prima che il prezzo si muova = meno slippage per i trader.
+        </p>
+        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+          Nel grafico sopra, l'altezza delle barre al prezzo corrente ($2,000) rappresenta la profondità.
+          In V2 la profondità è bassa (100 unità) perché il capitale è spalmato su tutti i prezzi.
+          In V3, concentrando lo stesso capitale in un range ristretto, la profondità al prezzo corrente aumenta proporzionalmente.
+        </p>
       </div>
 
       {/* Efficiency table */}
@@ -171,9 +186,9 @@ export default function ConcentratedLiquidityChart() {
             <tbody className="align-top">
               <tr className="border-t border-slate-200">
                 <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Base V2</td>
-                <td className="py-2 pr-4 text-slate-600">In V2 la liquidita copre da $0 a infinito. Fissiamo la profondita al prezzo corrente come riferimento</td>
+                <td className="py-2 pr-4 text-slate-600">In V2 la liquidità copre da $0 a infinito. Fissiamo la profondità al prezzo corrente come riferimento</td>
                 <td className="py-2 text-slate-700">
-                  <div>Profondita V2 = <span className="text-indigo-600 font-semibold">100 unita</span> (baseline)</div>
+                  <div>Profondità V2 = <span className="text-indigo-600 font-semibold">100 unità</span> (baseline)</div>
                 </td>
               </tr>
               <tr className="border-t border-slate-200">
@@ -186,18 +201,18 @@ export default function ConcentratedLiquidityChart() {
               </tr>
               <tr className="border-t border-slate-200">
                 <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
-                <td className="py-2 pr-4 text-slate-600">V3 concentra <strong>tutto</strong> il capitale in quel range. Meno tick da coprire = piu liquidita per ogni tick</td>
+                <td className="py-2 pr-4 text-slate-600">V3 concentra <strong>tutto</strong> il capitale in quel range. Meno tick da coprire = più liquidità per ogni tick</td>
                 <td className="py-2 text-slate-700">
                   <div>Concentrazione = riferimento × (50 / range%)</div>
                   <div>= 100 × (50 / {rangePct}) = 100 × {(50 / rangePct).toFixed(2)}</div>
-                  <div>= <span className="text-indigo-600 font-semibold">{peakConc} unita</span></div>
+                  <div>= <span className="text-indigo-600 font-semibold">{peakConc} unità</span></div>
                 </td>
               </tr>
               <tr className="border-t border-slate-200 bg-slate-100/50">
                 <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Risultato</td>
-                <td className="py-2 pr-4 text-slate-600">Efficienza = quante volte piu profonda e la liquidita V3 rispetto a V2</td>
+                <td className="py-2 pr-4 text-slate-600">Efficienza = quante volte più profonda è la liquidità V3 rispetto a V2</td>
                 <td className="py-2 text-slate-700">
-                  <div className="text-indigo-600 font-semibold">{peakConc} ÷ 100 = {efficiency}× piu efficiente</div>
+                  <div className="text-indigo-600 font-semibold">{peakConc} ÷ 100 = {efficiency}× più efficiente</div>
                   <div className="text-emerald-600 font-semibold mt-1">Fee generate: {efficiency}× rispetto a V2</div>
                   <div className="text-amber-600 font-semibold mt-1">Trade-off: fuori da ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()} → fee = 0</div>
                 </td>
@@ -207,9 +222,9 @@ export default function ConcentratedLiquidityChart() {
         </div>
 
         <p className="mt-3 text-xs text-slate-400 italic">
-          * Formula semplificata per scopi didattici. In V3, la liquidita e <strong className="text-slate-500">uniforme</strong> in tutto il range scelto (le barre verdi hanno la stessa altezza).
-          Il fattore 50 rappresenta un range V2 di riferimento: quando il range V3 e il 50% del totale (±50%), l'efficienza e 1× (uguale a V2).
-          Range piu stretto → divisore piu piccolo → efficienza piu alta.
+          * Formula semplificata per scopi didattici. In V3, la liquidità è <strong className="text-slate-500">uniforme</strong> in tutto il range scelto (le barre verdi hanno la stessa altezza).
+          Il fattore 50 rappresenta un range V2 di riferimento: quando il range V3 è il 50% del totale (±50%), l'efficienza è 1× (uguale a V2).
+          Range più stretto → divisore più piccolo → efficienza più alta.
         </p>
       </div>
 
@@ -218,15 +233,15 @@ export default function ConcentratedLiquidityChart() {
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
           <div className="text-indigo-600 font-semibold text-sm mb-1">Full Range (V2)</div>
           <p className="text-slate-500 text-xs leading-relaxed">
-            Con $400,000 nella pool ETH/USDC, la liquidita e distribuita uniformemente su tutti i prezzi (da $0 a infinito).
-            La maggior parte del capitale e <span className="text-slate-700 font-medium">inattiva</span> e non guadagna fee.
+            Con $400,000 nella pool ETH/USDC, la liquidità è distribuita uniformemente su tutti i prezzi (da $0 a infinito).
+            La maggior parte del capitale è <span className="text-slate-700 font-medium">inattiva</span> e non guadagna fee.
           </p>
         </div>
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-          <div className="text-emerald-700 font-semibold text-sm mb-1">Concentrata (V3) — {efficiency}× piu efficiente</div>
+          <div className="text-emerald-700 font-semibold text-sm mb-1">Concentrata (V3) — {efficiency}× più efficiente</div>
           <p className="text-slate-500 text-xs leading-relaxed">
             Con lo stesso capitale nella pool ETH/USDC, concentrato nel range ${(rangeMin).toLocaleString()}–${(rangeMax).toLocaleString()}.
-            Ogni swap genera <span className="text-emerald-700 font-medium">{efficiency}× piu fee</span> per gli LP.
+            Ogni swap genera <span className="text-emerald-700 font-medium">{efficiency}× più fee</span> per gli LP.
           </p>
         </div>
       </div>
