@@ -5,6 +5,7 @@ import PriceImpactChart           from '../components/learn/PriceImpactChart.tsx
 import RebalancingTimeline        from '../components/learn/RebalancingTimeline.tsx'
 import ILManualSimulator          from '../components/charts/ILManualSimulator.tsx'
 import NavBar                     from '../components/NavBar.tsx'
+import Footer                     from '../components/Footer.tsx'
 
 type View = 'home' | 'dashboard' | 'discover' | 'learn'
 
@@ -54,7 +55,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
     sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <NavBar
         view="learn"
         onNavigate={onNavigate}
@@ -72,7 +73,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
         }
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 flex gap-8">
+      <div className="max-w-6xl mx-auto px-4 py-8 flex gap-8 flex-1 w-full">
         {/* Sticky sidebar */}
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-24 space-y-0.5">
@@ -285,6 +286,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

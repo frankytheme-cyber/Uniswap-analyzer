@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDiscoverPools, useAddToWatchlist } from '../hooks/usePoolData.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 import PoolCard from '../components/dashboard/PoolCard.tsx'
+import Footer from '../components/Footer.tsx'
 import type { Chain } from '../types.ts'
 
 const CHAINS: { value: Chain; label: string }[] = [
@@ -39,7 +40,8 @@ export default function Discover({ onSelectPool, onBack }: Props) {
   ) ?? []
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen flex flex-col">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 flex-1">
       {/* Header */}
       <div>
         <button
@@ -185,6 +187,8 @@ export default function Discover({ onSelectPool, onBack }: Props) {
           )}
         </>
       )}
+    </div>
+    <Footer />
     </div>
   )
 }
