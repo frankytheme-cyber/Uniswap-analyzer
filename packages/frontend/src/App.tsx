@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Routes, Route, Outlet } from 'react-router-dom'
 import Dashboard    from './pages/Dashboard.tsx'
 import PoolDetail   from './pages/PoolDetail.tsx'
 import Discover     from './pages/Discover.tsx'
@@ -7,8 +8,6 @@ import Learn        from './pages/Learn.tsx'
 import MyPositions  from './pages/MyPositions.tsx'
 import NavBar       from './components/NavBar.tsx'
 import PasswordGate from './components/PasswordGate.tsx'
-
-type View = 'home' | 'dashboard' | 'discover' | 'learn' | 'wallet'
 
 function DisclaimerBanner() {
   const [visible, setVisible] = useState(() => localStorage.getItem('disclaimer-dismissed') !== '1')
@@ -67,8 +66,6 @@ function useDarkMode() {
 }
 
 export default function App() {
-  const [view, setView] = useState<View>('home')
-  const [selected, setSelected] = useState<{ chain: string; address: string } | null>(null)
   const font = useFontScale()
   const theme = useDarkMode()
 
@@ -96,70 +93,21 @@ export default function App() {
     </div>
   )
 
-  if (selected) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <DisclaimerBanner />
-        <PoolDetail
-          chain={selected.chain}
-          address={selected.address}
-          onBack={() => setSelected(null)}
-        />
-        {controls}
-      </div>
-    )
-  }
-
-  if (view === 'home') {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <DisclaimerBanner />
-        <Home onNavigate={setView} />
-        {controls}
-      </div>
-    )
-  }
-
-  if (view === 'learn') {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <DisclaimerBanner />
-        <Learn onBack={() => setView('home')} onNavigate={setView} />
-        {controls}
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
       <DisclaimerBanner />
-      <NavBar
-        view={view}
-        onNavigate={setView}
-        leftContent={
-          <button
-            onClick={() => setView('home')}
-            className="font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors"
-          >
-            Uniswap Analyzer
-          </button>
-        }
-      />
 
-      {view === 'dashboard' && (
-        <Dashboard onSelectPool={(chain, address) => setSelected({ chain, address })} />
-      )}
-      {view === 'wallet' && (
-        <MyPositions onSelectPool={(chain, address) => setSelected({ chain, address })} />
-      )}
-      {view === 'discover' && (
-        <PasswordGate>
-          <Discover
-            onSelectPool={(chain, address) => setSelected({ chain, address })}
-            onBack={() => setView('dashboard')}
-          />
-        </PasswordGate>
-      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        {/* Pages with shared NavBar */}
+        <Route element={<><NavBar /><Outlet /></>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/pool/:chain/:address" element={<PoolDetail />} />
+          <Route path="/wallet" element={<MyPositions />} />
+          <Route path="/discover" element={<PasswordGate><Discover /></PasswordGate>} />
+          <Route path="/learn" element={<Learn />} />
+        </Route>
+      </Routes>
 
       {controls}
     </div>

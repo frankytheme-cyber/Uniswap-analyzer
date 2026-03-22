@@ -1,15 +1,10 @@
 import type { FC } from 'react'
+import { Link } from 'react-router-dom'
 import NavBar from '../components/NavBar.tsx'
 import Footer from '../components/Footer.tsx'
 
-type View = 'home' | 'dashboard' | 'discover' | 'learn'
-
-interface HomeProps {
-  onNavigate: (view: View) => void
-}
-
 interface SectionCard {
-  view: View
+  path: string
   icon: string
   title: string
   description: string
@@ -22,7 +17,7 @@ interface SectionCard {
 
 const cards: SectionCard[] = [
   {
-    view: 'dashboard',
+    path: '/dashboard',
     icon: '📊',
     title: 'Il Tuo Portafoglio',
     description: 'Aggiungi pool alla watchlist e monitora la salute delle tue posizioni in tempo reale.',
@@ -33,7 +28,7 @@ const cards: SectionCard[] = [
     accentDot:     'bg-indigo-400',
   },
   {
-    view: 'discover',
+    path: '/discover',
     icon: '🔍',
     title: 'Scopri Pool',
     description: 'Esplora le top pool per chain, ordinate per score, liquidità e volume organico.',
@@ -44,7 +39,7 @@ const cards: SectionCard[] = [
     accentDot:     'bg-emerald-400',
   },
   {
-    view: 'learn',
+    path: '/learn',
     icon: '🎓',
     title: 'Come Funziona una Pool',
     description: 'Guida interattiva con grafici: AMM, liquidità concentrata V3, impermanent loss e strategie.',
@@ -56,10 +51,10 @@ const cards: SectionCard[] = [
   },
 ]
 
-const Home: FC<HomeProps> = ({ onNavigate }) => {
+const Home: FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <NavBar view="home" onNavigate={onNavigate} />
+      <NavBar />
 
       {/* Hero */}
       <div className="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
@@ -78,9 +73,9 @@ const Home: FC<HomeProps> = ({ onNavigate }) => {
       {/* Cards grid */}
       <div className="max-w-5xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
         {cards.map((card) => (
-          <button
-            key={card.view}
-            onClick={() => onNavigate(card.view)}
+          <Link
+            key={card.path}
+            to={card.path}
             className={`group text-left bg-white border border-slate-200 rounded-lg p-6 transition-all duration-200 shadow-card ${card.accentBorder} hover:shadow-card-hover hover:-translate-y-0.5`}
           >
             <div className={`w-11 h-11 ${card.accentIconBg} rounded-lg flex items-center justify-center text-xl mb-5`}>
@@ -103,7 +98,7 @@ const Home: FC<HomeProps> = ({ onNavigate }) => {
               Vai alla sezione
               <span>→</span>
             </div>
-          </button>
+          </Link>
         ))}
       </div>
 

@@ -1,54 +1,52 @@
 import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
-type View = 'home' | 'dashboard' | 'discover' | 'learn' | 'wallet'
+interface NavItem { path: string; label: string; icon: string }
 
-interface NavBarProps {
-  view: View
-  onNavigate: (v: View) => void
-  leftContent?: React.ReactNode
-}
-
-const navItems: { view: View; label: string; icon: string }[] = [
-  { view: 'dashboard', label: 'Dashboard',    icon: '📊' },
-  { view: 'wallet',    label: 'My Positions', icon: '👛' },
-  { view: 'discover',  label: 'Discover',     icon: '🔍' },
-  { view: 'learn',     label: 'Learn',        icon: '🎓' },
+const navItems: NavItem[] = [
+  { path: '/dashboard', label: 'Dashboard',    icon: '📊' },
+  { path: '/wallet',    label: 'My Positions', icon: '👛' },
+  { path: '/discover',  label: 'Discover',     icon: '🔍' },
+  { path: '/learn',     label: 'Learn',        icon: '🎓' },
 ]
 
-export default function NavBar({ view, onNavigate, leftContent }: NavBarProps) {
+export default function NavBar() {
   const [open, setOpen] = useState(false)
+  const { pathname } = useLocation()
 
   const close = () => setOpen(false)
+
+  function isActive(path: string) {
+    return pathname === path || pathname.startsWith(path + '/')
+  }
 
   return (
     <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Left */}
         <div className="flex items-center gap-3 min-w-0">
-          {leftContent ?? (
-            <button
-              onClick={() => { onNavigate('home'); close() }}
-              className="font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors truncate"
-            >
-              Uniswap Analyzer
-            </button>
-          )}
+          <Link
+            to="/"
+            className="font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors truncate"
+          >
+            Uniswap Analyzer
+          </Link>
         </div>
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1 shrink-0">
           {navItems.map((item) => (
-            <button
-              key={item.view}
-              onClick={() => onNavigate(item.view)}
+            <Link
+              key={item.path}
+              to={item.path}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                view === item.view
+                isActive(item.path)
                   ? 'bg-slate-100 text-slate-900'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -74,18 +72,19 @@ export default function NavBar({ view, onNavigate, leftContent }: NavBarProps) {
       {open && (
         <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-2 space-y-1">
           {navItems.map((item) => (
-            <button
-              key={item.view}
-              onClick={() => { onNavigate(item.view); close() }}
-              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                view === item.view
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={close}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive(item.path)
                   ? 'bg-slate-100 text-slate-900'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               <span>{item.icon}</span>
               {item.label}
-            </button>
+            </Link>
           ))}
         </div>
       )}

@@ -14,11 +14,7 @@ import StrategyAdvisor     from '../components/charts/StrategyAdvisor.tsx'
 import BacktestChart       from '../components/charts/BacktestChart.tsx'
 import ILManualSimulator   from '../components/charts/ILManualSimulator.tsx'
 
-interface Props {
-  chain:   string
-  address: string
-  onBack:  () => void
-}
+import { useParams, useNavigate } from 'react-router-dom'
 
 const STATUS_COLOR: Record<string, string> = {
   healthy: 'text-emerald-600',
@@ -40,7 +36,10 @@ const TAB_LABELS: Record<Tab, string> = {
   strategy: 'Strategie LP',
 }
 
-export default function PoolDetail({ chain, address, onBack }: Props) {
+export default function PoolDetail() {
+  const { chain = '', address = '' } = useParams<{ chain: string; address: string }>()
+  const navigate = useNavigate()
+  const onBack = () => navigate(-1)
   const [tab, setTab]                           = useState<Tab>('overview')
   const [selectedStrategyId, setSelectedStrategy] = useState('passive')
 

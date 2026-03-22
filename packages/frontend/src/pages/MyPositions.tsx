@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useWalletPositions } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
 import type { Chain } from '../types.ts'
@@ -250,11 +251,9 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-interface Props {
-  onSelectPool: (chain: string, address: string) => void
-}
-
-export default function MyPositions({ onSelectPool }: Props) {
+export default function MyPositions() {
+  const navigate = useNavigate()
+  const onSelectPool = (chain: string, address: string) => navigate(`/pool/${chain}/${address}`)
   const [chain,  setChain]  = useState<Chain>('ethereum')
   const [wallet, setWallet] = useState('')
   const [query,  setQuery]  = useState('')
@@ -350,6 +349,70 @@ export default function MyPositions({ onSelectPool }: Props) {
             </p>
           </div>
         )}
+      </div>
+
+      {/* SEO content */}
+      <div className="max-w-4xl mx-auto px-4 pb-16 w-full">
+        <div className="border-t border-slate-200 pt-12 grid grid-cols-1 md:grid-cols-2 gap-10 text-sm text-slate-500 leading-relaxed">
+          <div>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Tracker posizioni Uniswap V3 e V4</h2>
+            <p className="mb-3">
+              Visualizza tutte le posizioni LP di un wallet su Uniswap V3 e V4 senza connettere il portafoglio.
+              Inserisci un indirizzo Ethereum, Arbitrum, Base o Polygon per vedere le posizioni aperte e chiuse,
+              il range di prezzo, la liquidità depositata e il <strong className="text-slate-600">controvalore in USD</strong> aggiornato in tempo reale.
+            </p>
+            <p>
+              A differenza di altri tracker, le <strong className="text-slate-600">fee maturate (uncollected)</strong> vengono
+              calcolate on-chain tramite la formula <code className="text-xs bg-slate-100 px-1 rounded">feeGrowthInside</code> del
+              whitepaper Uniswap — non dal subgraph — garantendo dati accurati anche per posizioni V4 sul nuovo PoolManager.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Come vengono calcolate le fee</h2>
+            <p className="mb-3">
+              Le fee da prelevare (pending) sono la differenza tra il <em className="text-slate-600">feeGrowthInside</em> attuale
+              della pool e l'ultimo snapshot registrato nella posizione, moltiplicata per la liquidità.
+              Per le posizioni V3 il calcolo avviene leggendo il contratto <strong className="text-slate-600">NonfungiblePositionManager</strong>;
+              per V4 si legge lo storage interno del <strong className="text-slate-600">PoolManager</strong> tramite <code className="text-xs bg-slate-100 px-1 rounded">extsload</code>.
+            </p>
+            <p>
+              Le fee ritirate (collected) provengono dallo storico registrato dal subgraph The Graph
+              e includono tutti i <code className="text-xs bg-slate-100 px-1 rounded">collect()</code> eseguiti dal wallet nel tempo.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Impermanent loss e capitale attuale</h2>
+            <p className="mb-3">
+              Per ogni posizione aperta viene calcolato il <strong className="text-slate-600">capitale attuale</strong> in token
+              e in USD, derivato dalla liquidità e dal prezzo corrente della pool (formula V3 whitepaper §6.3).
+              L'<strong className="text-slate-600">impermanent loss</strong> confronta il valore attuale della posizione LP
+              con quello che avrebbe avuto facendo HODL dei token iniziali.
+            </p>
+            <p>
+              Quando una posizione è completamente out-of-range, il capitale è interamente in un solo token:
+              100% token0 se il prezzo è sotto il range, 100% token1 se è sopra.
+              L'IL mostrato tiene conto di questa conversione forzata.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Chain e versioni supportate</h2>
+            <ul className="space-y-1.5">
+              {[
+                ['Uniswap V3', 'posizioni lette dal subgraph, fee calcolate on-chain via NonfungiblePositionManager'],
+                ['Uniswap V4', 'posizioni ricostruite da eventi ModifyLiquidity, fee via PoolManager extsload'],
+                ['Ethereum', 'mainnet — pool con la TVL più alta'],
+                ['Arbitrum', 'solo V3 (subgraph V4 non ancora disponibile)'],
+                ['Base', 'V3 + V4, L2 di Coinbase'],
+                ['Polygon', 'V3 + V4, sidechain EVM'],
+              ].map(([name, desc]) => (
+                <li key={name} className="flex gap-2">
+                  <span className="text-indigo-400 mt-0.5 shrink-0">·</span>
+                  <span><span className="text-slate-600">{name}</span> — {desc}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
 
       <Footer />

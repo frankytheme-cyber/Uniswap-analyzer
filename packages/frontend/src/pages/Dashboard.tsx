@@ -1,14 +1,13 @@
+import { useNavigate } from 'react-router-dom'
 import { useWatchlist, usePoolAnalysis, useRefreshPool } from '../hooks/usePoolData.ts'
 import PoolTable       from '../components/dashboard/PoolTable.tsx'
 import PoolCard        from '../components/dashboard/PoolCard.tsx'
 import ParameterLegend from '../components/dashboard/ParameterLegend.tsx'
 import Footer          from '../components/Footer.tsx'
 
-interface Props {
-  onSelectPool: (chain: string, address: string) => void
-}
-
-export default function Dashboard({ onSelectPool }: Props) {
+export default function Dashboard() {
+  const navigate = useNavigate()
+  const onSelectPool = (chain: string, address: string) => navigate(`/pool/${chain}/${address}`)
   const { data: watchlist = [], isLoading } = useWatchlist()
   const refresh = useRefreshPool()
 

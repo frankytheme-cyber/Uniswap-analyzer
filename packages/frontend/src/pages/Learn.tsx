@@ -4,15 +4,7 @@ import ConcentratedLiquidityChart from '../components/learn/ConcentratedLiquidit
 import PriceImpactChart           from '../components/learn/PriceImpactChart.tsx'
 import RebalancingTimeline        from '../components/learn/RebalancingTimeline.tsx'
 import ILManualSimulator          from '../components/charts/ILManualSimulator.tsx'
-import NavBar                     from '../components/NavBar.tsx'
 import Footer                     from '../components/Footer.tsx'
-
-type View = 'home' | 'dashboard' | 'discover' | 'learn'
-
-interface LearnProps {
-  onBack: () => void
-  onNavigate: (v: View) => void
-}
 
 interface Chapter {
   id: string
@@ -30,7 +22,7 @@ const chapters: Chapter[] = [
   { id: 'rebalancing',  number: '05', title: 'Il Ribilanciamento',        subtitle: 'Quando e come ricalibrare',          icon: '⟳'  },
 ]
 
-export default function Learn({ onBack, onNavigate }: LearnProps) {
+export default function Learn() {
   const [activeChapter, setActiveChapter] = useState('amm')
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
 
@@ -56,22 +48,7 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <NavBar
-        view="learn"
-        onNavigate={onNavigate}
-        leftContent={
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={onBack}
-              className="text-slate-500 hover:text-slate-700 transition-colors text-sm shrink-0"
-            >
-              ← Home
-            </button>
-            <div className="h-4 w-px bg-slate-200 shrink-0" />
-            <span className="text-slate-700 font-semibold text-sm truncate">Come Funziona una Pool</span>
-          </div>
-        }
-      />
+      {/* NavBar rendered by App layout */}
 
       <div className="max-w-6xl mx-auto px-4 py-8 flex gap-8 flex-1 w-full">
         {/* Sticky sidebar */}
@@ -277,12 +254,12 @@ export default function Learn({ onBack, onNavigate }: LearnProps) {
           {/* CTA */}
           <div className="border-t border-slate-200 pt-12 pb-8 text-center space-y-4">
             <p className="text-slate-500 text-sm">Pronto ad analizzare le pool reali?</p>
-            <button
-              onClick={() => onNavigate('dashboard')}
+            <a
+              href="/dashboard"
               className="btn-primary inline-flex items-center gap-2"
             >
               Vai al tool →
-            </button>
+            </a>
           </div>
         </main>
       </div>

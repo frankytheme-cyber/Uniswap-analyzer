@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useDiscoverPools, useAddToWatchlist } from '../hooks/usePoolData.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 import PoolCard from '../components/dashboard/PoolCard.tsx'
@@ -12,11 +13,6 @@ const CHAINS: { value: Chain; label: string }[] = [
   { value: 'polygon',  label: 'Polygon' },
 ]
 
-interface Props {
-  onSelectPool: (chain: string, address: string) => void
-  onBack: () => void
-}
-
 type VersionFilter = 'all' | 'v3' | 'v4'
 
 const VERSION_FILTERS: { value: VersionFilter; label: string }[] = [
@@ -27,7 +23,10 @@ const VERSION_FILTERS: { value: VersionFilter; label: string }[] = [
 
 const POOL_LIMITS = [10, 25, 50] as const
 
-export default function Discover({ onSelectPool, onBack }: Props) {
+export default function Discover() {
+  const navigate = useNavigate()
+  const onSelectPool = (chain: string, address: string) => navigate(`/pool/${chain}/${address}`)
+  const onBack = () => navigate('/dashboard')
   const [chain, setChain]                   = useState<Chain>('ethereum')
   const [versionFilter, setVersionFilter]   = useState<VersionFilter>('all')
   const [limit, setLimit]                   = useState<number>(10)
