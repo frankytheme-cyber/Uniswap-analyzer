@@ -132,6 +132,7 @@ export interface DiscoveryResult {
 export interface WalletPosition {
   id:               string
   version:          'v3' | 'v4'
+  status:           'open' | 'closed'
   poolId:           string
   token0:           string
   token1:           string
@@ -146,12 +147,21 @@ export interface WalletPosition {
   currentTick:      number
   depositedToken0:  number
   depositedToken1:  number
+  initialValueUSD:  number
   withdrawnToken0:  number
   withdrawnToken1:  number
+  currentAmount0:   number
+  currentAmount1:   number
+  currentValueUSD:  number
   netToken0:        number
   netToken1:        number
   collectedFees0:   number
   collectedFees1:   number
+  collectedFeesUSD: number
+  uncollectedFees0: number
+  uncollectedFees1: number
+  uncollectedFeesUSD: number
+  ilPercent:        number | null
   poolTvlUSD:       number
 }
 
@@ -160,6 +170,7 @@ export interface WalletPositionsResponse {
   wallet:      string
   positions:   WalletPosition[]
   totalOpen:   number
+  totalClosed: number
   inRange:     number
   outOfRange:  number
   v3Count:     number

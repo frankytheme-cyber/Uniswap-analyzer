@@ -33,8 +33,10 @@ const CHAIN_TO_HOSTED_URL: Record<string, string> = {
 // ── TypeScript Interfaces ───────────────────────────────────────────────────
 
 export interface Token {
+  id?: string
   symbol: string
   decimals: string
+  derivedETH?: string
 }
 
 export interface Pool {
@@ -319,8 +321,8 @@ const GET_WALLET_POSITIONS = gql`
       owner
       pool {
         id
-        token0 { symbol decimals }
-        token1 { symbol decimals }
+        token0 { id symbol decimals derivedETH }
+        token1 { id symbol decimals derivedETH }
         feeTier
         liquidity
         sqrtPrice
@@ -356,8 +358,8 @@ const GET_WALLET_MODIFY_LIQUIDITIES_V4 = gql`
       id
       pool {
         id
-        token0 { symbol decimals }
-        token1 { symbol decimals }
+        token0 { id symbol decimals derivedETH }
+        token1 { id symbol decimals derivedETH }
         feeTier
         liquidity
         sqrtPrice
@@ -371,6 +373,20 @@ const GET_WALLET_MODIFY_LIQUIDITIES_V4 = gql`
       amount1
       timestamp
       origin
+    }
+  }
+`
+
+/** V4 Position entity — used to get tokenIds for on-chain fee computation. */
+const GET_WALLET_TOKEN_IDS_V4 = gql`
+  query GetWalletTokenIdsV4($owner: String!) {
+    positions(
+      first: 100
+      where: { origin: $owner }
+      orderBy: tokenId
+      orderDirection: desc
+    ) {
+      tokenId
     }
   }
 `
@@ -391,6 +407,12 @@ const GET_TOP_POOLS_BY_FEE_TIER = gql`
       volumeUSD
       createdAtTimestamp
     }
+  }
+`
+
+const GET_ETH_PRICE_USD = gql`
+  query GetEthPriceUSD {
+    bundle(id: "1") { ethPriceUSD }
   }
 `
 
@@ -514,6 +536,15 @@ export class GraphFetcher {
       return data.positions ?? []
     } catch (error) {
       throw this.wrapError(error, context)
+    }
+  }
+
+  async getEthPriceUSD(): Promise<number> {
+    try {
+      const data = await this.client.request<{ bundle: { ethPriceUSD: string } }>(GET_ETH_PRICE_USD)
+      return parseFloat(data.bundle.ethPriceUSD)
+    } catch {
+      return 0
     }
   }
 
@@ -685,6 +716,22 @@ export class GraphFetcherV4 extends GraphFetcher {
     } catch (error) {
       // Graceful fallback: chain may not have V4 subgraph yet
       console.warn(JSON.stringify({ warning: 'V4 wallet positions unavailable', ...context, error: String(error) }))
+      return []
+    }
+  }
+
+  /**
+   * Fetches all V4 Position tokenIds for a wallet from the subgraph.
+   * Used to compute on-chain uncollected fees (the tokenId is the salt in the position key).
+   */
+  async getWalletTokenIds(owner: string): Promise<string[]> {
+    try {
+      const data = await this.client.request<{ positions: Array<{ tokenId: string }> }>(
+        GET_WALLET_TOKEN_IDS_V4,
+        { owner: owner.toLowerCase() }
+      )
+      return (data.positions ?? []).map((p) => p.tokenId)
+    } catch {
       return []
     }
   }
