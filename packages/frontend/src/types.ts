@@ -127,6 +127,43 @@ export interface DiscoveryResult {
   lastUpdated:     string
 }
 
+// ── Wallet Positions ──────────────────────────────────────────────────────────
+
+export interface WalletPosition {
+  id:               string
+  poolId:           string
+  token0:           string
+  token1:           string
+  feeTier:          number
+  feeTierPercent:   number
+  tickLower:        number
+  tickUpper:        number
+  priceLower:       number
+  priceUpper:       number
+  liquidity:        string
+  inRange:          boolean
+  currentTick:      number
+  depositedToken0:  number
+  depositedToken1:  number
+  withdrawnToken0:  number
+  withdrawnToken1:  number
+  netToken0:        number
+  netToken1:        number
+  collectedFees0:   number
+  collectedFees1:   number
+  poolTvlUSD:       number
+}
+
+export interface WalletPositionsResponse {
+  chain:       string
+  wallet:      string
+  positions:   WalletPosition[]
+  totalOpen:   number
+  inRange:     number
+  outOfRange:  number
+  lastUpdated: string
+}
+
 // ── Backtesting ───────────────────────────────────────────────────────────────
 
 export interface BacktestResult {

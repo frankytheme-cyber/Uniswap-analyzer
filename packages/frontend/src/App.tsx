@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import Dashboard  from './pages/Dashboard.tsx'
-import PoolDetail from './pages/PoolDetail.tsx'
-import Discover   from './pages/Discover.tsx'
-import Home       from './pages/Home.tsx'
-import Learn      from './pages/Learn.tsx'
-import NavBar     from './components/NavBar.tsx'
+import Dashboard    from './pages/Dashboard.tsx'
+import PoolDetail   from './pages/PoolDetail.tsx'
+import Discover     from './pages/Discover.tsx'
+import Home         from './pages/Home.tsx'
+import Learn        from './pages/Learn.tsx'
+import MyPositions  from './pages/MyPositions.tsx'
+import NavBar       from './components/NavBar.tsx'
 import PasswordGate from './components/PasswordGate.tsx'
 
-type View = 'home' | 'dashboard' | 'discover' | 'learn'
+type View = 'home' | 'dashboard' | 'discover' | 'learn' | 'wallet'
 
 function DisclaimerBanner() {
   const [visible, setVisible] = useState(() => localStorage.getItem('disclaimer-dismissed') !== '1')
@@ -145,9 +146,13 @@ export default function App() {
         }
       />
 
-      {view === 'dashboard' ? (
+      {view === 'dashboard' && (
         <Dashboard onSelectPool={(chain, address) => setSelected({ chain, address })} />
-      ) : (
+      )}
+      {view === 'wallet' && (
+        <MyPositions onSelectPool={(chain, address) => setSelected({ chain, address })} />
+      )}
+      {view === 'discover' && (
         <PasswordGate>
           <Discover
             onSelectPool={(chain, address) => setSelected({ chain, address })}

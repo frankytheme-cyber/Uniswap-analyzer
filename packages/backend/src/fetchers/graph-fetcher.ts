@@ -111,6 +111,34 @@ export interface CompetitorPool {
   createdAtTimestamp: string
 }
 
+export interface PositionTick {
+  tickIdx: string
+}
+
+export interface WalletPosition {
+  id: string
+  owner: string
+  pool: {
+    id: string
+    token0: Token
+    token1: Token
+    feeTier: string
+    liquidity: string
+    sqrtPrice: string
+    tick: string
+    totalValueLockedUSD: string
+  }
+  tickLower: PositionTick
+  tickUpper: PositionTick
+  liquidity: string
+  depositedToken0: string
+  depositedToken1: string
+  withdrawnToken0: string
+  withdrawnToken1: string
+  collectedFeesToken0: string
+  collectedFeesToken1: string
+}
+
 // ── GraphQL Queries ─────────────────────────────────────────────────────────
 
 const GET_POOL = gql`
@@ -257,6 +285,39 @@ const GET_POOL_TICKS = gql`
   }
 `
 
+const GET_WALLET_POSITIONS = gql`
+  query GetWalletPositions($owner: String!) {
+    positions(
+      first: 100
+      where: { owner: $owner }
+      orderBy: id
+      orderDirection: desc
+    ) {
+      id
+      owner
+      pool {
+        id
+        token0 { symbol decimals }
+        token1 { symbol decimals }
+        feeTier
+        liquidity
+        sqrtPrice
+        tick
+        totalValueLockedUSD
+      }
+      tickLower { tickIdx }
+      tickUpper { tickIdx }
+      liquidity
+      depositedToken0
+      depositedToken1
+      withdrawnToken0
+      withdrawnToken1
+      collectedFeesToken0
+      collectedFeesToken1
+    }
+  }
+`
+
 const GET_TOP_POOLS_BY_FEE_TIER = gql`
   query GetTopPoolsByFeeTier($feeTier: BigInt!) {
     pools(
@@ -381,6 +442,19 @@ export class GraphFetcher {
       }
 
       return allTicks
+    } catch (error) {
+      throw this.wrapError(error, context)
+    }
+  }
+
+  async getWalletPositions(owner: string): Promise<WalletPosition[]> {
+    const context = { method: 'getWalletPositions', owner }
+    try {
+      const data = await this.client.request<{ positions: WalletPosition[] }>(
+        GET_WALLET_POSITIONS,
+        { owner: owner.toLowerCase() }
+      )
+      return data.positions ?? []
     } catch (error) {
       throw this.wrapError(error, context)
     }

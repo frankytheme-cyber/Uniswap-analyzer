@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-type View = 'home' | 'dashboard' | 'discover' | 'learn'
+type View = 'home' | 'dashboard' | 'discover' | 'learn' | 'wallet'
 
 interface NavBarProps {
   view: View
@@ -9,9 +9,10 @@ interface NavBarProps {
 }
 
 const navItems: { view: View; label: string; icon: string }[] = [
-  { view: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { view: 'discover',  label: 'Discover',  icon: '🔍' },
-  { view: 'learn',     label: 'Learn',     icon: '🎓' },
+  { view: 'dashboard', label: 'Dashboard',    icon: '📊' },
+  { view: 'wallet',    label: 'My Positions', icon: '👛' },
+  { view: 'discover',  label: 'Discover',     icon: '🔍' },
+  { view: 'learn',     label: 'Learn',        icon: '🎓' },
 ]
 
 export default function NavBar({ view, onNavigate, leftContent }: NavBarProps) {

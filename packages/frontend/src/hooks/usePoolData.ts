@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult } from '../types.ts'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult, WalletPositionsResponse } from '../types.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -151,6 +151,17 @@ export function useDiscoverPools(chain: string, limit = 10, enabled = true) {
     queryFn:   () => fetchJson(`${API}/discover/${chain}?limit=${limit}`),
     enabled:   enabled && !!chain,
     staleTime: 30 * 60 * 1000, // 30 min — match backend DISCOVERY TTL
+  })
+}
+
+// ── Wallet Positions ──────────────────────────────────────────────────────────
+
+export function useWalletPositions(chain: string, walletAddress: string) {
+  return useQuery<WalletPositionsResponse>({
+    queryKey:  ['wallet-positions', chain, walletAddress],
+    queryFn:   () => fetchJson(`${API}/wallet/${chain}/${walletAddress}/positions`),
+    enabled:   !!chain && /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
+    staleTime: 15 * 60 * 1000,
   })
 }
 
