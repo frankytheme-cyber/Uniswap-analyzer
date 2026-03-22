@@ -539,6 +539,18 @@ export class GraphFetcherV4 extends GraphFetcher {
       return []
     }
   }
+
+  /**
+   * V4 wallet positions — graceful fallback to empty array if the subgraph
+   * is not yet deployed on this chain (e.g. Arbitrum).
+   */
+  async getWalletPositions(owner: string): Promise<WalletPosition[]> {
+    try {
+      return await super.getWalletPositions(owner)
+    } catch {
+      return []
+    }
+  }
 }
 
 // ── Version Detection ─────────────────────────────────────────────────────────

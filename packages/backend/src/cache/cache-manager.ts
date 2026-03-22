@@ -80,7 +80,7 @@ export const CACHE_KEYS = {
   ticks:       (chain: string, poolId: string) => cacheKey(chain, poolId, 'ticks'),
   competitors:     (chain: string, feeTier: string) => `${chain}:competitors:${feeTier}`,
   discovery:       (chain: string, limit: number) => `${chain}:discovery:${limit}`,
-  walletPositions: (chain: string, wallet: string) => `${chain}:wallet:${wallet.toLowerCase()}:positions`,
+  walletPositions: (chain: string, wallet: string, version: 'v3' | 'v4') => `${chain}:wallet:${wallet.toLowerCase()}:positions:${version}`,
 } as const
 
 // ── Singleton ─────────────────────────────────────────────────────────────────

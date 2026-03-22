@@ -38,9 +38,18 @@ function PositionCard({ position, onAnalyze }: { position: WalletPosition; onAna
     }`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <span className="font-semibold text-slate-900 text-sm">{pair}</span>
-          <span className="ml-2 text-xs text-slate-400 font-mono">{feePct}%</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-slate-900 text-sm">{pair}</span>
+            <span className="text-xs text-slate-400 font-mono">{feePct}%</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
+              position.version === 'v4'
+                ? 'bg-violet-100 text-violet-700'
+                : 'bg-sky-100 text-sky-700'
+            }`}>
+              {position.version.toUpperCase()}
+            </span>
+          </div>
         </div>
         <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
           position.inRange
@@ -111,21 +120,41 @@ function PositionCard({ position, onAnalyze }: { position: WalletPosition; onAna
 
 // ── Summary Bar ───────────────────────────────────────────────────────────────
 
-function SummaryBar({ total, inRange, outOfRange }: { total: number; inRange: number; outOfRange: number }) {
+interface SummaryBarProps {
+  total: number
+  inRange: number
+  outOfRange: number
+  v3Count: number
+  v4Count: number
+}
+
+function SummaryBar({ total, inRange, outOfRange, v3Count, v4Count }: SummaryBarProps) {
   return (
-    <div className="flex gap-4 text-sm">
-      <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-center">
+    <div className="flex flex-wrap gap-3 text-sm">
+      <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-center min-w-[72px]">
         <div className="text-2xl font-bold text-slate-900">{total}</div>
-        <div className="text-slate-400 text-xs">Posizioni aperte</div>
+        <div className="text-slate-400 text-xs">Totale</div>
       </div>
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center">
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-center min-w-[72px]">
         <div className="text-2xl font-bold text-emerald-700">{inRange}</div>
         <div className="text-slate-500 text-xs">In range</div>
       </div>
-      <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center min-w-[72px]">
         <div className="text-2xl font-bold text-amber-700">{outOfRange}</div>
         <div className="text-slate-500 text-xs">Out of range</div>
       </div>
+      {v3Count > 0 && (
+        <div className="bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-center min-w-[72px]">
+          <div className="text-2xl font-bold text-sky-700">{v3Count}</div>
+          <div className="text-slate-500 text-xs">V3</div>
+        </div>
+      )}
+      {v4Count > 0 && (
+        <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-2 text-center min-w-[72px]">
+          <div className="text-2xl font-bold text-violet-700">{v4Count}</div>
+          <div className="text-slate-500 text-xs">V4</div>
+        </div>
+      )}
     </div>
   )
 }
@@ -155,7 +184,7 @@ export default function MyPositions({ onSelectPool }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Le mie posizioni</h1>
           <p className="text-slate-500 text-sm mt-1">
-            Visualizza le posizioni LP V3 aperte su Uniswap per un indirizzo wallet.
+            Posizioni LP aperte su Uniswap V3 e V4 per un indirizzo wallet (sola lettura, nessuna connessione richiesta).
           </p>
         </div>
 
@@ -208,6 +237,8 @@ export default function MyPositions({ onSelectPool }: Props) {
               total={data.totalOpen}
               inRange={data.inRange}
               outOfRange={data.outOfRange}
+              v3Count={data.v3Count}
+              v4Count={data.v4Count}
             />
 
             {data.positions.length === 0 ? (

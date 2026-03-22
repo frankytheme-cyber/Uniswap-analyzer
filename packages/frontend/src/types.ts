@@ -131,6 +131,7 @@ export interface DiscoveryResult {
 
 export interface WalletPosition {
   id:               string
+  version:          'v3' | 'v4'
   poolId:           string
   token0:           string
   token1:           string
@@ -161,6 +162,8 @@ export interface WalletPositionsResponse {
   totalOpen:   number
   inRange:     number
   outOfRange:  number
+  v3Count:     number
+  v4Count:     number
   lastUpdated: string
 }
 
