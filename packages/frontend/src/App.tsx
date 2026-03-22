@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Routes, Route, Outlet } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import Dashboard    from './pages/Dashboard.tsx'
 import PoolDetail   from './pages/PoolDetail.tsx'
 import Discover     from './pages/Discover.tsx'
@@ -110,6 +111,7 @@ export default function App() {
       </Routes>
 
       {controls}
+      <Analytics />
     </div>
   )
 }
