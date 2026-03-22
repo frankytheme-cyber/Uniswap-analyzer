@@ -139,6 +139,28 @@ export interface WalletPosition {
   collectedFeesToken1: string
 }
 
+/** Raw event from V4 ModifyLiquidity entity */
+export interface ModifyLiquidityEvent {
+  id: string
+  pool: {
+    id: string
+    token0: Token
+    token1: Token
+    feeTier: string
+    liquidity: string
+    sqrtPrice: string
+    tick: string
+    totalValueLockedUSD: string
+  }
+  tickLower: string   // BigInt as string
+  tickUpper: string   // BigInt as string
+  amount:    string   // liquidity delta (BigInt, negative for removes)
+  amount0:   string   // token0 amount (BigDecimal)
+  amount1:   string   // token1 amount (BigDecimal)
+  timestamp: string
+  origin:    string
+}
+
 // ── GraphQL Queries ─────────────────────────────────────────────────────────
 
 const GET_POOL = gql`
@@ -314,6 +336,41 @@ const GET_WALLET_POSITIONS = gql`
       withdrawnToken1
       collectedFeesToken0
       collectedFeesToken1
+    }
+  }
+`
+
+/**
+ * V4: liquidity data lives on ModifyLiquidity events, not on Position.
+ * We fetch all events for a wallet (origin) and aggregate by (pool, tickLower, tickUpper).
+ */
+const GET_WALLET_MODIFY_LIQUIDITIES_V4 = gql`
+  query GetWalletModifyLiquidities($owner: String!, $skip: Int!) {
+    modifyLiquidities(
+      first: 1000
+      skip: $skip
+      where: { origin: $owner }
+      orderBy: timestamp
+      orderDirection: desc
+    ) {
+      id
+      pool {
+        id
+        token0 { symbol decimals }
+        token1 { symbol decimals }
+        feeTier
+        liquidity
+        sqrtPrice
+        tick
+        totalValueLockedUSD
+      }
+      tickLower
+      tickUpper
+      amount
+      amount0
+      amount1
+      timestamp
+      origin
     }
   }
 `
@@ -541,13 +598,93 @@ export class GraphFetcherV4 extends GraphFetcher {
   }
 
   /**
-   * V4 wallet positions — graceful fallback to empty array if the subgraph
-   * is not yet deployed on this chain (e.g. Arbitrum).
+   * V4 wallet positions — reconstructed from ModifyLiquidity events.
+   *
+   * The V4 subgraph does not store per-position data on the Position entity
+   * (no tickLower, tickUpper, liquidity, deposited/collected amounts).
+   * Instead, we paginate through all ModifyLiquidity events for the owner,
+   * group by (poolId, tickLower, tickUpper), and sum the liquidity deltas.
+   * Groups with net liquidity > 0 are currently open positions.
+   *
+   * Returns [] if the V4 subgraph is not deployed on this chain (e.g. Arbitrum).
    */
   async getWalletPositions(owner: string): Promise<WalletPosition[]> {
+    const context = { method: 'getWalletPositions', owner, version: 'v4' }
     try {
-      return await super.getWalletPositions(owner)
-    } catch {
+      // Paginate ModifyLiquidity events (up to 5 000 events / 5 pages)
+      const allEvents: ModifyLiquidityEvent[] = []
+      let skip = 0
+      while (allEvents.length < 5000) {
+        const data = await this.client.request<{ modifyLiquidities: ModifyLiquidityEvent[] }>(
+          GET_WALLET_MODIFY_LIQUIDITIES_V4,
+          { owner: owner.toLowerCase(), skip }
+        )
+        const batch = data.modifyLiquidities ?? []
+        allEvents.push(...batch)
+        if (batch.length < 1000) break
+        skip += 1000
+      }
+
+      if (allEvents.length === 0) return []
+
+      // Aggregate by (poolId, tickLower, tickUpper)
+      type Group = {
+        pool: ModifyLiquidityEvent['pool']
+        tickLower: string
+        tickUpper: string
+        netLiquidity: bigint
+        deposited0: number
+        deposited1: number
+        withdrawn0: number
+        withdrawn1: number
+      }
+      const groups = new Map<string, Group>()
+
+      for (const event of allEvents) {
+        const key = `${event.pool.id}:${event.tickLower}:${event.tickUpper}`
+        const g = groups.get(key) ?? {
+          pool:         event.pool,
+          tickLower:    event.tickLower,
+          tickUpper:    event.tickUpper,
+          netLiquidity: 0n,
+          deposited0:   0,
+          deposited1:   0,
+          withdrawn0:   0,
+          withdrawn1:   0,
+        }
+        const delta = BigInt(event.amount)
+        g.netLiquidity += delta
+        if (delta > 0n) {
+          g.deposited0 += Math.abs(parseFloat(event.amount0))
+          g.deposited1 += Math.abs(parseFloat(event.amount1))
+        } else {
+          g.withdrawn0 += Math.abs(parseFloat(event.amount0))
+          g.withdrawn1 += Math.abs(parseFloat(event.amount1))
+        }
+        groups.set(key, g)
+      }
+
+      // Only open positions (net liquidity > 0)
+      return Array.from(groups.values())
+        .filter((g) => g.netLiquidity > 0n)
+        .map((g) => ({
+          id:                  `v4:${g.pool.id}:${g.tickLower}:${g.tickUpper}`,
+          owner,
+          pool:                g.pool,
+          tickLower:           { tickIdx: g.tickLower },
+          tickUpper:           { tickIdx: g.tickUpper },
+          liquidity:           g.netLiquidity.toString(),
+          depositedToken0:     g.deposited0.toString(),
+          depositedToken1:     g.deposited1.toString(),
+          withdrawnToken0:     g.withdrawn0.toString(),
+          withdrawnToken1:     g.withdrawn1.toString(),
+          // V4 does not track per-position collected fees in the subgraph
+          collectedFeesToken0: '0',
+          collectedFeesToken1: '0',
+        }))
+    } catch (error) {
+      // Graceful fallback: chain may not have V4 subgraph yet
+      console.warn(JSON.stringify({ warning: 'V4 wallet positions unavailable', ...context, error: String(error) }))
       return []
     }
   }
