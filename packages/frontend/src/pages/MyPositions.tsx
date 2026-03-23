@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWalletPositions } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
@@ -35,37 +35,74 @@ function fmtUsd(n: number): string {
 
 // ── Position Row ──────────────────────────────────────────────────────────────
 
+function TokenAmounts({ token0, token1, amount0, amount1, color = 'slate' }: {
+  token0: string; token1: string; amount0: number; amount1: number; color?: 'slate' | 'amber' | 'emerald'
+}) {
+  const textColor = color === 'amber' ? 'text-amber-700' : color === 'emerald' ? 'text-emerald-700' : 'text-slate-700'
+  return (
+    <div className="space-y-1 mt-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-slate-400 shrink-0">{token0}</span>
+        <span className={`font-mono text-xs ${textColor}`}>{fmt(amount0)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-slate-400 shrink-0">{token1}</span>
+        <span className={`font-mono text-xs ${textColor}`}>{fmt(amount1)}</span>
+      </div>
+    </div>
+  )
+}
+
+function DataCell({ label, usd, children, accent }: {
+  label: string; usd?: number; children: ReactNode; accent?: 'amber' | 'emerald'
+}) {
+  const labelColor = accent === 'amber' ? 'text-amber-600' : accent === 'emerald' ? 'text-emerald-600' : 'text-slate-400'
+  const usdColor   = accent === 'amber' ? 'text-amber-700' : accent === 'emerald' ? 'text-emerald-700' : 'text-slate-700'
+  return (
+    <div className="bg-slate-50 rounded-lg p-3 min-w-0">
+      <span className={`text-[11px] font-semibold uppercase tracking-wide block ${labelColor}`}>{label}</span>
+      {usd !== undefined && usd > 0 && (
+        <span className={`text-sm font-bold font-mono block mt-1 ${usdColor}`}>{fmtUsd(usd)}</span>
+      )}
+      {children}
+    </div>
+  )
+}
+
 function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnalyze: (poolId: string) => void }) {
-  const feePct = (position.feeTier / 10000).toFixed(2)
-  const pair   = `${position.token0}/${position.token1}`
+  const feePct   = (position.feeTier / 10000).toFixed(2)
+  const pair     = `${position.token0}/${position.token1}`
   const isClosed = position.status === 'closed'
 
   const hasUncollected = position.uncollectedFees0 > 0 || position.uncollectedFees1 > 0
   const hasCollected   = position.collectedFees0 > 0 || position.collectedFees1 > 0
+  const hasFees        = hasUncollected || hasCollected
+
+  const borderClass = isClosed
+    ? 'border-slate-200'
+    : position.inRange ? 'border-emerald-200' : 'border-amber-200'
 
   return (
-    <div className={`rounded-xl border bg-white p-5 shadow-sm ${
-      isClosed
-        ? 'border-slate-200 opacity-70'
-        : position.inRange ? 'border-emerald-200' : 'border-amber-200'
-    }`}>
+    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass} ${isClosed ? 'opacity-75' : ''}`}>
+
       {/* ─── Header ─── */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className={`font-semibold text-base ${isClosed ? 'text-slate-500' : 'text-slate-900'}`}>{pair}</span>
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
+        {/* Left: pair + badges */}
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <span className={`font-bold text-base leading-none ${isClosed ? 'text-slate-500' : 'text-slate-900'}`}>{pair}</span>
           <span className="text-xs text-slate-400 font-mono">{feePct}%</span>
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
             position.version === 'v4' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700'
           }`}>
             {position.version.toUpperCase()}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {position.ilPercent !== null && (
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-              position.ilPercent >= 0
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-red-50 text-red-700'
+
+        {/* Right: IL + status */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {position.ilPercent !== null && !isClosed && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              position.ilPercent >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
             }`}>
               IL {position.ilPercent >= 0 ? '+' : ''}{position.ilPercent.toFixed(2)}%
             </span>
@@ -82,117 +119,90 @@ function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnal
         </div>
       </div>
 
-      {/* ─── Body grid ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-        {/* Range */}
-        <div className="bg-slate-50 rounded-lg p-3">
-          <div className="text-slate-400 mb-1 font-medium">Range</div>
-          <div className="space-y-0.5">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Min</span>
-              <span className="font-mono text-slate-700">{formatPrice(position.priceLower)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Max</span>
-              <span className="font-mono text-slate-700">{formatPrice(position.priceUpper)}</span>
-            </div>
-          </div>
-        </div>
+      {/* ─── Body ─── */}
+      <div className="p-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
-        {/* Initial capital (deposited) */}
-        <div className="bg-slate-50 rounded-lg p-3">
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="text-slate-400 font-medium">Capitale iniziale</span>
-            {position.initialValueUSD > 0 && (
-              <span className="text-slate-700 font-mono text-xs font-semibold">{fmtUsd(position.initialValueUSD)}</span>
-            )}
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex justify-between">
-              <span className="text-slate-500">{position.token0}</span>
-              <span className="font-mono text-slate-700">{fmt(position.depositedToken0)}</span>
+          {/* Range */}
+          <DataCell label="Range">
+            <div className="space-y-1 mt-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400">Min</span>
+                <span className="font-mono text-xs text-slate-700">{formatPrice(position.priceLower)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400">Max</span>
+                <span className="font-mono text-xs text-slate-700">{formatPrice(position.priceUpper)}</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">{position.token1}</span>
-              <span className="font-mono text-slate-700">{fmt(position.depositedToken1)}</span>
-            </div>
-          </div>
-        </div>
+          </DataCell>
 
-        {/* Current amounts */}
-        {!isClosed && (
-          <div className="bg-slate-50 rounded-lg p-3">
-            <div className="flex items-baseline justify-between mb-1">
-              <span className="text-slate-400 font-medium">Capitale attuale</span>
-              {position.currentValueUSD > 0 && (
-                <span className="text-slate-700 font-mono text-xs font-semibold">{fmtUsd(position.currentValueUSD)}</span>
+          {/* Initial capital */}
+          <DataCell label="Depositato" usd={position.initialValueUSD}>
+            <TokenAmounts
+              token0={position.token0} token1={position.token1}
+              amount0={position.depositedToken0} amount1={position.depositedToken1}
+            />
+          </DataCell>
+
+          {/* Current capital — open only */}
+          {!isClosed ? (
+            <DataCell label="Attuale" usd={position.currentValueUSD}>
+              <TokenAmounts
+                token0={position.token0} token1={position.token1}
+                amount0={position.currentAmount0} amount1={position.currentAmount1}
+              />
+            </DataCell>
+          ) : (
+            <div />
+          )}
+
+          {/* Fees — single cell with both uncollected + collected */}
+          {hasFees ? (
+            <DataCell
+              label={hasUncollected ? 'Fee da prelevare' : 'Fee ritirate'}
+              usd={hasUncollected ? position.uncollectedFeesUSD : position.collectedFeesUSD}
+              accent={hasUncollected ? 'amber' : 'emerald'}
+            >
+              {hasUncollected && (
+                <TokenAmounts
+                  token0={position.token0} token1={position.token1}
+                  amount0={position.uncollectedFees0} amount1={position.uncollectedFees1}
+                  color="amber"
+                />
               )}
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex justify-between">
-                <span className="text-slate-500">{position.token0}</span>
-                <span className="font-mono text-slate-700">{fmt(position.currentAmount0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">{position.token1}</span>
-                <span className="font-mono text-slate-700">{fmt(position.currentAmount1)}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Fees */}
-        {(hasUncollected || hasCollected) && (
-          <div className="bg-slate-50 rounded-lg p-3">
-            <div className="text-slate-400 mb-1 font-medium">Fee</div>
-            {hasUncollected && (
-              <div className="space-y-0.5 mb-1.5">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-amber-600 text-[10px] font-medium">Da prelevare</span>
-                  {position.uncollectedFeesUSD > 0 && (
-                    <span className="text-amber-700 font-mono text-xs font-semibold">{fmtUsd(position.uncollectedFeesUSD)}</span>
+              {hasCollected && (
+                <div className={hasUncollected ? 'mt-2 pt-2 border-t border-slate-200' : ''}>
+                  {hasUncollected && (
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">Ritirate</span>
+                      {position.collectedFeesUSD > 0 && (
+                        <span className="text-xs font-bold font-mono text-emerald-700">{fmtUsd(position.collectedFeesUSD)}</span>
+                      )}
+                    </div>
                   )}
+                  <TokenAmounts
+                    token0={position.token0} token1={position.token1}
+                    amount0={position.collectedFees0} amount1={position.collectedFees1}
+                    color="emerald"
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{position.token0}</span>
-                  <span className="font-mono text-amber-700">{fmt(position.uncollectedFees0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{position.token1}</span>
-                  <span className="font-mono text-amber-700">{fmt(position.uncollectedFees1)}</span>
-                </div>
-              </div>
-            )}
-            {hasCollected && (
-              <div className="space-y-0.5">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-emerald-600 text-[10px] font-medium">Ritirate</span>
-                  {position.collectedFeesUSD > 0 && (
-                    <span className="text-emerald-700 font-mono text-xs font-semibold">{fmtUsd(position.collectedFeesUSD)}</span>
-                  )}
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{position.token0}</span>
-                  <span className="font-mono text-emerald-700">{fmt(position.collectedFees0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{position.token1}</span>
-                  <span className="font-mono text-emerald-700">{fmt(position.collectedFees1)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </DataCell>
+          ) : (
+            <div />
+          )}
+        </div>
       </div>
 
       {/* ─── Footer ─── */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-xs text-slate-400 font-mono truncate max-w-[200px]">
-          Pool {position.poolId.slice(0, 10)}…
+      <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <span className="text-[11px] text-slate-400 font-mono truncate max-w-[220px]">
+          {position.poolId.slice(0, 12)}…{position.poolId.slice(-6)}
         </span>
         <button
           onClick={() => onAnalyze(position.poolId)}
-          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors shrink-0 ml-2"
         >
           Analizza pool →
         </button>
@@ -355,7 +365,7 @@ export default function MyPositions() {
       <div className="max-w-4xl mx-auto px-4 pb-16 w-full">
         <div className="border-t border-slate-200 pt-12 grid grid-cols-1 md:grid-cols-2 gap-10 text-sm text-slate-500 leading-relaxed">
           <div>
-            <h2 className="text-slate-700 font-semibold mb-3 text-base">Tracker posizioni Uniswap V3 e V4</h2>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Monitora le posizioni Uniswap V3 e V4</h2>
             <p className="mb-3">
               Visualizza tutte le posizioni LP di un wallet su Uniswap V3 e V4 senza connettere il portafoglio.
               Inserisci un indirizzo Ethereum, Arbitrum, Base o Polygon per vedere le posizioni aperte e chiuse,
