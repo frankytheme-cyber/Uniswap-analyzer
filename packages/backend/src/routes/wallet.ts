@@ -136,8 +136,10 @@ function enrichPosition(
   const uncollected1 = Number(uncollected.owed1) / Math.pow(10, decimals1)
   const uncollectedFeesUSD = uncollected0 * token0PriceUSD + uncollected1 * token1PriceUSD
 
-  const collected0 = parseFloat(p.collectedFeesToken0)
-  const collected1 = parseFloat(p.collectedFeesToken1)
+  // collectedFeesToken0/1 in the V3 subgraph includes BOTH fees AND withdrawn capital
+  // (everything sent via collect()). Subtract withdrawnToken0/1 to get only the earned fees.
+  const collected0 = Math.max(0, parseFloat(p.collectedFeesToken0) - parseFloat(p.withdrawnToken0))
+  const collected1 = Math.max(0, parseFloat(p.collectedFeesToken1) - parseFloat(p.withdrawnToken1))
   const collectedFeesUSD = collected0 * token0PriceUSD + collected1 * token1PriceUSD
 
   // Impermanent Loss: compare (current LP value) vs (HODL value of initial deposit)
