@@ -8,18 +8,20 @@ import {
   ListIcon,
   XIcon,
   ChartPieSliceIcon,
+  LockIcon,
 } from '@phosphor-icons/react'
 
 interface NavItem {
   path: string
   label: string
   Icon: React.ElementType
+  locked?: boolean
 }
 
 const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard',    Icon: ChartBarIcon },
   { path: '/wallet',    label: 'My Positions', Icon: WalletIcon },
-  { path: '/discover',  label: 'Discover',     Icon: MagnifyingGlassIcon },
+  { path: '/discover',  label: 'Discover',     Icon: MagnifyingGlassIcon, locked: true },
   { path: '/learn',     label: 'Learn',        Icon: GraduationCapIcon },
 ]
 
@@ -49,17 +51,18 @@ export default function NavBar() {
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1 shrink-0">
-          {navItems.map(({ path, label }) => (
+          {navItems.map(({ path, label, locked }) => (
             <Link
               key={path}
               to={path}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 isActive(path)
                   ? 'bg-slate-100 text-slate-900'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               {label}
+              {locked && <LockIcon size={11} weight="bold" className="opacity-40" />}
             </Link>
           ))}
         </nav>
@@ -77,7 +80,7 @@ export default function NavBar() {
       {/* Mobile dropdown */}
       {open && (
         <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-2 space-y-1">
-          {navItems.map(({ path, label, Icon }) => (
+          {navItems.map(({ path, label, Icon, locked }) => (
             <Link
               key={path}
               to={path}
@@ -90,6 +93,7 @@ export default function NavBar() {
             >
               <Icon size={18} weight={isActive(path) ? 'bold' : 'regular'} />
               {label}
+              {locked && <LockIcon size={11} weight="bold" className="ml-auto opacity-40" />}
             </Link>
           ))}
         </div>

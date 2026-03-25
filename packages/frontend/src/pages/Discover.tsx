@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LockIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverPools, useAddToWatchlist } from '../hooks/usePoolData.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
@@ -49,7 +50,10 @@ export default function Discover() {
         >
           ← Dashboard
         </button>
-        <h1 className="text-2xl font-bold text-slate-900">Discover Top Pools</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+          Discover Top Pools
+          <LockIcon size={18} weight="duotone" className="text-slate-400" />
+        </h1>
         <p className="text-slate-500 text-sm mt-1">
           Le migliori pool Uniswap V3 e V4 ordinate per punteggio
         </p>
