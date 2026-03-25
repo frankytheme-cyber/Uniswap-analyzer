@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Routes, Route, Outlet } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
+import { WarningIcon, XIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import Dashboard    from './pages/Dashboard.tsx'
 import PoolDetail   from './pages/PoolDetail.tsx'
 import Discover     from './pages/Discover.tsx'
@@ -22,7 +23,7 @@ function DisclaimerBanner() {
 
   return (
     <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-start gap-3 text-xs text-amber-900">
-      <span className="shrink-0 text-amber-500 dark:text-amber-400 mt-0.5" aria-hidden>⚠</span>
+      <WarningIcon size={14} weight="bold" className="shrink-0 text-amber-500 dark:text-amber-400 mt-0.5" aria-hidden />
       <p className="flex-1 leading-relaxed">
         <strong>Solo a scopo informativo.</strong>{' '}
         Uniswap Pool Analyzer è uno strumento di analisi dati e non costituisce consulenza finanziaria,
@@ -32,9 +33,9 @@ function DisclaimerBanner() {
       <button
         onClick={dismiss}
         aria-label="Chiudi avviso"
-        className="shrink-0 text-amber-500 hover:text-amber-200 dark:text-amber-500 dark:hover:text-amber-300 transition-colors ml-1 leading-none text-base"
+        className="shrink-0 text-amber-500 hover:text-amber-200 dark:text-amber-500 dark:hover:text-amber-300 transition-colors ml-1"
       >
-        ✕
+        <XIcon size={14} weight="bold" />
       </button>
     </div>
   )
@@ -89,7 +90,7 @@ export default function App() {
         title={theme.dark ? 'Modalità chiara' : 'Modalità scura'}
         className="px-2 py-0.5 rounded-full text-xs text-slate-400 hover:text-slate-600 transition-colors"
       >
-        {theme.dark ? '☀' : '☾'}
+        {theme.dark ? <SunIcon size={14} weight="bold" /> : <MoonIcon size={14} weight="bold" />}
       </button>
     </div>
   )

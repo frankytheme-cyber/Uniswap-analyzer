@@ -1,13 +1,25 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import {
+  ChartBarIcon,
+  WalletIcon,
+  MagnifyingGlassIcon,
+  GraduationCapIcon,
+  ListIcon,
+  XIcon,
+} from '@phosphor-icons/react'
 
-interface NavItem { path: string; label: string; icon: string }
+interface NavItem {
+  path: string
+  label: string
+  Icon: React.ElementType
+}
 
 const navItems: NavItem[] = [
-  { path: '/dashboard', label: 'Dashboard',    icon: '📊' },
-  { path: '/wallet',    label: 'My Positions', icon: '👛' },
-  { path: '/discover',  label: 'Discover',     icon: '🔍' },
-  { path: '/learn',     label: 'Learn',        icon: '🎓' },
+  { path: '/dashboard', label: 'Dashboard',    Icon: ChartBarIcon },
+  { path: '/wallet',    label: 'My Positions', Icon: WalletIcon },
+  { path: '/discover',  label: 'Discover',     Icon: MagnifyingGlassIcon },
+  { path: '/learn',     label: 'Learn',        Icon: GraduationCapIcon },
 ]
 
 export default function NavBar() {
@@ -35,17 +47,17 @@ export default function NavBar() {
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1 shrink-0">
-          {navItems.map((item) => (
+          {navItems.map(({ path, label }) => (
             <Link
-              key={item.path}
-              to={item.path}
+              key={path}
+              to={path}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                isActive(item.path)
+                isActive(path)
                   ? 'bg-slate-100 text-slate-900'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {item.label}
+              {label}
             </Link>
           ))}
         </nav>
@@ -56,34 +68,26 @@ export default function NavBar() {
           className="sm:hidden p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
           aria-label={open ? 'Chiudi menu' : 'Apri menu'}
         >
-          {open ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
+          {open ? <XIcon size={20} weight="bold" /> : <ListIcon size={20} weight="bold" />}
         </button>
       </div>
 
       {/* Mobile dropdown */}
       {open && (
         <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-2 space-y-1">
-          {navItems.map((item) => (
+          {navItems.map(({ path, label, Icon }) => (
             <Link
-              key={item.path}
-              to={item.path}
+              key={path}
+              to={path}
               onClick={close}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive(item.path)
+                isActive(path)
                   ? 'bg-slate-100 text-slate-900'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <span>{item.icon}</span>
-              {item.label}
+              <Icon size={18} weight={isActive(path) ? 'bold' : 'regular'} />
+              {label}
             </Link>
           ))}
         </div>
