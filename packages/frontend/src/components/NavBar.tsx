@@ -7,6 +7,7 @@ import {
   GraduationCapIcon,
   ListIcon,
   XIcon,
+  ChartPieSliceIcon,
 } from '@phosphor-icons/react'
 
 interface NavItem {
@@ -39,8 +40,9 @@ export default function NavBar() {
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/"
-            className="font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors truncate"
+            className="flex items-center gap-1.5 font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors truncate"
           >
+            <ChartPieSliceIcon size={18} weight="duotone" className="text-indigo-600 shrink-0" />
             Uniswap Analyzer
           </Link>
         </div>
