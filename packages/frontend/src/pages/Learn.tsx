@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import {
+  TrendUpIcon, TargetIcon, ShoppingCartIcon, WarningIcon,
+  ArrowsCounterClockwiseIcon, ArrowRightIcon, WavesIcon,
+} from '@phosphor-icons/react'
 import LiquidityCurveChart        from '../components/learn/LiquidityCurveChart.tsx'
 import ConcentratedLiquidityChart from '../components/learn/ConcentratedLiquidityChart.tsx'
 import PriceImpactChart           from '../components/learn/PriceImpactChart.tsx'
@@ -11,15 +15,15 @@ interface Chapter {
   number: string
   title: string
   subtitle: string
-  icon: string
+  Icon: React.ElementType
 }
 
 const chapters: Chapter[] = [
-  { id: 'amm',          number: '01', title: 'La Curva AMM',             subtitle: 'x · y = k con ETH/USDC',            icon: '📈' },
-  { id: 'concentrated', number: '02', title: 'Liquidità Concentrata V3', subtitle: 'Più efficienza, stesso capitale',     icon: '🎯' },
-  { id: 'impact',       number: '03', title: 'Comprare un Token',         subtitle: 'Price impact e slippage',            icon: '🛒' },
-  { id: 'il',           number: '04', title: 'Impermanent Loss',          subtitle: 'Il rischio nascosto degli LP',        icon: '⚠️' },
-  { id: 'rebalancing',  number: '05', title: 'Il Ribilanciamento',        subtitle: 'Quando e come ricalibrare',          icon: '⟳'  },
+  { id: 'amm',          number: '01', title: 'La Curva AMM',             subtitle: 'x · y = k con ETH/USDC',         Icon: TrendUpIcon },
+  { id: 'concentrated', number: '02', title: 'Liquidità Concentrata V3', subtitle: 'Più efficienza, stesso capitale', Icon: TargetIcon },
+  { id: 'impact',       number: '03', title: 'Comprare un Token',        subtitle: 'Price impact e slippage',         Icon: ShoppingCartIcon },
+  { id: 'il',           number: '04', title: 'Impermanent Loss',         subtitle: 'Il rischio nascosto degli LP',    Icon: WarningIcon },
+  { id: 'rebalancing',  number: '05', title: 'Il Ribilanciamento',       subtitle: 'Quando e come ricalibrare',       Icon: ArrowsCounterClockwiseIcon },
 ]
 
 export default function Learn() {
@@ -77,7 +81,7 @@ export default function Learn() {
 
           {/* Pool setup callout */}
           <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 flex items-start gap-3">
-            <span className="text-lg">🏊</span>
+            <WavesIcon size={20} weight="duotone" className="text-violet-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-violet-700 mb-1">La nostra pool di esempio</p>
               <p className="text-sm text-slate-600">
@@ -258,7 +262,7 @@ export default function Learn() {
               href="/dashboard"
               className="btn-primary inline-flex items-center gap-2"
             >
-              Vai al tool →
+              Vai al tool <ArrowRightIcon size={14} weight="bold" />
             </a>
           </div>
         </main>
@@ -271,8 +275,8 @@ export default function Learn() {
 function ChapterHeader({ ch }: { ch: Chapter }) {
   return (
     <div className="flex items-start gap-4 mb-5">
-      <div className="w-11 h-11 bg-violet-50 border border-violet-200 rounded-lg flex items-center justify-center text-xl shrink-0">
-        {ch.icon}
+      <div className="w-11 h-11 bg-violet-50 border border-violet-200 rounded-lg flex items-center justify-center shrink-0">
+        <ch.Icon size={22} weight="duotone" className="text-violet-600" />
       </div>
       <div>
         <div className="text-xs font-mono text-violet-500 mb-0.5">{ch.number}</div>

@@ -15,6 +15,7 @@ import BacktestChart       from '../components/charts/BacktestChart.tsx'
 import ILManualSimulator   from '../components/charts/ILManualSimulator.tsx'
 
 import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeftIcon } from '@phosphor-icons/react'
 
 const STATUS_COLOR: Record<string, string> = {
   healthy: 'text-emerald-600',
@@ -71,7 +72,7 @@ export default function PoolDetail() {
         onClick={onBack}
         className="text-sm text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
       >
-        ← Dashboard
+        <ArrowLeftIcon size={13} weight="bold" /> Dashboard
       </button>
 
       {isLoading && (

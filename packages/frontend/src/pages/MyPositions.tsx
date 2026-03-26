@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { useWalletPositions } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
@@ -204,7 +205,7 @@ function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnal
           onClick={() => onAnalyze(position.poolId)}
           className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors shrink-0 ml-2"
         >
-          Analizza pool →
+          Analizza pool <ArrowRightIcon size={12} weight="bold" />
         </button>
       </div>
     </div>

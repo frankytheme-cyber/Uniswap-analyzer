@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LockIcon } from '@phosphor-icons/react'
+import { LockIcon, ArrowLeftIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverPools, useAddToWatchlist } from '../hooks/usePoolData.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
@@ -48,7 +48,7 @@ export default function Discover() {
           onClick={onBack}
           className="text-slate-400 hover:text-slate-600 text-sm mb-3 transition-colors"
         >
-          ← Dashboard
+          <ArrowLeftIcon size={13} weight="bold" /> Dashboard
         </button>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
           Discover Top Pools

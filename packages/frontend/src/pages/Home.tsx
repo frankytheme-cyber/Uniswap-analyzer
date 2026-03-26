@@ -1,11 +1,13 @@
 import type { FC } from 'react'
 import { Link } from 'react-router-dom'
+import { ChartBarIcon, WalletIcon, GraduationCapIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import NavBar from '../components/NavBar.tsx'
 import Footer from '../components/Footer.tsx'
 
 interface SectionCard {
   path: string
-  icon: string
+  Icon: React.ElementType
+  iconColor: string
   title: string
   description: string
   features: string[]
@@ -18,7 +20,8 @@ interface SectionCard {
 const cards: SectionCard[] = [
   {
     path: '/dashboard',
-    icon: '📊',
+    Icon: ChartBarIcon,
+    iconColor: 'text-indigo-600',
     title: 'Il Tuo Portafoglio',
     description: 'Aggiungi pool alla watchlist e monitora la salute delle tue posizioni in tempo reale.',
     features: ['Analisi 6 parametri', 'Score di salute', 'Grafici avanzati', 'Simulatore IL'],
@@ -28,11 +31,12 @@ const cards: SectionCard[] = [
     accentDot:     'bg-indigo-400',
   },
   {
-    path: '/discover',
-    icon: '🔍',
-    title: 'Scopri Pool',
-    description: 'Esplora le top pool per chain, ordinate per score, liquidità e volume organico.',
-    features: ['Top pool per chain', 'Ranking automatico', 'V3 + V4 support', 'Aggiunta rapida'],
+    path: '/wallet',
+    Icon: WalletIcon,
+    iconColor: 'text-emerald-600',
+    title: 'My Positions',
+    description: 'Collega il tuo wallet e visualizza le tue posizioni attive su Uniswap V3 e V4 con P&L in tempo reale.',
+    features: ['Posizioni aperte', 'Fee accumulate', 'IL per posizione', 'Storico movimenti'],
     accentText:    'text-emerald-600',
     accentBorder:  'hover:border-emerald-300 hover:shadow-emerald-100',
     accentIconBg:  'bg-emerald-50',
@@ -40,7 +44,8 @@ const cards: SectionCard[] = [
   },
   {
     path: '/learn',
-    icon: '🎓',
+    Icon: GraduationCapIcon,
+    iconColor: 'text-violet-600',
     title: 'Come Funziona una Pool',
     description: 'Guida interattiva con grafici: AMM, liquidità concentrata V3, impermanent loss e strategie.',
     features: ['Curva AMM x·y=k', 'Liquidità V3 concentrata', 'Price impact visivo', 'Ribilanciamento'],
@@ -78,8 +83,8 @@ const Home: FC = () => {
             to={card.path}
             className={`group text-left bg-white border border-slate-200 rounded-lg p-6 transition-all duration-200 shadow-card ${card.accentBorder} hover:shadow-card-hover hover:-translate-y-0.5`}
           >
-            <div className={`w-11 h-11 ${card.accentIconBg} rounded-lg flex items-center justify-center text-xl mb-5`}>
-              {card.icon}
+            <div className={`w-11 h-11 ${card.accentIconBg} rounded-lg flex items-center justify-center mb-5`}>
+              <card.Icon size={22} weight="duotone" className={card.iconColor} />
             </div>
 
             <h2 className="text-base font-semibold text-slate-900 mb-2">{card.title}</h2>
@@ -96,7 +101,7 @@ const Home: FC = () => {
 
             <div className={`flex items-center gap-1 text-sm font-medium ${card.accentText} group-hover:gap-2 transition-all`}>
               Vai alla sezione
-              <span>→</span>
+              <ArrowRightIcon size={14} weight="bold" />
             </div>
           </Link>
         ))}
