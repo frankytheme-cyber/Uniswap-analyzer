@@ -109,6 +109,59 @@ function PoolRow({ entry, onSelect, onRemove, removing }: {
   )
 }
 
+function PoolRowMobile({ entry, onSelect, onRemove, removing }: {
+  entry:    WatchlistEntry
+  onSelect: () => void
+  onRemove: () => void
+  removing: boolean
+}) {
+  const { data: pool, isLoading } = useRawPool(entry.chain, entry.address)
+
+  const poolName = isLoading
+    ? '…'
+    : pool ? `${pool.token0.symbol}/${pool.token1.symbol}` : '—'
+
+  const feeTierNum = pool ? parseInt(pool.feeTier, 10) : 0
+  const feeTier    = pool && feeTierNum > 0 ? `${(feeTierNum / 10000).toFixed(2)}%` : ''
+  const version    = entry.address.length === 66 ? 'V4' : 'V3'
+
+  return (
+    <div
+      className="card p-3 flex items-center justify-between gap-2 cursor-pointer active:bg-slate-50 transition-colors"
+      onClick={onSelect}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-medium text-slate-800">{poolName}</span>
+          {feeTier && (
+            <span className="text-[11px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{feeTier}</span>
+          )}
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+            version === 'V4'
+              ? 'bg-violet-50 text-violet-600'
+              : 'bg-slate-50 text-slate-500'
+          }`}>
+            {version}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[11px] text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">{entry.chain}</span>
+          <span className="text-[11px] text-slate-400 font-mono truncate">
+            {entry.address.slice(0, 8)}…{entry.address.slice(-4)}
+          </span>
+        </div>
+      </div>
+      <button
+        className="text-slate-300 hover:text-red-500 text-xs transition-colors shrink-0 px-2 py-1"
+        disabled={removing}
+        onClick={(e) => { e.stopPropagation(); onRemove() }}
+      >
+        Rimuovi
+      </button>
+    </div>
+  )
+}
+
 export default function PoolTable({ entries, onSelectPool }: Props) {
   const [address, setAddress] = useState('')
   const [chain, setChain]     = useState<Chain>('ethereum')
@@ -227,29 +280,45 @@ export default function PoolTable({ entries, onSelectPool }: Props) {
           Nessuna pool in watchlist. Aggiungine una sopra.
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-400 text-xs uppercase tracking-wider bg-slate-50">
-                <th className="text-left px-4 py-3">Pool</th>
-                <th className="text-left px-4 py-3">Indirizzo</th>
-                <th className="text-left px-4 py-3">Aggiunta</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <PoolRow
-                  key={entry.id}
-                  entry={entry}
-                  onSelect={() => onSelectPool(entry.chain, entry.address)}
-                  onRemove={() => removeMutation.mutate(entry.id)}
-                  removing={removeMutation.isPending}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Desktop: table */}
+          <div className="card overflow-hidden hidden sm:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 text-xs uppercase tracking-wider bg-slate-50">
+                  <th className="text-left px-4 py-3">Pool</th>
+                  <th className="text-left px-4 py-3">Indirizzo</th>
+                  <th className="text-left px-4 py-3">Aggiunta</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <PoolRow
+                    key={entry.id}
+                    entry={entry}
+                    onSelect={() => onSelectPool(entry.chain, entry.address)}
+                    onRemove={() => removeMutation.mutate(entry.id)}
+                    removing={removeMutation.isPending}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card list */}
+          <div className="space-y-2 sm:hidden">
+            {entries.map((entry) => (
+              <PoolRowMobile
+                key={entry.id}
+                entry={entry}
+                onSelect={() => onSelectPool(entry.chain, entry.address)}
+                onRemove={() => removeMutation.mutate(entry.id)}
+                removing={removeMutation.isPending}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

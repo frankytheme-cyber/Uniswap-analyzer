@@ -145,11 +145,14 @@ export interface WalletPosition {
   liquidity:        string
   inRange:          boolean
   currentTick:      number
+  openedAt:         string | null
+  closedAt:         string | null
   depositedToken0:  number
   depositedToken1:  number
   initialValueUSD:  number
   withdrawnToken0:  number
   withdrawnToken1:  number
+  withdrawnValueUSD: number
   currentAmount0:   number
   currentAmount1:   number
   currentValueUSD:  number
@@ -162,6 +165,7 @@ export interface WalletPosition {
   uncollectedFees1: number
   uncollectedFeesUSD: number
   ilPercent:        number | null
+  pnlPercent:       number | null
   poolTvlUSD:       number
 }
 
@@ -175,6 +179,9 @@ export interface WalletPositionsResponse {
   outOfRange:  number
   v3Count:     number
   v4Count:     number
+  totalUncollectedFeesUSD: number
+  totalCollectedFeesUSD:   number
+  totalFeesUSD:            number
   lastUpdated: string
 }
 

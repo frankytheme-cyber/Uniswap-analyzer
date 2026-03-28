@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { GraphFetcher, GraphFetcherV4 } from '../fetchers/graph-fetcher.ts'
-import type { WalletPosition } from '../fetchers/graph-fetcher.ts'
+import type { Token, WalletPosition } from '../fetchers/graph-fetcher.ts'
 import { cache, CACHE_KEYS } from '../cache/cache-manager.ts'
 import {
   getUncollectedFeesBatchV3,
@@ -13,6 +13,21 @@ const router = Router()
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const SUPPORTED_CHAINS = ['ethereum', 'arbitrum', 'base', 'polygon']
+
+/** Known stablecoins (lowercase symbols) — fallback to $1 when derivedETH is missing */
+const STABLECOINS = new Set([
+  'usdt', 'usdc', 'usdc.e', 'dai', 'busd', 'tusd', 'usdp', 'frax', 'lusd',
+  'gusd', 'susd', 'eurs', 'eurt', 'usdd', 'pyusd', 'usdbc', 'usdb',
+])
+
+/** Returns USD price for a token, falling back to $1 for known stablecoins. */
+function tokenPriceUSD(token: Token, ethPriceUSD: number): number {
+  const derived = parseFloat(token.derivedETH ?? '0')
+  if (derived > 0) return derived * ethPriceUSD
+  // Fallback: stablecoins ≈ $1
+  if (STABLECOINS.has(token.symbol.toLowerCase())) return 1
+  return 0
+}
 
 // Chains that have a V4 subgraph deployed (Arbitrum not yet available)
 const V4_CHAINS = new Set(['ethereum', 'base', 'polygon'])
@@ -117,9 +132,9 @@ function enrichPosition(
   const decimals1 = parseInt(dec1)
   const isOpen = p.liquidity !== '0'
 
-  // Token USD prices: derivedETH × ethPriceUSD
-  const token0PriceUSD = parseFloat(p.pool.token0.derivedETH ?? '0') * ethPriceUSD
-  const token1PriceUSD = parseFloat(p.pool.token1.derivedETH ?? '0') * ethPriceUSD
+  // Token USD prices: derivedETH × ethPriceUSD, with stablecoin fallback
+  const token0PriceUSD = tokenPriceUSD(p.pool.token0, ethPriceUSD)
+  const token1PriceUSD = tokenPriceUSD(p.pool.token1, ethPriceUSD)
 
   // Current amounts based on liquidity + price (what the position actually holds now)
   const current = currentAmounts(p.liquidity, p.pool.sqrtPrice, tickLower, tickUpper, currentTick, decimals0, decimals1)
@@ -136,23 +151,65 @@ function enrichPosition(
   const uncollected1 = Number(uncollected.owed1) / Math.pow(10, decimals1)
   const uncollectedFeesUSD = uncollected0 * token0PriceUSD + uncollected1 * token1PriceUSD
 
-  // collectedFeesToken0/1 in the V3 subgraph includes BOTH fees AND withdrawn capital
-  // (everything sent via collect()). Subtract withdrawnToken0/1 to get only the earned fees.
-  const collected0 = Math.max(0, parseFloat(p.collectedFeesToken0) - parseFloat(p.withdrawnToken0))
-  const collected1 = Math.max(0, parseFloat(p.collectedFeesToken1) - parseFloat(p.withdrawnToken1))
+  // In the V3 subgraph, `collectedFeesToken0` tracks the TOTAL amount passed
+  // through `collect()` — which includes both fee income AND capital removed via
+  // `decreaseLiquidity()`. The `withdrawnToken0` field tracks the capital portion.
+  // Therefore: pure collected fees = collectedFeesToken0 − withdrawnToken0.
+  //
+  // KNOWN SUBGRAPH BUG: collectedFeesToken0 and collectedFeesToken1 often have
+  // IDENTICAL values (the subgraph copies token0 into token1). When this happens,
+  // the token1 fee value is completely wrong (e.g. 1960 "WETH" when it should be
+  // ~0.01). We detect this and zero out the corrupted field.
+  const rawCollected0 = parseFloat(p.collectedFeesToken0)
+  const rawCollected1 = parseFloat(p.collectedFeesToken1)
+
+  // Detect subgraph bug: if values are identical and both tokens have different
+  // decimals, the data is corrupted. Keep token0 (usually correct), zero token1.
+  const subgraphBug = rawCollected0 > 0 && rawCollected0 === rawCollected1
+      && p.pool.token0.decimals !== p.pool.token1.decimals
+
+  const collected0 = Math.max(0, rawCollected0 - parseFloat(p.withdrawnToken0))
+  const collected1 = subgraphBug
+    ? 0
+    : Math.max(0, rawCollected1 - parseFloat(p.withdrawnToken1))
   const collectedFeesUSD = collected0 * token0PriceUSD + collected1 * token1PriceUSD
 
-  // Impermanent Loss: compare (current LP value) vs (HODL value of initial deposit)
-  // Both valued in token1 terms using the current price.
+  // ── IL (open) / PnL (closed) ──
   const currentPrice = priceAtTick(currentTick, dec0, dec1)
-  const currentValueInToken1  = current.amount0 * currentPrice + current.amount1
-  const hodlValueInToken1     = initialToken0 * currentPrice + initialToken1
-
-  // IL% = (LP value / HODL value - 1) × 100
   let ilPercent: number | null = null
-  if (isOpen && hodlValueInToken1 > 0) {
-    ilPercent = ((currentValueInToken1 / hodlValueInToken1) - 1) * 100
+  let pnlPercent: number | null = null
+
+  const withdrawn0 = parseFloat(p.withdrawnToken0)
+  const withdrawn1 = parseFloat(p.withdrawnToken1)
+
+  if (isOpen) {
+    // Open position: IL = (LP value / HODL value - 1) × 100
+    // This is pure impermanent loss — how much worse the LP is vs holding tokens.
+    const currentValueInToken1  = current.amount0 * currentPrice + current.amount1
+    const hodlValueInToken1     = initialToken0 * currentPrice + initialToken1
+    if (hodlValueInToken1 > 0) {
+      ilPercent = ((currentValueInToken1 / hodlValueInToken1) - 1) * 100
+    }
+  } else {
+    // Closed position: PnL = (withdrawn / deposited - 1) × 100
+    // This is NET PnL (capital + collected fees + IL combined), NOT pure IL.
+    // Uses historic USD values from mint/burn events (priced at the time of each tx).
+    const histDeposit  = p.historicDepositUSD
+    const histWithdraw = p.historicWithdrawnUSD
+    if (histDeposit && histDeposit > 0 && histWithdraw !== undefined && histWithdraw > 0) {
+      pnlPercent = ((histWithdraw / histDeposit) - 1) * 100
+    } else {
+      // Fallback: use current prices (less accurate but better than nothing)
+      const withdrawnUSD  = withdrawn0 * token0PriceUSD + withdrawn1 * token1PriceUSD
+      if (initialValueUSD > 0 && withdrawnUSD > 0) {
+        pnlPercent = ((withdrawnUSD / initialValueUSD) - 1) * 100
+      }
+    }
   }
+
+  // Dates
+  const openedAt  = p.openedAtTimestamp ? new Date(parseInt(p.openedAtTimestamp) * 1000).toISOString() : null
+  const closedAt  = !isOpen && p.closedAtTimestamp ? new Date(parseInt(p.closedAtTimestamp) * 1000).toISOString() : null
 
   return {
     id:               p.id,
@@ -170,12 +227,15 @@ function enrichPosition(
     liquidity:        p.liquidity,
     inRange:          isOpen ? isInRange(p) : false,
     currentTick,
-    // Initial capital
+    openedAt,
+    closedAt,
+    // Initial capital (use historic USD for closed positions — current prices are misleading)
     depositedToken0:  initialToken0,
     depositedToken1:  initialToken1,
-    initialValueUSD,
-    withdrawnToken0:  parseFloat(p.withdrawnToken0),
-    withdrawnToken1:  parseFloat(p.withdrawnToken1),
+    initialValueUSD:  !isOpen && p.historicDepositUSD ? p.historicDepositUSD : initialValueUSD,
+    withdrawnToken0:  withdrawn0,
+    withdrawnToken1:  withdrawn1,
+    withdrawnValueUSD: !isOpen && p.historicWithdrawnUSD !== undefined ? p.historicWithdrawnUSD : withdrawn0 * token0PriceUSD + withdrawn1 * token1PriceUSD,
     // Current amounts (from liquidity + sqrtPrice)
     currentAmount0:   current.amount0,
     currentAmount1:   current.amount1,
@@ -190,8 +250,9 @@ function enrichPosition(
     uncollectedFees0: uncollected0,
     uncollectedFees1: uncollected1,
     uncollectedFeesUSD,
-    // IL
+    // IL (open positions) / PnL (closed positions)
     ilPercent,
+    pnlPercent,
     poolTvlUSD:       parseFloat(p.pool.totalValueLockedUSD),
   }
 }
@@ -218,8 +279,8 @@ router.get('/:chain/:address/positions', async (req, res) => {
     const v3Fetcher = new GraphFetcher(chain)
     const v4Fetcher = V4_CHAINS.has(chain) ? new GraphFetcherV4(chain) : null
 
-    // Query V3, V4, and ETH price in parallel
-    const [v3Raw, v4Raw, v4TokenIds, ethPriceUSD] = await Promise.all([
+    // Query V3, V4, ETH price, and burn info in parallel
+    const [v3Raw, v4Raw, v4TokenIds, ethPriceUSD, burnInfo] = await Promise.all([
       cache.get(
         CACHE_KEYS.walletPositions(chain, address, 'v3'),
         'POOL',
@@ -236,11 +297,18 @@ router.get('/:chain/:address/positions', async (req, res) => {
         ? v4Fetcher.getWalletTokenIds(address)
         : Promise.resolve([] as string[]),
       v3Fetcher.getEthPriceUSD(),
+      v3Fetcher.getWalletBurnInfo(address),
     ])
 
-    // Split V3 into open/closed
+    // Split V3 into open/closed, attach closedAtTimestamp + historicWithdrawnUSD from burn events
     const openV3   = v3Raw.filter((p) => p.liquidity !== '0')
-    const closedV3 = v3Raw.filter((p) => p.liquidity === '0')
+    const closedV3 = v3Raw.filter((p) => p.liquidity === '0').map((p) => {
+      const burnKey = `${p.pool.id}:${p.tickLower.tickIdx}:${p.tickUpper.tickIdx}`
+      const burn = burnInfo.get(burnKey)
+      return burn
+        ? { ...p, closedAtTimestamp: burn.timestamp, historicWithdrawnUSD: burn.totalAmountUSD }
+        : p
+    })
 
     // V4 positions from the event aggregator are already filtered to open (net liq > 0)
     // But we also want to show closed V4 positions from the same event data
@@ -331,6 +399,11 @@ router.get('/:chain/:address/positions', async (req, res) => {
     const openPositions   = positions.filter((p) => p.status === 'open')
     const closedPositions = positions.filter((p) => p.status === 'closed')
 
+    // Aggregate total fees across all positions
+    const totalUncollectedFeesUSD = positions.reduce((sum, p) => sum + p.uncollectedFeesUSD, 0)
+    const totalCollectedFeesUSD   = positions.reduce((sum, p) => sum + p.collectedFeesUSD, 0)
+    const totalFeesUSD            = totalUncollectedFeesUSD + totalCollectedFeesUSD
+
     res.json({
       chain,
       wallet:     address.toLowerCase(),
@@ -341,6 +414,9 @@ router.get('/:chain/:address/positions', async (req, res) => {
       outOfRange:   openPositions.filter((p) => !p.inRange).length,
       v3Count:      positions.filter((p) => p.version === 'v3').length,
       v4Count:      positions.filter((p) => p.version === 'v4').length,
+      totalUncollectedFeesUSD,
+      totalCollectedFeesUSD,
+      totalFeesUSD,
       lastUpdated:  new Date().toISOString(),
     })
   } catch (error) {

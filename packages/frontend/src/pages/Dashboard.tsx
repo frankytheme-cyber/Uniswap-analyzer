@@ -13,12 +13,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 flex-1">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 min-w-0">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Il Tuo Portafoglio</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Analisi in tempo reale delle pool Uniswap V3 — aggiornamento ogni 15 minuti
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Il Tuo Portafoglio</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+            Analisi in tempo reale delle pool Uniswap V3 — aggiornamento ogni 15 min
           </p>
         </div>
 

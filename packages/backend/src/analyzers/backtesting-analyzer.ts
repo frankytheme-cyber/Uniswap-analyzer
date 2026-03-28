@@ -95,7 +95,20 @@ function backtestStrategy(
   const exitPrice  = exitDay.close
 
   // ── Fees ────────────────────────────────────────────────────────────────
-  const totalFeesUSD = chronological.reduce((acc, d) => acc + d.feesUSD, 0)
+  // poolDayDatas.feesUSD is the TOTAL pool fee revenue — not the LP's share.
+  // An LP's fee income depends on:
+  //  1. Time in range: when out-of-range the position earns zero fees.
+  //  2. Concentration factor: a narrower range earns more fee per $ of liquidity
+  //     because the same capital is concentrated into a smaller price band.
+  //     concentrationFactor ≈ 1 / (√b - √a) relative to full range (≈ 1 / (√∞ - 0) ≈ 1).
+  //     In practice: full-range factor ≈ 1, narrow ±10% ≈ ~10x, etc.
+  //
+  // We express everything as % of TVL so the pool-wide feesPercent already
+  // represents "return per $ of uniformly distributed liquidity".
+  // Adjusted fee return = feesPercent × (timeInRange/100) × concentrationFactor
+  //
+  // NOTE: concentrationFactor is capped at the full-range baseline (1.0) as minimum.
+  const totalPoolFeesUSD = chronological.reduce((acc, d) => acc + d.feesUSD, 0)
 
   // ── IL al prezzo finale (calcolo diretto, senza snap ai punti fissi) ─────
   const priceMultiplier = entryPrice > 0 ? exitPrice / entryPrice : 1
@@ -143,7 +156,20 @@ function backtestStrategy(
   // ── Net PnL ─────────────────────────────────────────────────────────────
   // Utilizziamo il TVL del primo giorno come base per esprimere i valori in %
   const initialTvlUSD = entryDay.tvlUSD > 0 ? entryDay.tvlUSD : 1
-  const feesPercent   = (totalFeesUSD / initialTvlUSD) * 100
+  const poolFeesPercent = (totalPoolFeesUSD / initialTvlUSD) * 100
+
+  // Concentration factor: how much more fee a concentrated position earns vs full-range.
+  // For a range [a, b] the virtual liquidity multiplier ≈ 1 / (√b − √a).
+  // Full-range (a≈0, b≈∞) → factor ≈ 1. Narrow ±10% (a=0.9, b=1.1) → factor ≈ ~10.
+  const a = strategy.rangeMinPercent <= -99 ? 0.000001 : Math.max(1 + strategy.rangeMinPercent / 100, 0.000001)
+  const b = strategy.rangeMaxPercent >= 899 ? 1_000_000 : 1 + strategy.rangeMaxPercent / 100
+  const rangeBreadth = Math.sqrt(b) - Math.sqrt(a)
+  const concentrationFactor = rangeBreadth > 0 ? Math.max(1, 1 / rangeBreadth) : 1
+
+  // Adjusted fees: pool-level return × time-in-range fraction × concentration advantage
+  const feesPercent = poolFeesPercent * (timeInRangePercent / 100) * concentrationFactor
+  const totalFeesUSD = parseFloat(((feesPercent / 100) * initialTvlUSD).toFixed(2))
+
   const gasCostPct    = (totalGasCostEstimateUSD / initialTvlUSD) * 100
   // totalILPercent è già negativo; sottraiamo in valore assoluto
   const netPnlPercent = parseFloat((feesPercent + totalILPercent - gasCostPct).toFixed(2))
