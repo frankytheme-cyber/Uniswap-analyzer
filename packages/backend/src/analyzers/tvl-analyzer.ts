@@ -38,38 +38,83 @@ const RANGE_WIDTH: Record<PoolType, number> = {
 /**
  * Calculates Active Value Locked (AVL) in USD.
  *
- * AVL = sum of liquidityGross for ticks within [currentTick ± rangeWidth],
- * proportional to total pool liquidity, mapped to totalValueLockedUSD.
+ * Walks initialized ticks using liquidityNet to reconstruct actual liquidity L
+ * at each tick interval, then computes what fraction of the pool's total
+ * liquidity-weighted tick space falls within [currentTick ± rangeWidth].
+ *
+ * The ratio is: sum(L × width) in range / sum(L × width) across ALL ticks
+ * where "all ticks" is bounded by the first and last initialized tick (not
+ * the theoretical min/max), so empty far-away ticks don't dilute the result.
+ *
+ * NOTE: the original implementation summed liquidityGross which double-counts
+ * every position (liquidityGross is added at both the lower AND upper tick).
+ * Using liquidityNet and accumulating from the bottom correctly reconstructs
+ * the real liquidity at each interval.
  */
 function calculateAvlUsd(
   currentTick: number,
   ticks: Tick[],
-  totalLiquidity: bigint,
+  poolLiquidity: bigint,
   totalValueLockedUSD: number,
   rangeWidth: number,
 ): number {
-  if (totalLiquidity === 0n || totalValueLockedUSD === 0) return 0
+  if (poolLiquidity === 0n || totalValueLockedUSD === 0) return 0
+  if (ticks.length === 0) return 0
 
   const lowerBound = currentTick - rangeWidth
   const upperBound = currentTick + rangeWidth
 
-  let activeLiquidity = 0n
-  for (const tick of ticks) {
-    const tickIdx = parseInt(tick.tickIdx, 10)
-    if (tickIdx >= lowerBound && tickIdx <= upperBound) {
+  // Sort ticks ascending by tickIdx, keeping only those with non-zero liquidityNet
+  const sorted = [...ticks]
+    .map((t) => {
       try {
-        activeLiquidity += BigInt(tick.liquidityGross)
+        return { idx: parseInt(t.tickIdx, 10), liquidityNet: BigInt(t.liquidityNet) }
       } catch {
-        // Skip ticks with malformed liquidityGross from subgraph
-        continue
+        return null
       }
+    })
+    .filter((t): t is { idx: number; liquidityNet: bigint } => t !== null && t.liquidityNet !== 0n)
+    .sort((a, b) => a.idx - b.idx)
+
+  if (sorted.length === 0) return 0
+
+  // Walk ticks from bottom, accumulating liquidityNet to reconstruct L per interval.
+  // For each interval [tick_i, tick_{i+1}), the active liquidity is the running sum.
+  // We compute sum(L × width) in-range vs total to get the AVL fraction.
+  let runningL = 0n
+  let weightedLInRange = 0n
+  let weightedLAll = 0n
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    runningL += sorted[i].liquidityNet
+
+    const intervalStart = sorted[i].idx
+    const intervalEnd = sorted[i + 1].idx
+
+    if (intervalEnd <= intervalStart) continue
+
+    // Clamp to non-negative (runningL can go negative with bad subgraph data)
+    const effectiveL = runningL > 0n ? runningL : 0n
+    const width = BigInt(intervalEnd - intervalStart)
+
+    // Accumulate for all initialized ticks
+    weightedLAll += effectiveL * width
+
+    // Accumulate for in-range ticks
+    const clampedStart = Math.max(intervalStart, lowerBound)
+    const clampedEnd = Math.min(intervalEnd, upperBound)
+    if (clampedStart < clampedEnd) {
+      const inRangeWidth = BigInt(clampedEnd - clampedStart)
+      weightedLInRange += effectiveL * inRangeWidth
     }
   }
 
-  // Use BigInt division scaled by 1e18 to avoid Number precision loss for large values
+  if (weightedLAll === 0n) return 0
+
+  // AVL ratio = fraction of total liquidity-weighted tick space that is in range
+  // This ratio is always ≤ 1.0 because in-range is a subset of all ticks.
   const SCALE = 10n ** 18n
-  const scaledRatio = (activeLiquidity * SCALE) / totalLiquidity
-  const avlRatio = Number(scaledRatio) / 1e18
+  const avlRatio = Number((weightedLInRange * SCALE) / weightedLAll) / 1e18
   return avlRatio * totalValueLockedUSD
 }
 

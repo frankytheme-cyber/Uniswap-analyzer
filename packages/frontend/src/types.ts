@@ -147,6 +147,8 @@ export interface WalletPosition {
   currentTick:      number
   openedAt:         string | null
   closedAt:         string | null
+  openTxHash:       string | null
+  closeTxHash:      string | null
   depositedToken0:  number
   depositedToken1:  number
   initialValueUSD:  number
@@ -166,6 +168,7 @@ export interface WalletPosition {
   uncollectedFeesUSD: number
   ilPercent:        number | null
   pnlPercent:       number | null
+  pnlVsHodlUSD:    number | null
   poolTvlUSD:       number
 }
 

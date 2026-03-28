@@ -70,7 +70,14 @@ function DataCell({ label, usd, children, accent }: {
   )
 }
 
-function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnalyze: (poolId: string) => void }) {
+const EXPLORER_TX: Record<string, string> = {
+  ethereum: 'https://etherscan.io/tx/',
+  arbitrum: 'https://arbiscan.io/tx/',
+  base:     'https://basescan.org/tx/',
+  polygon:  'https://polygonscan.com/tx/',
+}
+
+function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition; chain: string; onAnalyze: (poolId: string) => void }) {
   const feePct   = (position.feeTier / 10000).toFixed(2)
   const pair     = `${position.token0}/${position.token1}`
   const isClosed = position.status === 'closed'
@@ -112,7 +119,7 @@ function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnal
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
               position.pnlPercent >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
             }`}>
-              PnL {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
+              vs HODL {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
             </span>
           )}
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -175,11 +182,11 @@ function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnal
           {/* PnL summary for closed positions */}
           {isClosed && position.pnlPercent !== null && (
             <div className="bg-slate-50 rounded-lg p-3 min-w-0 flex flex-col justify-center">
-              <span className="text-[11px] font-semibold uppercase tracking-wide block text-slate-400">Profitto / Perdita</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide block text-slate-400">PnL vs HODL</span>
               <span className={`text-sm font-bold font-mono block mt-1 ${
-                position.withdrawnValueUSD - position.initialValueUSD >= 0 ? 'text-emerald-700' : 'text-red-600'
+                (position.pnlVsHodlUSD ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'
               }`}>
-                {position.withdrawnValueUSD - position.initialValueUSD >= 0 ? '+' : ''}{fmtUsd(position.withdrawnValueUSD - position.initialValueUSD)}
+                {(position.pnlVsHodlUSD ?? 0) >= 0 ? '+' : ''}{fmtUsd(Math.abs(position.pnlVsHodlUSD ?? 0))}
               </span>
               <span className={`text-xs font-mono mt-0.5 ${
                 position.pnlPercent >= 0 ? 'text-emerald-600' : 'text-red-500'
@@ -233,16 +240,30 @@ function PositionRow({ position, onAnalyze }: { position: WalletPosition; onAnal
           <span className="text-[11px] text-slate-400 font-mono truncate max-w-[160px] sm:max-w-[180px]">
             {position.poolId.slice(0, 10)}…{position.poolId.slice(-4)}
           </span>
-          {position.openedAt && (
-            <span className="text-[11px] text-slate-400 shrink-0">
-              Aperta {new Date(position.openedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </span>
-          )}
-          {position.closedAt && (
-            <span className="text-[11px] text-slate-400 shrink-0">
-              · Chiusa {new Date(position.closedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </span>
-          )}
+          {position.openedAt && (() => {
+            const dateStr = new Date(position.openedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+            const base = EXPLORER_TX[chain]
+            return position.openTxHash && base ? (
+              <a href={`${base}${position.openTxHash}`} target="_blank" rel="noopener noreferrer"
+                className="text-[11px] text-indigo-500 hover:text-indigo-700 underline decoration-dotted shrink-0">
+                Aperta {dateStr}
+              </a>
+            ) : (
+              <span className="text-[11px] text-slate-400 shrink-0">Aperta {dateStr}</span>
+            )
+          })()}
+          {position.closedAt && (() => {
+            const dateStr = new Date(position.closedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })
+            const base = EXPLORER_TX[chain]
+            return position.closeTxHash && base ? (
+              <a href={`${base}${position.closeTxHash}`} target="_blank" rel="noopener noreferrer"
+                className="text-[11px] text-indigo-500 hover:text-indigo-700 underline decoration-dotted shrink-0">
+                · Chiusa {dateStr}
+              </a>
+            ) : (
+              <span className="text-[11px] text-slate-400 shrink-0">· Chiusa {dateStr}</span>
+            )
+          })()}
         </div>
         <button
           onClick={() => onAnalyze(position.poolId)}
@@ -267,11 +288,37 @@ interface SummaryBarProps {
   totalUncollectedFeesUSD: number
   totalCollectedFeesUSD:   number
   totalFeesUSD:            number
+  positions:    WalletPosition[]
 }
 
-function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Count, totalUncollectedFeesUSD, totalCollectedFeesUSD, totalFeesUSD }: SummaryBarProps) {
+function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Count, totalUncollectedFeesUSD, totalCollectedFeesUSD, totalFeesUSD, positions }: SummaryBarProps) {
+  // PnL calculations
+  const closedPositions = positions.filter((p) => p.status === 'closed')
+
+  // PnL vs HODL from closed positions
+  const totalPnlVsHodlUSD = closedPositions.reduce((s, p) => s + (p.pnlVsHodlUSD ?? 0), 0)
+  const pnlVsHodlPositive = totalPnlVsHodlUSD >= 0
+
   return (
     <div className="space-y-3">
+      {/* PnL vs HODL box (closed positions only) */}
+      {closedPositions.length > 0 && (
+        <div className={`border rounded-xl px-4 sm:px-5 py-3 sm:py-4 ${
+          pnlVsHodlPositive
+            ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/50 border-emerald-200'
+            : 'bg-gradient-to-r from-red-50 to-red-50/50 border-red-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">PnL vs HODL · {closedPositions.length} posizioni chiuse</div>
+              <div className={`text-xl sm:text-2xl font-bold font-mono mt-0.5 ${pnlVsHodlPositive ? 'text-emerald-700' : 'text-red-600'}`}>
+                {pnlVsHodlPositive ? '+' : '-'}{fmtUsd(Math.abs(totalPnlVsHodlUSD))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Fees summary box */}
       {totalFeesUSD > 0 && (
         <div className="bg-gradient-to-r from-emerald-50 to-amber-50 border border-emerald-200 rounded-xl px-4 sm:px-5 py-3 sm:py-4">
@@ -432,6 +479,7 @@ export default function MyPositions() {
               totalUncollectedFeesUSD={data.totalUncollectedFeesUSD}
               totalCollectedFeesUSD={data.totalCollectedFeesUSD}
               totalFeesUSD={data.totalFeesUSD}
+              positions={data.positions}
             />
 
             {data.positions.length === 0 ? (
@@ -444,6 +492,7 @@ export default function MyPositions() {
                   <PositionRow
                     key={p.id}
                     position={p}
+                    chain={chain}
                     onAnalyze={(poolId) => onSelectPool(chain, poolId)}
                   />
                 ))}

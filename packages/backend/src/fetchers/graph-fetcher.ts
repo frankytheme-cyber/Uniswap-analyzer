@@ -139,10 +139,16 @@ export interface WalletPosition {
   withdrawnToken1: string
   collectedFeesToken0: string
   collectedFeesToken1: string
+  /** The opening (mint) transaction */
+  transaction?: { id: string; timestamp: string }
   /** Unix timestamp (seconds) of the opening transaction */
   openedAtTimestamp?: string
+  /** Transaction hash of the opening (mint) event */
+  openTxHash?: string
   /** Unix timestamp (seconds) of the last withdrawal (≈ close date for closed positions) */
   closedAtTimestamp?: string
+  /** Transaction hash of the closing (burn) event */
+  closeTxHash?: string
   /** USD value of the deposit at the time of the mint event (from subgraph amountUSD) */
   historicDepositUSD?: number
   /** USD value of the withdrawal at the time of the burn event (from subgraph amountUSD) */
@@ -340,7 +346,7 @@ const POSITION_FIELDS = `
   withdrawnToken1
   collectedFeesToken0
   collectedFeesToken1
-  transaction { timestamp }
+  transaction { id timestamp }
 `
 
 /** Positions still owned by the wallet (includes open + closed-but-not-burned). */
@@ -371,6 +377,8 @@ const GET_WALLET_MINTS = gql`
       pool { id }
       tickLower
       tickUpper
+      amount0
+      amount1
       amountUSD
     }
   }
@@ -433,6 +441,7 @@ const GET_WALLET_BURNS = gql`
       orderDirection: desc
     ) {
       id
+      transaction { id }
       pool { id }
       tickLower
       tickUpper
@@ -594,9 +603,7 @@ export class GraphFetcher {
   async getWalletPositions(owner: string): Promise<WalletPosition[]> {
     const context = { method: 'getWalletPositions', owner }
     try {
-      interface RawV3Position extends WalletPosition {
-        transaction?: { timestamp: string }
-      }
+      type RawV3Position = WalletPosition
       const ownerLc = owner.toLowerCase()
 
       // 1. Positions still owned by the wallet (cursor-based pagination)
@@ -627,11 +634,13 @@ export class GraphFetcher {
       const mintsByTx = new Map<string, MintInfo>()
       // Map: "poolId:tickLower:tickUpper" → total deposited USD (sum of all mints for same position)
       const mintDepositUSD = new Map<string, number>()
+      // Map: "poolId:tickLower:tickUpper" → { amount0, amount1 } from mint events
+      const mintDepositTokens = new Map<string, { amount0: number; amount1: number }>()
 
       let mintLastId = 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
       while (true) {
         const data = await this.client.request<{
-          mints: Array<{ id: string; transaction: { id: string }; pool: { id: string }; tickLower: string; tickUpper: string; amountUSD: string }>
+          mints: Array<{ id: string; transaction: { id: string }; pool: { id: string }; tickLower: string; tickUpper: string; amount0: string; amount1: string; amountUSD: string }>
         }>(GET_WALLET_MINTS, { origin: ownerLc, lastId: mintLastId })
         const batch = data.mints ?? []
         if (batch.length === 0) break
@@ -644,9 +653,14 @@ export class GraphFetcher {
             tickLower: m.tickLower,
             tickUpper: m.tickUpper,
           })
-          // Accumulate deposit USD per position key
+          // Accumulate deposit USD + token amounts per position key
           const posKey = `${m.pool.id}:${m.tickLower}:${m.tickUpper}`
           mintDepositUSD.set(posKey, (mintDepositUSD.get(posKey) ?? 0) + parseFloat(m.amountUSD))
+          const prev = mintDepositTokens.get(posKey) ?? { amount0: 0, amount1: 0 }
+          mintDepositTokens.set(posKey, {
+            amount0: prev.amount0 + parseFloat(m.amount0),
+            amount1: prev.amount1 + parseFloat(m.amount1),
+          })
         }
         mintLastId = batch[batch.length - 1].id
         if (batch.length < 1000) break
@@ -672,13 +686,20 @@ export class GraphFetcher {
         }
       }
 
-      // 4. Merge and enrich with timestamps + historic USD values
+      // 4. Merge and enrich with timestamps + historic USD values + fallback token amounts
       const allPositions = [...ownedPositions, ...burnedPositions]
       return allPositions.map((p) => {
         const posKey = `${p.pool.id}:${p.tickLower.tickIdx}:${p.tickUpper.tickIdx}`
+        const mintTokens = mintDepositTokens.get(posKey)
+        // Prefer mint event amounts over Position.depositedToken fields.
+        // The Position entity's depositedToken0/1 can be zero or stale for burned
+        // positions — mint events are the authoritative source for deposit amounts.
         return {
           ...p,
+          depositedToken0: mintTokens ? String(mintTokens.amount0) : p.depositedToken0,
+          depositedToken1: mintTokens ? String(mintTokens.amount1) : p.depositedToken1,
           openedAtTimestamp: p.transaction?.timestamp,
+          openTxHash: p.transaction?.id,
           historicDepositUSD: mintDepositUSD.get(posKey),
         }
       })
@@ -691,17 +712,18 @@ export class GraphFetcher {
    * Fetches burn (liquidity removal) events for a wallet.
    * Returns a Map from position key ("poolId:tickLower:tickUpper") to burn info.
    */
-  async getWalletBurnInfo(owner: string): Promise<Map<string, { timestamp: string; totalAmountUSD: number }>> {
+  async getWalletBurnInfo(owner: string): Promise<Map<string, { timestamp: string; totalAmountUSD: number; txHash: string }>> {
     try {
       interface BurnEvent {
         id: string
+        transaction: { id: string }
         pool: { id: string }
         tickLower: string
         tickUpper: string
         timestamp: string
         amountUSD: string
       }
-      const burnMap = new Map<string, { timestamp: string; totalAmountUSD: number }>()
+      const burnMap = new Map<string, { timestamp: string; totalAmountUSD: number; txHash: string }>()
       let lastId = 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
       while (true) {
         const data = await this.client.request<{ burns: BurnEvent[] }>(
@@ -715,11 +737,14 @@ export class GraphFetcher {
           const existing = burnMap.get(key)
           const usd = parseFloat(b.amountUSD) || 0
           if (existing) {
-            // Keep latest timestamp, sum up all burn USD amounts
-            if (b.timestamp > existing.timestamp) existing.timestamp = b.timestamp
+            // Keep latest timestamp + txHash, sum up all burn USD amounts
+            if (b.timestamp > existing.timestamp) {
+              existing.timestamp = b.timestamp
+              existing.txHash = b.transaction.id
+            }
             existing.totalAmountUSD += usd
           } else {
-            burnMap.set(key, { timestamp: b.timestamp, totalAmountUSD: usd })
+            burnMap.set(key, { timestamp: b.timestamp, totalAmountUSD: usd, txHash: b.transaction.id })
           }
         }
         lastId = batch[batch.length - 1].id
@@ -894,26 +919,29 @@ export class GraphFetcherV4 extends GraphFetcher {
         groups.set(key, g)
       }
 
-      // Only open positions (net liquidity > 0)
+      // Return both open (net liquidity > 0) and closed (net liquidity <= 0) positions.
+      // Closed V4 positions are set to liquidity '0' so the enricher treats them correctly.
       return Array.from(groups.values())
-        .filter((g) => g.netLiquidity > 0n)
-        .map((g) => ({
-          id:                  `v4:${g.pool.id}:${g.tickLower}:${g.tickUpper}`,
-          owner,
-          pool:                g.pool,
-          tickLower:           { tickIdx: g.tickLower },
-          tickUpper:           { tickIdx: g.tickUpper },
-          liquidity:           g.netLiquidity.toString(),
-          depositedToken0:     g.deposited0.toString(),
-          depositedToken1:     g.deposited1.toString(),
-          withdrawnToken0:     g.withdrawn0.toString(),
-          withdrawnToken1:     g.withdrawn1.toString(),
-          // V4 does not track per-position collected fees in the subgraph
-          collectedFeesToken0: '0',
-          collectedFeesToken1: '0',
-          openedAtTimestamp:   g.firstTimestamp,
-          closedAtTimestamp:   g.netLiquidity <= 0n ? g.lastTimestamp : undefined,
-        }))
+        .map((g) => {
+          const isOpen = g.netLiquidity > 0n
+          return {
+            id:                  `v4:${g.pool.id}:${g.tickLower}:${g.tickUpper}`,
+            owner,
+            pool:                g.pool,
+            tickLower:           { tickIdx: g.tickLower },
+            tickUpper:           { tickIdx: g.tickUpper },
+            liquidity:           isOpen ? g.netLiquidity.toString() : '0',
+            depositedToken0:     g.deposited0.toString(),
+            depositedToken1:     g.deposited1.toString(),
+            withdrawnToken0:     g.withdrawn0.toString(),
+            withdrawnToken1:     g.withdrawn1.toString(),
+            // V4 does not track per-position collected fees in the subgraph
+            collectedFeesToken0: '0',
+            collectedFeesToken1: '0',
+            openedAtTimestamp:   g.firstTimestamp,
+            closedAtTimestamp:   !isOpen ? g.lastTimestamp : undefined,
+          }
+        })
     } catch (error) {
       // Graceful fallback: chain may not have V4 subgraph yet
       console.warn(JSON.stringify({ warning: 'V4 wallet positions unavailable', ...context, error: String(error) }))

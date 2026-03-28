@@ -178,6 +178,7 @@ function enrichPosition(
   const currentPrice = priceAtTick(currentTick, dec0, dec1)
   let ilPercent: number | null = null
   let pnlPercent: number | null = null
+  let pnlVsHodlUSD: number | null = null
 
   const withdrawn0 = parseFloat(p.withdrawnToken0)
   const withdrawn1 = parseFloat(p.withdrawnToken1)
@@ -191,19 +192,19 @@ function enrichPosition(
       ilPercent = ((currentValueInToken1 / hodlValueInToken1) - 1) * 100
     }
   } else {
-    // Closed position: PnL = (withdrawn / deposited - 1) × 100
-    // This is NET PnL (capital + collected fees + IL combined), NOT pure IL.
-    // Uses historic USD values from mint/burn events (priced at the time of each tx).
-    const histDeposit  = p.historicDepositUSD
-    const histWithdraw = p.historicWithdrawnUSD
-    if (histDeposit && histDeposit > 0 && histWithdraw !== undefined && histWithdraw > 0) {
-      pnlPercent = ((histWithdraw / histDeposit) - 1) * 100
-    } else {
-      // Fallback: use current prices (less accurate but better than nothing)
-      const withdrawnUSD  = withdrawn0 * token0PriceUSD + withdrawn1 * token1PriceUSD
-      if (initialValueUSD > 0 && withdrawnUSD > 0) {
-        pnlPercent = ((withdrawnUSD / initialValueUSD) - 1) * 100
-      }
+    // Closed position: PnL vs HODL = LP performance compared to simply holding tokens.
+    // Both sides are valued at CURRENT prices so that token price fluctuations cancel out
+    // and we measure pure LP alpha (fees earned minus impermanent loss).
+    //   HODL value  = initialToken0 × price0 + initialToken1 × price1
+    //   LP value    = (withdrawnToken0 + collectedFees0) × price0
+    //               + (withdrawnToken1 + collectedFees1) × price1
+    //   PnL vs HODL = (LP value / HODL value − 1) × 100
+    const hodlUSD = initialToken0 * token0PriceUSD + initialToken1 * token1PriceUSD
+    const lpUSD   = (withdrawn0 + collected0) * token0PriceUSD
+                  + (withdrawn1 + collected1) * token1PriceUSD
+    if (hodlUSD > 0) {
+      pnlPercent = ((lpUSD / hodlUSD) - 1) * 100
+      pnlVsHodlUSD = lpUSD - hodlUSD
     }
   }
 
@@ -229,6 +230,8 @@ function enrichPosition(
     currentTick,
     openedAt,
     closedAt,
+    openTxHash:       p.openTxHash ?? null,
+    closeTxHash:      p.closeTxHash ?? null,
     // Initial capital (use historic USD for closed positions — current prices are misleading)
     depositedToken0:  initialToken0,
     depositedToken1:  initialToken1,
@@ -250,9 +253,10 @@ function enrichPosition(
     uncollectedFees0: uncollected0,
     uncollectedFees1: uncollected1,
     uncollectedFeesUSD,
-    // IL (open positions) / PnL (closed positions)
+    // IL (open positions) / PnL vs HODL (closed positions)
     ilPercent,
     pnlPercent,
+    pnlVsHodlUSD,
     poolTvlUSD:       parseFloat(p.pool.totalValueLockedUSD),
   }
 }
@@ -306,13 +310,13 @@ router.get('/:chain/:address/positions', async (req, res) => {
       const burnKey = `${p.pool.id}:${p.tickLower.tickIdx}:${p.tickUpper.tickIdx}`
       const burn = burnInfo.get(burnKey)
       return burn
-        ? { ...p, closedAtTimestamp: burn.timestamp, historicWithdrawnUSD: burn.totalAmountUSD }
+        ? { ...p, closedAtTimestamp: burn.timestamp, closeTxHash: burn.txHash, historicWithdrawnUSD: burn.totalAmountUSD }
         : p
     })
 
-    // V4 positions from the event aggregator are already filtered to open (net liq > 0)
-    // But we also want to show closed V4 positions from the same event data
+    // V4 positions now include both open and closed (liquidity='0')
     const openV4   = v4Raw.filter((p) => p.liquidity !== '0')
+    const closedV4 = v4Raw.filter((p) => p.liquidity === '0')
 
     // ── Compute uncollected fees on-chain ──
 
@@ -377,6 +381,8 @@ router.get('/:chain/:address/positions', async (req, res) => {
       }),
       // Closed V3 (no uncollected fees, but may have collectedFees)
       ...closedV3.map((p) => enrichPosition(p, 'v3', ethPriceUSD)),
+      // Closed V4 (no uncollected fees)
+      ...closedV4.map((p) => enrichPosition(p, 'v4', ethPriceUSD)),
       // Open V4 with uncollected fees
       ...openV4.map((p) => {
         // Find the fee result by looking up which tokenId mapped to this position

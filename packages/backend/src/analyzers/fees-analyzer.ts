@@ -115,7 +115,10 @@ export function analyzeCompetitiveFees(input: CompetitiveInput): ParameterScore 
   try {
     const { poolFeeApr, competitors } = input
 
-    // Annualise competitor feeAPR based on pool age
+    // Annualise competitor feeAPR based on pool age.
+    // Filter out pools younger than 30 days — their extrapolated APR is too noisy
+    // (e.g. a 1-day pool would get its fees multiplied by 365x).
+    const MIN_AGE_DAYS = 30
     const nowSecs = Date.now() / 1000
     const competitorAprs = competitors
       .map((p) => {
@@ -123,6 +126,7 @@ export function analyzeCompetitiveFees(input: CompetitiveInput): ParameterScore 
         const fees = parseFloat(p.feesUSD)
         if (tvl <= 0 || fees <= 0) return 0
         const ageDays = Math.max((nowSecs - parseInt(p.createdAtTimestamp, 10)) / 86400, 1)
+        if (ageDays < MIN_AGE_DAYS) return 0
         const annualisedFees = fees * (365 / ageDays)
         return (annualisedFees / tvl) * 100
       })
