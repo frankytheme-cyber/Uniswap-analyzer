@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { calculateCompoundedRate } from '@aave/math-utils'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ReferenceLine, ResponsiveContainer,
@@ -109,6 +110,52 @@ function UtilizationCurve() {
   const currentBorrowAPY = calcBorrowAPY(utilization / 100) * 100
   const currentSupplyAPY = calcSupplyAPY(utilization / 100) * 100
 
+  // ─── Verifica con @aave/math-utils ───────────────────────────────────────
+  // L'SDK usa valori in ray (1e27) e APY composto (vs il nostro APR semplice).
+  // Usiamo BigNumber di bignumber.js internamente all'SDK — passiamo il rate
+  // come stringa decimale in ray (27 decimali).
+  const sdkVerification = useMemo(() => {
+    try {
+      const SECONDS_PER_YEAR = 31536000
+      const RAY_STR = '1' + '0'.repeat(27) // "1000000000000000000000000000"
+
+      // Converti APR [0,1] → stringa ray: moltiplica per 1e27 usando aritmetica intera
+      // Usiamo toFixed(0) su (APR * 1e18) poi appending '000000000' per ottenere ray
+      function aprToRay(apr: number): string {
+        // apr * 1e27, calcolato in due step per evitare overflow float
+        // apr * 1e9 (manteniamo 9 cifre decimali) poi shiftiamo di 18
+        const scaled = Math.round(apr * 1e9) // es. 0.0332 → 33200000
+        return scaled.toString() + '0'.repeat(18)
+      }
+
+      const borrowAPR = calcBorrowAPY(utilization / 100)
+      const supplyAPR = calcSupplyAPY(utilization / 100)
+
+      const sdkBorrowRaw = calculateCompoundedRate({
+        rate: aprToRay(borrowAPR),
+        duration: SECONDS_PER_YEAR,
+      })
+      const sdkSupplyRaw = calculateCompoundedRate({
+        rate: aprToRay(supplyAPR),
+        duration: SECONDS_PER_YEAR,
+      })
+
+      // sdkRaw è in ray — dividiamo per 1e27 e convertiamo in percentuale
+      const sdkBorrowAPY = (Number(sdkBorrowRaw.toString()) / Number(RAY_STR)) * 100
+      const sdkSupplyAPY = (Number(sdkSupplyRaw.toString()) / Number(RAY_STR)) * 100
+
+      return {
+        sdkBorrowAPY,
+        sdkSupplyAPY,
+        deltaBorrow: Math.abs(sdkBorrowAPY - currentBorrowAPY),
+        deltaSupply: Math.abs(sdkSupplyAPY - currentSupplyAPY),
+        error: false,
+      }
+    } catch {
+      return { sdkBorrowAPY: 0, sdkSupplyAPY: 0, deltaBorrow: 0, deltaSupply: 0, error: true }
+    }
+  }, [utilization, currentBorrowAPY, currentSupplyAPY])
+
   // Spread breakdown — dove va la differenza
   // Gli interessi totali prodotti = BorrowAPY × utilizzo (solo il capitale prestato genera interessi)
   // Quota protocollo = interessi totali × 15%
@@ -197,6 +244,32 @@ function UtilizationCurve() {
           <div className="text-xs text-slate-400 mt-0.5">guadagnato dai lender</div>
         </div>
       </div>
+
+      {/* Badge verifica SDK @aave/math-utils */}
+      {!sdkVerification.error && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 space-y-3 text-xs">
+          <span className="text-slate-400 font-medium uppercase tracking-wide">Verifica @aave/math-utils</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border border-slate-200 rounded-lg p-3">
+              <div className="text-slate-400 mb-1">Borrow APY (composto SDK)</div>
+              <div className="font-mono font-bold text-red-500 text-base">{sdkVerification.sdkBorrowAPY.toFixed(3)}%</div>
+              <div className={`mt-1 font-semibold ${sdkVerification.deltaBorrow < 0.01 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {sdkVerification.deltaBorrow < 0.01 ? '✓' : 'Δ'} delta {sdkVerification.deltaBorrow.toFixed(4)}% vs nostro {currentBorrowAPY.toFixed(3)}%
+              </div>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-3">
+              <div className="text-slate-400 mb-1">Supply APY (composto SDK)</div>
+              <div className="font-mono font-bold text-emerald-600 text-base">{sdkVerification.sdkSupplyAPY.toFixed(3)}%</div>
+              <div className={`mt-1 font-semibold ${sdkVerification.deltaSupply < 0.01 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {sdkVerification.deltaSupply < 0.01 ? '✓' : 'Δ'} delta {sdkVerification.deltaSupply.toFixed(4)}% vs nostro {currentSupplyAPY.toFixed(3)}%
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-400 leading-relaxed">
+            Il nostro modello usa <strong className="text-slate-500">APR semplice</strong>. L'SDK Aave usa <strong className="text-slate-500">APY composto</strong> — gli interessi maturano secondo per secondo e si capitalizzano. La differenza è fisiologica e cresce all'aumentare del tasso.
+          </p>
+        </div>
+      )}
 
       {/* Box: da dove viene il 2%? */}
       {(() => {
@@ -744,60 +817,8 @@ const MOCK_APY: ApyRow[] = [
 ]
 
 function LiveApyData() {
-  const [apyData, setApyData] = useState<ApyRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isMock, setIsMock] = useState(false)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    async function fetchApyData() {
-      try {
-        // Attempt to fetch real Aave V3 data from a public source.
-        // This will likely fail due to CORS in a browser context — the catch
-        // block handles that gracefully by falling back to mock data.
-        const res = await fetch(
-          'https://aave-api-v2.aave.com/data/liquidity/v2?poolId=0xb53c1a33016b2dc2ff3653530bff1848a515c8c5',
-          { signal: controller.signal },
-        )
-        if (!res.ok) throw new Error('non-200')
-        const json = await res.json()
-        // Parse Aave API response format (array of reserve objects)
-        const parsed: ApyRow[] = (json as { symbol: string; liquidityRate: string; variableBorrowRate: string }[])
-          .filter((r) => ['ETH', 'USDC', 'USDT', 'WBTC', 'WETH'].includes(r.symbol))
-          .slice(0, 4)
-          .map((r) => ({
-            symbol: r.symbol === 'WETH' ? 'ETH' : r.symbol,
-            // Aave rates are in ray (1e27) — convert to percentage
-            supplyApy: parseFloat(r.liquidityRate) / 1e25,
-            borrowApy: parseFloat(r.variableBorrowRate) / 1e25,
-          }))
-        if (parsed.length === 0) throw new Error('empty')
-        setApyData(parsed)
-      } catch {
-        // Network error, CORS, or parse failure — show mock data
-        setApyData(MOCK_APY)
-        setIsMock(true)
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-    fetchApyData()
-    return () => controller.abort()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-lg p-4 animate-pulse">
-            <div className="h-4 bg-slate-100 rounded mb-3 w-12" />
-            <div className="h-3 bg-slate-100 rounded mb-1.5" />
-            <div className="h-3 bg-slate-100 rounded" />
-          </div>
-        ))}
-      </div>
-    )
-  }
+  const apyData = MOCK_APY
+  const isMock = true
 
   return (
     <div className="space-y-3">
