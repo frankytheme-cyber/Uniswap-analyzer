@@ -6,7 +6,9 @@ import Dashboard    from './pages/Dashboard.tsx'
 import PoolDetail   from './pages/PoolDetail.tsx'
 import Discover     from './pages/Discover.tsx'
 import Home         from './pages/Home.tsx'
-import Learn        from './pages/Learn.tsx'
+import LearnIndex   from './pages/LearnIndex.tsx'
+import LearnDex     from './pages/LearnDex.tsx'
+import LearnLending from './pages/LearnLending.tsx'
 import MyPositions  from './pages/MyPositions.tsx'
 import NavBar       from './components/NavBar.tsx'
 import PasswordGate from './components/PasswordGate.tsx'
@@ -107,7 +109,9 @@ export default function App() {
           <Route path="/pool/:chain/:address" element={<PoolDetail />} />
           <Route path="/wallet" element={<MyPositions />} />
           <Route path="/discover" element={<PasswordGate><Discover /></PasswordGate>} />
-          <Route path="/learn" element={<Learn />} />
+          <Route path="/learn" element={<LearnIndex />} />
+          <Route path="/learn/dex" element={<LearnDex />} />
+          <Route path="/learn/lending" element={<LearnLending />} />
         </Route>
       </Routes>
 
