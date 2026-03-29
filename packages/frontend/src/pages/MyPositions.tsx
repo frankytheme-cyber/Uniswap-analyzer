@@ -228,6 +228,11 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
                 </div>
               )}
             </DataCell>
+          ) : isClosed && position.version === 'v4' ? (
+            <div className="bg-slate-50 rounded-lg p-2.5 sm:p-3 min-w-0">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide block text-slate-400">Fee</span>
+              <span className="text-[11px] text-slate-400 mt-1 block">Incluse nel PnL vs HODL</span>
+            </div>
           ) : (
             <div />
           )}
@@ -298,6 +303,7 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
   // PnL vs HODL from closed positions
   const totalPnlVsHodlUSD = closedPositions.reduce((s, p) => s + (p.pnlVsHodlUSD ?? 0), 0)
   const pnlVsHodlPositive = totalPnlVsHodlUSD >= 0
+  const hasV4 = positions.some((p) => p.version === 'v4')
 
   return (
     <div className="space-y-3">
@@ -324,7 +330,9 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
         <div className="bg-gradient-to-r from-emerald-50 to-amber-50 border border-emerald-200 rounded-xl px-4 sm:px-5 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Fee totali accumulate</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fee accumulate{hasV4 && ' (solo V3 — V4 incluse nel PnL)'}
+              </div>
               <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{fmtUsd(totalFeesUSD)}</div>
             </div>
             <div className="flex gap-4 sm:gap-6">
