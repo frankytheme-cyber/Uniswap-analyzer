@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChartBarIcon, WalletIcon, GraduationCapIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import NavBar from '../components/NavBar.tsx'
 import Footer from '../components/Footer.tsx'
+import SEO from '../components/SEO.tsx'
 
 interface SectionCard {
   path: string
@@ -59,6 +60,20 @@ const cards: SectionCard[] = [
 const Home: FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <SEO
+        title="Analisi Pool Liquidità Uniswap V3/V4"
+        description="Analizza la salute delle pool di liquidità Uniswap V3 e V4 su Ethereum, Arbitrum, Base e Polygon. Score di salute, simulatore impermanent loss, fee APR, efficienza del capitale e strategie LP."
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          name: 'Uniswap Pool Analyzer',
+          description: 'Strumento di analisi per pool di liquidità Uniswap V3 e V4 multi-chain',
+          applicationCategory: 'FinanceApplication',
+          operatingSystem: 'Web',
+          author: { '@type': 'Person', name: 'Simone Puliti', url: 'https://simonepuliti.dev' },
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        }}
+      />
       <NavBar />
 
       {/* Hero */}

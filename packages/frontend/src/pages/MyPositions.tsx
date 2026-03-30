@@ -5,6 +5,7 @@ import { useWalletPositions } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
 import type { Chain } from '../types.ts'
 import Footer from '../components/Footer.tsx'
+import SEO from '../components/SEO.tsx'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -425,6 +426,10 @@ export default function MyPositions() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="Le Mie Posizioni LP"
+        description="Visualizza le tue posizioni di liquidità attive su Uniswap V3 e V4 con P&L in tempo reale, fee accumulate, impermanent loss e storico movimenti su Ethereum, Arbitrum, Base e Polygon."
+      />
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 sm:space-y-6 flex-1">
         {/* Header */}
         <div>

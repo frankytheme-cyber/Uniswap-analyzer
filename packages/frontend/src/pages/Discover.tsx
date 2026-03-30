@@ -5,6 +5,7 @@ import { useDiscoverPools, useAddToWatchlist } from '../hooks/usePoolData.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 import PoolCard from '../components/dashboard/PoolCard.tsx'
 import Footer from '../components/Footer.tsx'
+import SEO from '../components/SEO.tsx'
 import type { Chain } from '../types.ts'
 
 const CHAINS: { value: Chain; label: string }[] = [
@@ -41,6 +42,10 @@ export default function Discover() {
 
   return (
     <div className="min-h-screen flex flex-col">
+    <SEO
+      title="Discover Top Pool Uniswap"
+      description="Scopri le migliori pool Uniswap V3 e V4 per TVL, volume e fee APR su Ethereum, Arbitrum, Base e Polygon. Classifica automatica aggiornata ogni 15 minuti."
+    />
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 flex-1">
       {/* Header */}
       <div>

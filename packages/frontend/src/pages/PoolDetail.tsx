@@ -16,6 +16,7 @@ import ILManualSimulator   from '../components/charts/ILManualSimulator.tsx'
 
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
+import SEO from '../components/SEO.tsx'
 
 const STATUS_COLOR: Record<string, string> = {
   healthy: 'text-emerald-600',
@@ -65,8 +66,15 @@ export default function PoolDetail() {
     }
   }, [strategyAnalysis?.recommendedStrategy.id])
 
+  const poolName = data ? `${data.token0}/${data.token1}` : `${chain}/${address.slice(0, 8)}…`
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <SEO
+        title={`${poolName} — Analisi Pool`}
+        description={`Analisi dettagliata della pool ${poolName} su ${chain}: score di salute, TVL, fee APR, impermanent loss, efficienza del capitale e strategie LP.`}
+        noindex
+      />
       {/* Back */}
       <button
         onClick={onBack}

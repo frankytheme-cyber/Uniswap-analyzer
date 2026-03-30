@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { GraduationCapIcon, DropIcon, BankIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import Footer from '../components/Footer.tsx'
+import SEO from '../components/SEO.tsx'
 
 interface Section {
   path: string
@@ -64,6 +65,18 @@ const colorMap = {
 export default function LearnIndex() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <SEO
+        title="Guida Interattiva DeFi"
+        description="Impara come funzionano le pool di liquidità, gli AMM, la liquidità concentrata V3, l'impermanent loss, le strategie di ribilanciamento e i protocolli di lending come Aave."
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Course',
+          name: 'Guida Interattiva alla DeFi',
+          description: 'Corso interattivo su AMM, liquidità concentrata V3, impermanent loss e lending DeFi',
+          provider: { '@type': 'Person', name: 'Simone Puliti', url: 'https://simonepuliti.dev' },
+          isAccessibleForFree: true,
+        }}
+      />
       <div className="max-w-5xl mx-auto px-4 py-12 flex-1 w-full">
 
         {/* Header */}

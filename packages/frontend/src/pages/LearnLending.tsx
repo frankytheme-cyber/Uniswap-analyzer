@@ -5,6 +5,7 @@ import {
 } from '@phosphor-icons/react'
 import AaveLendingChart from '../components/learn/AaveLendingChart.tsx'
 import Footer           from '../components/Footer.tsx'
+import SEO              from '../components/SEO.tsx'
 
 interface Chapter {
   id: string
@@ -44,6 +45,18 @@ export default function LearnLending() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <SEO
+        title="Prestiti DeFi — Aave, Health Factor, Liquidazione"
+        description="Come funzionano i prestiti DeFi su Aave: curva di utilizzo, tassi di interesse, Health Factor, collaterale e rischio di liquidazione. Guida interattiva con simulatore."
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: 'Prestiti DeFi: Aave, Health Factor e Liquidazione',
+          description: 'Guida interattiva ai money market protocol come Aave',
+          author: { '@type': 'Person', name: 'Simone Puliti', url: 'https://simonepuliti.dev' },
+          publisher: { '@type': 'Person', name: 'Simone Puliti' },
+        }}
+      />
       <div className="max-w-6xl mx-auto px-4 py-8 flex gap-8 flex-1 w-full">
         {/* Sticky sidebar */}
         <aside className="hidden lg:block w-56 shrink-0">

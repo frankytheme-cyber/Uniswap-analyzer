@@ -10,6 +10,7 @@ import PriceImpactChart           from '../components/learn/PriceImpactChart.tsx
 import RebalancingTimeline        from '../components/learn/RebalancingTimeline.tsx'
 import ILManualSimulator          from '../components/charts/ILManualSimulator.tsx'
 import Footer                     from '../components/Footer.tsx'
+import SEO                        from '../components/SEO.tsx'
 
 interface Chapter {
   id: string
@@ -53,6 +54,18 @@ export default function LearnDex() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <SEO
+        title="Pool di Liquidità — AMM, V3, Impermanent Loss"
+        description="Guida interattiva con grafici: come funziona la curva AMM x·y=k, la liquidità concentrata Uniswap V3, il price impact, l'impermanent loss e le strategie di ribilanciamento."
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: 'Guida alle Pool di Liquidità Uniswap V3',
+          description: 'Come funzionano AMM, liquidità concentrata, impermanent loss e strategie LP',
+          author: { '@type': 'Person', name: 'Simone Puliti', url: 'https://simonepuliti.dev' },
+          publisher: { '@type': 'Person', name: 'Simone Puliti' },
+        }}
+      />
       <div className="max-w-6xl mx-auto px-4 py-8 flex gap-8 flex-1 w-full">
         {/* Sticky sidebar */}
         <aside className="hidden lg:block w-56 shrink-0">

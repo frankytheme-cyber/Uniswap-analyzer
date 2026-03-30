@@ -4,6 +4,7 @@ import PoolTable       from '../components/dashboard/PoolTable.tsx'
 import PoolCard        from '../components/dashboard/PoolCard.tsx'
 import ParameterLegend from '../components/dashboard/ParameterLegend.tsx'
 import Footer          from '../components/Footer.tsx'
+import SEO             from '../components/SEO.tsx'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -13,6 +14,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="Dashboard — Watchlist Pool"
+        description="Monitora la salute delle tue pool Uniswap V3 in tempo reale. Analisi automatica di TVL, volume, fee APR, efficienza del capitale e impermanent loss su Ethereum, Arbitrum, Base e Polygon."
+      />
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 min-w-0">
         {/* Header */}
         <div>

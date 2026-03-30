@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /dashboard
+Allow: /wallet
+Allow: /discover
+Allow: /learn
+Allow: /learn/dex
+Allow: /learn/lending
+
+Disallow: /api/
+Disallow: /pool/
+
+Sitemap: https://uniswap-analyzer.vercel.app/sitemap.xml
