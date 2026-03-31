@@ -13,7 +13,7 @@ export default function Dashboard() {
   const refresh = useRefreshPool()
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
         title="Dashboard — Watchlist Pool"
         description="Monitora la salute delle tue pool Uniswap V3 in tempo reale. Analisi automatica di TVL, volume, fee APR, efficienza del capitale e impermanent loss su Ethereum, Arbitrum, Base e Polygon."
@@ -72,16 +72,26 @@ function PoolCardWrapper({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-lg p-4 animate-pulse shadow-card">
-        <div className="h-4 bg-slate-100 rounded w-1/2 mb-2" />
-        <div className="h-3 bg-slate-100 rounded w-1/3" />
+      <div
+        className="rounded-lg p-4 animate-pulse shadow-card border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+      >
+        <div className="h-4 rounded w-1/2 mb-2" style={{ backgroundColor: 'var(--bg-raised)' }} />
+        <div className="h-3 rounded w-1/3" style={{ backgroundColor: 'var(--bg-raised)' }} />
       </div>
     )
   }
 
   if (isError || !data) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-xs">
+      <div
+        className="rounded-lg p-4 text-xs border"
+        style={{
+          backgroundColor: 'var(--bad-bg)',
+          borderColor: 'var(--bad-border)',
+          color: 'var(--bad-text)',
+        }}
+      >
         Errore nel caricare {address.slice(0, 8)}…
       </div>
     )

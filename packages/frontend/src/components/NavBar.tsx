@@ -36,33 +36,40 @@ export default function NavBar() {
   }
 
   return (
-    <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div
+      className="sticky top-0 z-20 backdrop-blur-md border-b"
+      style={{
+        backgroundColor: 'color-mix(in srgb, var(--bg-base) 92%, transparent)',
+        borderColor: 'var(--border-subtle)',
+      }}
+    >
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        {/* Left */}
+        {/* Left — logo */}
         <div className="flex items-center gap-3 min-w-0">
           <Link
             to="/"
-            className="flex items-center gap-1.5 font-semibold text-slate-900 text-sm hover:text-indigo-600 transition-colors truncate"
+            className="flex items-center gap-1.5 font-semibold text-sm truncate transition-colors"
+            style={{ color: 'var(--text-primary)' }}
           >
-            <ChartPieSliceIcon size={18} weight="duotone" className="text-indigo-600 shrink-0" />
+            <ChartPieSliceIcon size={18} weight="duotone" style={{ color: 'var(--accent)', flexShrink: 0 }} />
             Uniswap Analyzer
           </Link>
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden sm:flex items-center gap-1 shrink-0">
+        <nav className="hidden sm:flex items-center gap-0.5 shrink-0">
           {navItems.map(({ path, label, locked }) => (
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                isActive(path)
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+              style={{
+                backgroundColor: isActive(path) ? 'var(--bg-raised)' : 'transparent',
+                color: isActive(path) ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
             >
               {label}
-              {locked && <LockIcon size={11} weight="bold" className="opacity-40" />}
+              {locked && <LockIcon size={11} weight="bold" style={{ opacity: 0.4 }} />}
             </Link>
           ))}
         </nav>
@@ -70,7 +77,8 @@ export default function NavBar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setOpen((v) => !v)}
-          className="sm:hidden p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+          className="sm:hidden p-2 rounded-md transition-colors shrink-0"
+          style={{ color: 'var(--text-muted)' }}
           aria-label={open ? 'Chiudi menu' : 'Apri menu'}
         >
           {open ? <XIcon size={20} weight="bold" /> : <ListIcon size={20} weight="bold" />}
@@ -79,21 +87,27 @@ export default function NavBar() {
 
       {/* Mobile dropdown */}
       {open && (
-        <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-2 space-y-1">
+        <div
+          className="sm:hidden border-t px-4 py-2 space-y-1"
+          style={{
+            backgroundColor: 'var(--bg-base)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
           {navItems.map(({ path, label, Icon, locked }) => (
             <Link
               key={path}
               to={path}
               onClick={close}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive(path)
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-              }`}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: isActive(path) ? 'var(--bg-raised)' : 'transparent',
+                color: isActive(path) ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
             >
               <Icon size={18} weight={isActive(path) ? 'bold' : 'regular'} />
               {label}
-              {locked && <LockIcon size={11} weight="bold" className="ml-auto opacity-40" />}
+              {locked && <LockIcon size={11} weight="bold" className="ml-auto" style={{ opacity: 0.4 }} />}
             </Link>
           ))}
         </div>

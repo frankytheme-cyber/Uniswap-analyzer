@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
-import { GraduationCapIcon, DropIcon, BankIcon, ArrowRightIcon } from '@phosphor-icons/react'
-import Footer from '../components/Footer.tsx'
+import { GraduationCapIcon, DropIcon, BankIcon, CubeIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import SEO from '../components/SEO.tsx'
+import Footer from '../components/Footer.tsx'
 
 interface Section {
   path: string
@@ -10,7 +10,12 @@ interface Section {
   description: string
   chapters: string[]
   Icon: React.ElementType
-  color: 'violet' | 'emerald'
+  accentVar: string
+  badgeBgVar: string
+  badgeBorderVar: string
+  badgeTextVar: string
+  dotVar: string
+  hoverClass: string
 }
 
 const sections: Section[] = [
@@ -27,7 +32,12 @@ const sections: Section[] = [
       '05 — Il Ribilanciamento',
     ],
     Icon: DropIcon,
-    color: 'violet',
+    accentVar: '--home-violet',
+    badgeBgVar: '--home-badge-violet-bg',
+    badgeBorderVar: '--home-badge-violet-border',
+    badgeTextVar: '--home-badge-violet-text',
+    dotVar: '--home-violet',
+    hoverClass: 'home-card-hover-violet',
   },
   {
     path: '/learn/lending',
@@ -41,30 +51,37 @@ const sections: Section[] = [
       '06 — APY live (Aave V3)',
     ],
     Icon: BankIcon,
-    color: 'emerald',
+    accentVar: '--home-green',
+    badgeBgVar: '--home-badge-green-bg',
+    badgeBorderVar: '--home-badge-green-border',
+    badgeTextVar: '--home-badge-green-text',
+    dotVar: '--home-green',
+    hoverClass: 'home-card-hover-green',
+  },
+  {
+    path: '/learn/blockchain',
+    number: '07 – 10',
+    title: 'Blockchain & Consenso',
+    description: 'Come funzionano le blockchain Bitcoin ed Ethereum, il Proof of Work, il Proof of Stake, gli smart contract e il meccanismo delle gas fee.',
+    chapters: [
+      '07 — La Blockchain Bitcoin',
+      '08 — Proof of Work',
+      '09 — La Blockchain Ethereum',
+      '10 — Proof of Stake',
+    ],
+    Icon: CubeIcon,
+    accentVar: '--home-amber',
+    badgeBgVar: '--home-badge-amber-bg',
+    badgeBorderVar: '--home-badge-amber-border',
+    badgeTextVar: '--home-badge-amber-text',
+    dotVar: '--home-amber',
+    hoverClass: 'home-card-hover-amber',
   },
 ]
 
-const colorMap = {
-  violet: {
-    icon: 'bg-violet-50 border-violet-200 text-violet-600',
-    number: 'text-violet-400',
-    badge: 'bg-violet-50 text-violet-600',
-    arrow: 'text-violet-600 group-hover:text-violet-700',
-    border: 'hover:border-violet-200',
-  },
-  emerald: {
-    icon: 'bg-emerald-50 border-emerald-200 text-emerald-600',
-    number: 'text-emerald-400',
-    badge: 'bg-emerald-50 text-emerald-600',
-    arrow: 'text-emerald-600 group-hover:text-emerald-700',
-    border: 'hover:border-emerald-200',
-  },
-}
-
 export default function LearnIndex() {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
         title="Guida Interattiva DeFi"
         description="Impara come funzionano le pool di liquidità, gli AMM, la liquidità concentrata V3, l'impermanent loss, le strategie di ribilanciamento e i protocolli di lending come Aave."
@@ -77,16 +94,19 @@ export default function LearnIndex() {
           isAccessibleForFree: true,
         }}
       />
-      <div className="max-w-5xl mx-auto px-4 py-12 flex-1 w-full">
+      <div className="max-w-5xl mx-auto px-6 py-12 flex-1 w-full">
 
         {/* Header */}
-        <div className="flex items-start gap-4 mb-10">
-          <div className="w-12 h-12 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-center shrink-0">
-            <GraduationCapIcon size={24} weight="duotone" className="text-indigo-600" />
+        <div className="flex items-start gap-4 mb-12">
+          <div
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'var(--accent-soft)', border: '1px solid var(--accent-border)' }}
+          >
+            <GraduationCapIcon size={22} weight="duotone" style={{ color: 'var(--accent)' }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 leading-tight">Learn</h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>Learn</h1>
+            <p className="text-sm mt-1 font-mono" style={{ color: 'var(--text-muted)' }}>
               Guide interattive su AMM, liquidità concentrata e lending protocol
             </p>
           </div>
@@ -94,41 +114,71 @@ export default function LearnIndex() {
 
         {/* Section cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {sections.map((sec) => {
-            const c = colorMap[sec.color]
-            return (
-              <Link
-                key={sec.path}
-                to={sec.path}
-                className={`group block bg-white border border-slate-200 ${c.border} rounded-xl p-6 transition-all hover:shadow-sm`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`w-11 h-11 border rounded-lg flex items-center justify-center shrink-0 ${c.icon}`}>
-                    <sec.Icon size={22} weight="duotone" />
+          {sections.map((sec) => (
+            <Link
+              key={sec.path}
+              to={sec.path}
+              className={`home-section-card group block rounded-xl p-6 transition-all duration-300 ${sec.hoverClass}`}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="home-icon-box w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                >
+                  <sec.Icon size={20} weight="duotone" style={{ color: `var(${sec.accentVar})` }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-mono tracking-widest"
+                      style={{
+                        backgroundColor: `var(${sec.badgeBgVar})`,
+                        borderColor: `var(${sec.badgeBorderVar})`,
+                        color: `var(${sec.badgeTextVar})`,
+                      }}
+                    >
+                      {sec.number}
+                    </span>
+                    <ArrowRightIcon
+                      size={13}
+                      weight="bold"
+                      className="opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200"
+                      style={{ color: `var(${sec.accentVar})` }}
+                    />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className={`text-xs font-mono mb-0.5 ${c.number}`}>{sec.number}</div>
-                    <h2 className="text-lg font-bold text-slate-900 leading-tight mb-1">{sec.title}</h2>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-4">{sec.description}</p>
-                    {/* Chapter list */}
-                    <ul className="space-y-1 mb-4">
-                      {sec.chapters.map((ch) => (
-                        <li key={ch} className="flex items-center gap-2 text-xs text-slate-400">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.badge}`} />
-                          {ch}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className={`flex items-center gap-1 text-sm font-medium ${c.arrow} transition-colors`}>
-                      Inizia <ArrowRightIcon size={14} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
-                    </div>
+                  <h2 className="text-lg font-bold leading-tight mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {sec.title}
+                  </h2>
+                  <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--text-muted)' }}>
+                    {sec.description}
+                  </p>
+
+                  {/* Chapter list */}
+                  <ul className="space-y-1.5 mb-4">
+                    {sec.chapters.map((ch) => (
+                      <li key={ch} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-faint)' }}>
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: `var(${sec.dotVar})` }}
+                        />
+                        {ch}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div
+                    className="flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                    style={{ color: `var(${sec.accentVar})` }}
+                  >
+                    Inizia il percorso
+                    <ArrowRightIcon size={13} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
-              </Link>
-            )
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
+
       <Footer />
     </div>
   )

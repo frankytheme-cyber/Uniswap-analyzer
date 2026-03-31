@@ -69,7 +69,7 @@ export default function PoolDetail() {
   const poolName = data ? `${data.token0}/${data.token1}` : `${chain}/${address.slice(0, 8)}…`
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 min-h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
         title={`${poolName} — Analisi Pool`}
         description={`Analisi dettagliata della pool ${poolName} su ${chain}: score di salute, TVL, fee APR, impermanent loss, efficienza del capitale e strategie LP.`}

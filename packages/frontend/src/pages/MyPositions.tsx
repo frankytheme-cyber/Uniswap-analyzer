@@ -61,7 +61,7 @@ function DataCell({ label, usd, children, accent }: {
   const labelColor = accent === 'amber' ? 'text-amber-600' : accent === 'emerald' ? 'text-emerald-600' : 'text-slate-400'
   const usdColor   = accent === 'amber' ? 'text-amber-700' : accent === 'emerald' ? 'text-emerald-700' : 'text-slate-700'
   return (
-    <div className="bg-slate-50 rounded-lg p-2.5 sm:p-3 min-w-0 overflow-hidden">
+    <div className="rounded-lg p-2.5 sm:p-3 min-w-0 overflow-hidden" style={{ backgroundColor: 'var(--bg-raised)' }}>
       <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide block ${labelColor}`}>{label}</span>
       {usd !== undefined && usd > 0 && (
         <span className={`text-xs sm:text-sm font-bold font-mono block mt-1 truncate ${usdColor}`}>{fmtUsd(usd)}</span>
@@ -92,10 +92,10 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
     : position.inRange ? 'border-emerald-200' : 'border-amber-200'
 
   return (
-    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass} ${isClosed ? 'opacity-75' : ''}`}>
+    <div className={`rounded-xl border shadow-sm overflow-hidden ${borderClass} ${isClosed ? 'opacity-75' : ''}`} style={{ backgroundColor: 'var(--bg-surface)' }}>
 
       {/* ─── Header ─── */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-3 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         {/* Left: pair + badges */}
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className={`font-bold text-base leading-none ${isClosed ? 'text-slate-500' : 'text-slate-900'}`}>{pair}</span>
@@ -182,7 +182,7 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
 
           {/* PnL summary for closed positions */}
           {isClosed && position.pnlPercent !== null && (
-            <div className="bg-slate-50 rounded-lg p-3 min-w-0 flex flex-col justify-center">
+            <div className="rounded-lg p-3 min-w-0 flex flex-col justify-center" style={{ backgroundColor: 'var(--bg-raised)' }}>
               <span className="text-[11px] font-semibold uppercase tracking-wide block text-slate-400">PnL vs HODL</span>
               <span className={`text-sm font-bold font-mono block mt-1 ${
                 (position.pnlVsHodlUSD ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'
@@ -241,7 +241,7 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
       </div>
 
       {/* ─── Footer ─── */}
-      <div className="px-3 sm:px-4 py-2.5 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
+      <div className="px-3 sm:px-4 py-2.5 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-raised)' }}>
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-wrap">
           <span className="text-[11px] text-slate-400 font-mono truncate max-w-[160px] sm:max-w-[180px]">
             {position.poolId.slice(0, 10)}…{position.poolId.slice(-4)}
@@ -356,12 +356,12 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
 
       {/* Position counts */}
       <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-3 text-sm">
-        <div className="bg-white border border-slate-200 rounded-lg px-2 sm:px-3 py-2 text-center sm:min-w-[72px]">
+        <div className="border rounded-lg px-2 sm:px-3 py-2 text-center sm:min-w-[72px]" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
           <div className="text-xl sm:text-2xl font-bold text-slate-900">{totalOpen}</div>
           <div className="text-slate-400 text-xs">Aperte</div>
         </div>
         {totalClosed > 0 && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg px-2 sm:px-3 py-2 text-center sm:min-w-[72px]">
+          <div className="border rounded-lg px-2 sm:px-3 py-2 text-center sm:min-w-[72px]" style={{ backgroundColor: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
             <div className="text-xl sm:text-2xl font-bold text-slate-400">{totalClosed}</div>
             <div className="text-slate-400 text-xs">Chiuse</div>
           </div>
@@ -425,12 +425,12 @@ export default function MyPositions() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
         title="Le Mie Posizioni LP"
         description="Visualizza le tue posizioni di liquidità attive su Uniswap V3 e V4 con P&L in tempo reale, fee accumulate, impermanent loss e storico movimenti su Ethereum, Arbitrum, Base e Polygon."
       />
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 sm:space-y-6 flex-1">
+      <div className="max-w-5xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1">
         {/* Header */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Le mie posizioni</h1>
@@ -456,7 +456,7 @@ export default function MyPositions() {
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
             placeholder="0x... indirizzo wallet"
-            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="flex-1 min-w-0 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
             spellCheck={false}
           />
 
@@ -520,7 +520,7 @@ export default function MyPositions() {
       </div>
 
       {/* SEO content */}
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-12 sm:pb-16 w-full">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 pb-12 sm:pb-16 w-full">
         <div className="border-t border-slate-200 pt-8 sm:pt-12 grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 text-sm text-slate-500 leading-relaxed">
           <div>
             <h2 className="text-slate-700 font-semibold mb-3 text-base">Monitora le posizioni Uniswap V3 e V4</h2>
