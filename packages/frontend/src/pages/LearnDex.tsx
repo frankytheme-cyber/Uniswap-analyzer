@@ -77,7 +77,7 @@ export default function LearnDex() {
               <ArrowLeftIcon size={11} weight="bold" />
               Tutte le sezioni
             </Link>
-            <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 px-3">Capitoli</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider pb-3 px-3">Capitoli</p>
             {chapters.map((ch) => (
               <button
                 key={ch.id}

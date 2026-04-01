@@ -92,13 +92,13 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
     : position.inRange ? 'border-emerald-200' : 'border-amber-200'
 
   return (
-    <div className={`rounded-xl border shadow-sm overflow-hidden ${borderClass} ${isClosed ? 'opacity-75' : ''}`} style={{ backgroundColor: 'var(--bg-surface)' }}>
+    <div className={`rounded-xl border overflow-hidden ${borderClass} ${isClosed ? 'opacity-60' : 'shadow-md ring-1 ring-black/[0.04]'}`} style={{ backgroundColor: 'var(--bg-surface)' }}>
 
       {/* ─── Header ─── */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         {/* Left: pair + badges */}
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className={`font-bold text-base leading-none ${isClosed ? 'text-slate-500' : 'text-slate-900'}`}>{pair}</span>
+          <span className={`font-bold leading-none ${isClosed ? 'text-base text-slate-500' : 'text-lg text-slate-900'}`}>{pair}</span>
           <span className="text-xs text-slate-400 font-mono">{feePct}%</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
             position.version === 'v4' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700'
@@ -433,8 +433,8 @@ export default function MyPositions() {
       <div className="max-w-5xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Le mie posizioni</h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Le mie posizioni</h1>
+          <p className="text-slate-500 text-sm mt-1">
             Posizioni LP su Uniswap V3 e V4 per un indirizzo wallet (sola lettura, nessuna connessione richiesta).
           </p>
         </div>
@@ -499,18 +499,34 @@ export default function MyPositions() {
               <div className="text-center py-12 text-slate-400 text-sm">
                 Nessuna posizione trovata su {chain} per questo wallet.
               </div>
-            ) : (
-              <div className="space-y-4">
-                {data.positions.map((p) => (
-                  <PositionRow
-                    key={p.id}
-                    position={p}
-                    chain={chain}
-                    onAnalyze={(poolId) => onSelectPool(chain, poolId)}
-                  />
-                ))}
-              </div>
-            )}
+            ) : (() => {
+              const open   = data.positions.filter((p) => p.status !== 'closed')
+              const closed = data.positions.filter((p) => p.status === 'closed')
+              return (
+                <div className="space-y-6">
+                  {open.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                        Posizioni attive · {open.length}
+                      </h3>
+                      {open.map((p) => (
+                        <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
+                      ))}
+                    </div>
+                  )}
+                  {closed.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Posizioni chiuse · {closed.length}
+                      </h3>
+                      {closed.map((p) => (
+                        <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             <p className="text-xs text-slate-400">
               Dati da The Graph + on-chain (fee, amounts) · aggiornati al {new Date(data.lastUpdated).toLocaleTimeString('it-IT')}

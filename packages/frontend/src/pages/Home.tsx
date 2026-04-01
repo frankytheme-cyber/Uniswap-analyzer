@@ -20,9 +20,10 @@ const metrics = [
   { label: 'TVL Reale vs Gonfiato', desc: 'Rapporto AVL/TVL — rileva liquidità inattiva' },
   { label: 'Volume Organico', desc: 'Indice Herfindahl-Hirschman contro wash trading' },
   { label: 'Fee APR', desc: 'Rendimento annualizzato su 365gg di dati storici' },
-  { label: 'Efficienza Capitale', desc: '% del tempo che il prezzo resta nel range scelto' },
   { label: 'Fee Competitiva', desc: 'Confronto con pool simili sullo stesso fee tier' },
+  { label: 'Efficienza Capitale', desc: '% del tempo che il prezzo resta nel range scelto' },
   { label: 'Incentivi Artificiali', desc: 'Correlazione TVL-fee per rilevare liquidità gonfiata' },
+  { label: 'Impermanent Loss V3', desc: 'Simulazione IL con range concentrato e offset fee' },
 ]
 
 const chains = [
@@ -52,7 +53,7 @@ const sections: Section[] = [
     path: '/dashboard',
     tag: 'WATCHLIST',
     title: 'Pool Analyzer',
-    description: 'Monitora la salute delle pool Uniswap V3 con sei parametri quantitativi. Score di salute aggregato, simulatore IL, backtesting e strategy advisor.',
+    description: 'Monitora la salute delle pool Uniswap V3 e V4 con sette parametri quantitativi. Score di salute aggregato, simulatore IL, backtesting e strategy advisor.',
     detail: "Aggiungi qualsiasi pool dalla watchlist e ottieni un'analisi completa: TVL reale, volume organico, fee APR, efficienza del capitale e rischio di incentivi artificiali.",
     Icon: ChartBarIcon,
     accentVar: '--home-blue',
@@ -151,7 +152,7 @@ const Home: FC = () => {
           </h1>
 
           <p className="home-text-muted text-lg max-w-xl leading-relaxed mb-10">
-            Score di salute quantitativo su sei parametri, simulatore impermanent loss,
+            Score di salute quantitativo su sette parametri, simulatore impermanent loss,
             backtesting e strategy advisor. Dati da The Graph, GeckoTerminal e DeFiLlama,
             aggiornati ogni 15 minuti.
           </p>
@@ -190,7 +191,7 @@ const Home: FC = () => {
       <div className="home-stats-bar border-y">
         <div className="max-w-6xl mx-auto px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-6">
           {[
-            { icon: ShieldCheckIcon, value: '6 parametri', label: 'Score di salute' },
+            { icon: ShieldCheckIcon, value: '7 parametri', label: 'Score di salute' },
             { icon: ChartLineUpIcon, value: '365 giorni',  label: 'Dati storici fee APR' },
             { icon: LightningIcon,   value: '15 minuti',   label: 'Intervallo aggiornamento' },
             { icon: BracketsSquareIcon, value: '4 chain',  label: 'Ethereum · ARB · Base · MATIC' },
@@ -267,9 +268,9 @@ const Home: FC = () => {
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="mb-10">
             <span className="home-label text-xs font-mono tracking-widest uppercase">Metodologia</span>
-            <h2 className="mt-2 text-2xl font-bold home-text-primary">Sei parametri quantitativi</h2>
+            <h2 className="mt-2 text-2xl font-bold home-text-primary">Sette parametri quantitativi</h2>
             <p className="mt-2 text-sm home-text-muted max-w-xl">
-              Ogni pool viene valutata su sei dimensioni indipendenti. Il risultato è uno score da 0 a 100
+              Ogni pool viene valutata su sette dimensioni indipendenti. Il risultato è uno score da 0 a 100
               con soglie di allerta calibrate su dati reali Uniswap V3.
             </p>
           </div>
@@ -299,7 +300,7 @@ const Home: FC = () => {
             <h2 className="home-text-primary text-base font-semibold mb-3">Cos'è Uniswap Pool Analyzer?</h2>
             <p className="home-text-muted text-sm leading-relaxed mb-3">
               Uniswap Pool Analyzer è uno strumento open-source per analizzare le pool di liquidità
-              su Ethereum, Arbitrum, Base e Polygon. Calcola automaticamente sei parametri chiave
+              su Ethereum, Arbitrum, Base e Polygon. Calcola automaticamente sette parametri chiave
               e restituisce uno <span className="home-text-secondary">score di salute</span> per ogni pool.
             </p>
             <p className="home-text-muted text-sm leading-relaxed">

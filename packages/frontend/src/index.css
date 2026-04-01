@@ -18,9 +18,9 @@
 
   /* Text */
   --text-primary: #0a0c10;
-  --text-secondary:#2d333b;
-  --text-muted:   #4b5563;
-  --text-faint:   #6b7280;
+  --text-secondary:#1f2937;
+  --text-muted:   #374151;
+  --text-faint:   #4b5563;
 
   /* Brand (blue — matches homepage accent, distinct from inner-page indigo) */
   --accent:       #2563eb;   /* blue-600 */
@@ -52,9 +52,9 @@
 
   --home-text-primary:   #0a0c10;
   --home-text-secondary: #2d333b;
-  --home-text-muted:     #3d4753;   /* gray-700 — darker for better readability */
-  --home-text-faint:     #5a6270;   /* gray-600 — darker for contrast */
-  --home-label-color:    #5a6270;
+  --home-text-muted:     #374151;   /* gray-700 — darker for better readability */
+  --home-text-faint:     #4b5563;   /* gray-600 — darker for contrast */
+  --home-label-color:    #4b5563;
 
   /* Gradient headline */
   --home-gradient: linear-gradient(135deg, #2563eb 0%, #6366f1 50%, #8b5cf6 100%);
@@ -100,7 +100,7 @@
   --home-icon-box-border:rgba(0,0,0,0.10);
   --home-chip-feature-bg:    rgba(0,0,0,0.04);
   --home-chip-feature-border:rgba(0,0,0,0.10);
-  --home-chip-feature-text:  #5a6270;
+  --home-chip-feature-text:  #4b5563;
 
   /* Section accent colors */
   --home-blue:   #2563eb;
@@ -134,7 +134,7 @@
   --home-metrics-gap:     #e5e7eb;
   --home-metric-cell-bg:  #f9fafb;
   --home-metric-cell-hover:#f3f4f6;
-  --home-metric-index:    #5a6270;
+  --home-metric-index:    #4b5563;
 
   /* Footer */
   --home-footer-border: #e5e7eb;
@@ -382,6 +382,7 @@ html.dark {
 /* ═══════════════════════════════════════════════════════════════════════════
    FONT SCALE
    ═══════════════════════════════════════════════════════════════════════════ */
+html { font-size: 106.25%; }          /* 17px base — slightly larger for readability */
 html.font-lg { font-size: 112.5%; }
 
 /* ═══════════════════════════════════════════════════════════════════════════

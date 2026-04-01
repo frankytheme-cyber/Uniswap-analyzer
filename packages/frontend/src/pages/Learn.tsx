@@ -60,7 +60,7 @@ export default function Learn() {
         {/* Sticky sidebar */}
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-24 space-y-0.5">
-            <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 px-3">Capitoli</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider pb-3 px-3">Capitoli</p>
             {chapters.map((ch) => (
               <button
                 key={ch.id}

@@ -16,13 +16,13 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
         title="Dashboard — Watchlist Pool"
-        description="Monitora la salute delle tue pool Uniswap V3 in tempo reale. Analisi automatica di TVL, volume, fee APR, efficienza del capitale e impermanent loss su Ethereum, Arbitrum, Base e Polygon."
+        description="Monitora la salute delle tue pool Uniswap V3 e V4 in tempo reale. Analisi automatica di TVL, volume, fee APR, efficienza del capitale e impermanent loss su Ethereum, Arbitrum, Base e Polygon."
       />
       <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 min-w-0">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Il Tuo Portafoglio</h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Il Tuo Portafoglio</h1>
+          <p className="text-slate-500 text-sm mt-1">
             Analisi in tempo reale delle pool Uniswap V3 — aggiornamento ogni 15 min
           </p>
         </div>
