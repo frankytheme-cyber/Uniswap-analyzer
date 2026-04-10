@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { GraduationCapIcon, DropIcon, BankIcon, CubeIcon, ArrowRightIcon } from '@phosphor-icons/react'
+import { GraduationCapIcon, DropIcon, BankIcon, CubeIcon, CurrencyEthIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import SEO from '../components/SEO.tsx'
 import Footer from '../components/Footer.tsx'
 
@@ -60,14 +60,12 @@ const sections: Section[] = [
   },
   {
     path: '/learn/blockchain',
-    number: '07 – 10',
-    title: 'Blockchain & Consenso',
-    description: 'Come funzionano le blockchain Bitcoin ed Ethereum, il Proof of Work, il Proof of Stake, gli smart contract e il meccanismo delle gas fee.',
+    number: '07 – 08',
+    title: 'Bitcoin & Proof of Work',
+    description: 'Come funziona la blockchain Bitcoin: transazioni, blocchi, hash e immutabilità. Poi il Proof of Work: mining, nonce, difficoltà e halving.',
     chapters: [
       '07 — La Blockchain Bitcoin',
       '08 — Proof of Work',
-      '09 — La Blockchain Ethereum',
-      '10 — Proof of Stake',
     ],
     Icon: CubeIcon,
     accentVar: '--home-amber',
@@ -76,6 +74,23 @@ const sections: Section[] = [
     badgeTextVar: '--home-badge-amber-text',
     dotVar: '--home-amber',
     hoverClass: 'home-card-hover-amber',
+  },
+  {
+    path: '/learn/ethereum',
+    number: '09 – 10',
+    title: 'Ethereum & Proof of Stake',
+    description: 'Come funziona la blockchain Ethereum: smart contract, EVM, gas EIP-1559. Poi il Proof of Stake: validatori, staking, slashing e The Merge.',
+    chapters: [
+      '09 — La Blockchain Ethereum',
+      '10 — Proof of Stake',
+    ],
+    Icon: CurrencyEthIcon,
+    accentVar: '--home-blue',
+    badgeBgVar: '--home-badge-blue-bg',
+    badgeBorderVar: '--home-badge-blue-border',
+    badgeTextVar: '--home-badge-blue-text',
+    dotVar: '--home-blue',
+    hoverClass: 'home-card-hover-blue',
   },
 ]
 

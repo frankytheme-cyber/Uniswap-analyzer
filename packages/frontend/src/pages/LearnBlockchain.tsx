@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  CubeIcon, HammerIcon, CurrencyEthIcon, ShieldCheckIcon,
+  CubeIcon, HammerIcon,
   ArrowRightIcon, ArrowLeftIcon, LinkIcon,
+  WalletIcon, BroadcastIcon, CheckCircleIcon,
 } from '@phosphor-icons/react'
 import BlockStructureChart       from '../components/learn/BlockStructureChart.tsx'
 import MiningSimulatorChart      from '../components/learn/MiningSimulatorChart.tsx'
-import GasFeeChart               from '../components/learn/GasFeeChart.tsx'
-import ConsensusComparisonChart  from '../components/learn/ConsensusComparisonChart.tsx'
 import Footer                    from '../components/Footer.tsx'
 import SEO                       from '../components/SEO.tsx'
 
@@ -22,8 +21,6 @@ interface Chapter {
 const chapters: Chapter[] = [
   { id: 'bitcoin',  number: '07', title: 'La Blockchain Bitcoin',   subtitle: 'Blocchi, hash e immutabilità',       Icon: CubeIcon },
   { id: 'pow',      number: '08', title: 'Proof of Work',          subtitle: 'Mining, nonce e difficoltà',          Icon: HammerIcon },
-  { id: 'ethereum', number: '09', title: 'La Blockchain Ethereum', subtitle: 'Smart contract, EVM e gas',           Icon: CurrencyEthIcon },
-  { id: 'pos',      number: '10', title: 'Proof of Stake',         subtitle: 'Validatori, staking e The Merge',     Icon: ShieldCheckIcon },
 ]
 
 export default function LearnBlockchain() {
@@ -53,13 +50,13 @@ export default function LearnBlockchain() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
-        title="Blockchain & Consenso — Bitcoin, Ethereum, PoW, PoS"
-        description="Guida interattiva con grafici: come funziona la blockchain Bitcoin, il Proof of Work, la blockchain Ethereum, gli smart contract, il gas EIP-1559 e il Proof of Stake."
+        title="Bitcoin & Proof of Work — Blockchain, Hash, Mining"
+        description="Guida interattiva con grafici: come funziona la blockchain Bitcoin, i blocchi, gli hash, l'immutabilità e il mining Proof of Work."
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Article',
-          headline: 'Guida alla Blockchain: Bitcoin, Ethereum, PoW e PoS',
-          description: 'Come funzionano le blockchain Bitcoin ed Ethereum, il mining Proof of Work e il Proof of Stake',
+          headline: 'Guida alla Blockchain Bitcoin e al Proof of Work',
+          description: 'Come funziona la blockchain Bitcoin, i blocchi, gli hash, l\'immutabilità e il mining Proof of Work',
           author: { '@type': 'Person', name: 'Simone Puliti', url: 'https://simonepuliti.dev' },
           publisher: { '@type': 'Person', name: 'Simone Puliti' },
         }}
@@ -95,6 +92,12 @@ export default function LearnBlockchain() {
             <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-1">
               <p className="text-xs text-slate-400 uppercase tracking-wider mb-2 px-3">Altre guide</p>
               <Link
+                to="/learn/ethereum"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                Ethereum & Proof of Stake <ArrowRightIcon size={10} weight="bold" />
+              </Link>
+              <Link
                 to="/learn/dex"
                 className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
@@ -117,12 +120,12 @@ export default function LearnBlockchain() {
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
             <LinkIcon size={20} weight="duotone" className="text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Dalla teoria alla pratica</p>
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-1">Le fondamenta della blockchain</p>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                In questa guida esploriamo come funzionano le blockchain <strong className="text-slate-800 dark:text-slate-100">Bitcoin</strong> ed{' '}
-                <strong className="text-slate-800 dark:text-slate-100">Ethereum</strong> partendo dalle basi: blocchi, hash e immutabilità.
-                Poi confrontiamo i due meccanismi di consenso: <strong className="text-slate-800 dark:text-slate-100">Proof of Work</strong> e{' '}
-                <strong className="text-slate-800 dark:text-slate-100">Proof of Stake</strong>. I grafici sono interattivi: sperimenta!
+                In questa guida partiamo dalle basi: come funziona una transazione <strong className="text-slate-800 dark:text-slate-100">Bitcoin</strong>,
+                come i blocchi vengono collegati tra loro con gli hash, e perché la blockchain è immutabile.
+                Poi esploriamo il <strong className="text-slate-800 dark:text-slate-100">Proof of Work</strong>: il meccanismo
+                che rende sicura la rete Bitcoin. I grafici sono interattivi: sperimenta!
               </p>
             </div>
           </div>
@@ -134,26 +137,276 @@ export default function LearnBlockchain() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[0]} />
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Una <strong className="text-slate-800 dark:text-slate-100">blockchain</strong> è un registro digitale distribuito —
-              una catena di blocchi collegati tra loro in modo crittografico. Ogni blocco contiene un gruppo di transazioni
-              e un riferimento al blocco precedente tramite il suo <em>hash</em>.
+
+            {/* Esempio concreto: una transazione Bitcoin */}
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+              Partiamo da un esempio concreto per capire come funziona Bitcoin nella pratica.
             </p>
+
+            {/* Alice e Simone — intro visuale */}
+            <div className="my-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 sm:p-6">
+              <div className="flex items-center justify-center gap-6 sm:gap-10 mb-5">
+                {/* Alice */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="32" cy="32" r="32" className="fill-violet-100 dark:fill-violet-900/50" />
+                      <circle cx="32" cy="24" r="10" className="fill-violet-300 dark:fill-violet-600" />
+                      <ellipse cx="32" cy="48" rx="18" ry="14" className="fill-violet-300 dark:fill-violet-600" />
+                    </svg>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-violet-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">A</span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">Alice</span>
+                  <span className="text-xs text-slate-400 font-mono">3.5 BTC</span>
+                </div>
+
+                {/* Freccia con BTC */}
+                <div className="flex flex-col items-center gap-1">
+                  <div className="bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 rounded-full px-4 py-1.5">
+                    <span className="text-amber-700 dark:text-amber-300 font-bold text-sm">1 BTC</span>
+                  </div>
+                  <svg width="80" height="20" viewBox="0 0 80 20" className="text-amber-400">
+                    <line x1="0" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
+                    <polygon points="65,4 77,10 65,16" fill="currentColor" />
+                  </svg>
+                </div>
+
+                {/* Simone */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="32" cy="32" r="32" className="fill-sky-100 dark:fill-sky-900/50" />
+                      <circle cx="32" cy="24" r="10" className="fill-sky-300 dark:fill-sky-600" />
+                      <ellipse cx="32" cy="48" rx="18" ry="14" className="fill-sky-300 dark:fill-sky-600" />
+                    </svg>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-sky-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">B</span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-sky-700 dark:text-sky-300">Simone</span>
+                  <span className="text-xs text-slate-400 font-mono">0.2 BTC</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-600 dark:text-slate-300 text-center leading-relaxed">
+                <strong className="text-slate-800 dark:text-slate-100">Alice vuole inviare 1 BTC a Simone.</strong>{' '}
+                Apre il wallet, inserisce l'indirizzo di Simone e conferma. Il wallet crea una{' '}
+                <em>transazione</em> firmata digitalmente con la chiave privata di Alice:<br />
+                <span className="inline-block mt-1.5 font-mono text-xs bg-slate-100 dark:bg-slate-700 rounded px-2 py-1 text-amber-600 dark:text-amber-400">
+                  "Trasferisci 1 BTC da Alice → Simone"
+                </span>
+              </p>
+            </div>
+
+            {/* Flusso visuale step-by-step */}
+            <div className="my-5 bg-gradient-to-b from-amber-50/80 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/10 border border-amber-200 dark:border-amber-800 rounded-xl p-5 sm:p-6">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-5">Il viaggio di 1 BTC: passo dopo passo</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-2">
+                {/* Step 1 — Firma */}
+                <div className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-800 flex items-center justify-center shrink-0">
+                    <WalletIcon size={22} weight="duotone" className="text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div className="sm:mt-1">
+                    <div className="text-xs font-bold text-violet-600 dark:text-violet-400">1. Firma</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Alice firma la transazione con la sua chiave privata</p>
+                  </div>
+                  <ArrowRightIcon size={14} weight="bold" className="text-amber-300 hidden sm:block sm:rotate-0 mt-1" />
+                </div>
+
+                {/* Step 2 — Mempool */}
+                <div className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
+                    <BroadcastIcon size={22} weight="duotone" className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="sm:mt-1">
+                    <div className="text-xs font-bold text-amber-600 dark:text-amber-400">2. Mempool</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">La tx entra nella "sala d'attesa" della rete</p>
+                  </div>
+                  <ArrowRightIcon size={14} weight="bold" className="text-amber-300 hidden sm:block sm:rotate-0 mt-1" />
+                </div>
+
+                {/* Step 3 — Mining */}
+                <div className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-800 flex items-center justify-center shrink-0">
+                    <HammerIcon size={22} weight="duotone" className="text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="sm:mt-1">
+                    <div className="text-xs font-bold text-orange-600 dark:text-orange-400">3. Mining</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">La tx viene inclusa nel blocco da minare</p>
+                  </div>
+                  <ArrowRightIcon size={14} weight="bold" className="text-amber-300 hidden sm:block sm:rotate-0 mt-1" />
+                </div>
+
+                {/* Step 4 — Blocco */}
+                <div className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
+                    <CubeIcon size={22} weight="duotone" className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="sm:mt-1">
+                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400">4. Blocco</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Il blocco viene validato e aggiunto alla catena</p>
+                  </div>
+                  <ArrowRightIcon size={14} weight="bold" className="text-amber-300 hidden sm:block sm:rotate-0 mt-1" />
+                </div>
+
+                {/* Step 5 — Confermato */}
+                <div className="flex sm:flex-col items-center sm:items-center gap-3 sm:gap-2 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
+                    <CheckCircleIcon size={22} weight="duotone" className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="sm:mt-1">
+                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">5. Confermato</div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Simone riceve 1 BTC — irreversibile!</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-amber-200/60 dark:border-amber-800/40 flex items-center gap-2">
+                <span className="text-xs text-slate-400">~10 min per la prima conferma</span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-xs text-slate-400">Dopo 6 conferme (~1 ora) la tx è irreversibile</span>
+              </div>
+            </div>
+
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              L'<span className="text-amber-600 dark:text-amber-400 font-medium">hash</span> è un'impronta digitale unica:
-              una funzione che prende qualsiasi input e produce una stringa di lunghezza fissa (256 bit per SHA-256 di Bitcoin).
-              Se cambi anche un solo carattere dell'input, l'hash cambia completamente.
+              Ma come fa la rete a garantire che Alice abbia davvero 1 BTC e non stia barando?
+              E come impedisce che qualcuno modifichi la transazione dopo che è stata registrata? La risposta è la{' '}
+              <strong className="text-slate-800 dark:text-slate-100">blockchain</strong>.
             </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Ogni blocco contiene: il <span className="font-mono text-sm text-slate-800 dark:text-slate-200">prevHash</span> (hash del blocco precedente),
-              un <span className="font-mono text-sm text-slate-800 dark:text-slate-200">merkle root</span> (riassunto di tutte le transazioni),
-              un <span className="font-mono text-sm text-slate-800 dark:text-slate-200">nonce</span> (numero usato per il mining),
-              il <span className="font-mono text-sm text-slate-800 dark:text-slate-200">timestamp</span> e le transazioni stesse.
+
+            {/* Ora contestualizziamo la blockchain */}
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+              La transazione di Alice è ora registrata per sempre. Ma in che modo? Qui entra in gioco la struttura della{' '}
+              <strong className="text-slate-800 dark:text-slate-100">blockchain</strong>: un registro digitale distribuito,
+              una catena di blocchi collegati tra loro in modo crittografico.
             </p>
+
+            {/* Cos'è un hash — scheda visuale */}
+            <div className="my-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-md bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center">
+                  <span className="text-amber-600 dark:text-amber-400 text-xs font-bold">#</span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Cos'è un hash?</h3>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+                Un'impronta digitale unica: una funzione che prende <em>qualsiasi</em> input e produce
+                una stringa di lunghezza fissa (256 bit per SHA-256).
+              </p>
+              <div className="space-y-2 font-mono text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <span className="text-slate-400 shrink-0 w-16">Input</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 rounded px-2.5 py-1.5 text-slate-700 dark:text-slate-200 break-all">"Ciao"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <span className="text-slate-400 shrink-0 w-16">Hash</span>
+                  <span className="bg-emerald-50 dark:bg-emerald-900/30 rounded px-2.5 py-1.5 text-emerald-700 dark:text-emerald-300 break-all">a1b2c3d4e5f6…</span>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2 font-mono text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <span className="text-slate-400 shrink-0 w-16">Input</span>
+                  <span className="bg-slate-100 dark:bg-slate-700 rounded px-2.5 py-1.5 text-slate-700 dark:text-slate-200 break-all">"Cia<span className="text-red-500 font-bold">o</span>" → "Cia<span className="text-red-500 font-bold">u</span>"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <span className="text-slate-400 shrink-0 w-16">Hash</span>
+                  <span className="bg-red-50 dark:bg-red-900/30 rounded px-2.5 py-1.5 text-red-600 dark:text-red-400 break-all">f7e8d9c0b1a2… <span className="font-semibold">completamente diverso!</span></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Struttura del blocco — griglia visuale */}
+            <div className="my-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <CubeIcon size={18} weight="duotone" className="text-amber-600 dark:text-amber-400" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Anatomia di un blocco</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-center">
+                  <div className="font-mono text-xs text-amber-600 dark:text-amber-400 font-bold mb-1">prevHash</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Hash del blocco precedente — il "collegamento" della catena</p>
+                </div>
+                <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-lg p-3 text-center">
+                  <div className="font-mono text-xs text-violet-600 dark:text-violet-400 font-bold mb-1">merkle root</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Riassunto crittografico di tutte le transazioni</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
+                  <div className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold mb-1">nonce</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Numero che il miner cambia per trovare l'hash valido</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg p-3 text-center">
+                  <div className="font-mono text-xs text-slate-600 dark:text-slate-300 font-bold mb-1">timestamp</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Data e ora di creazione del blocco</p>
+                </div>
+              </div>
+              <div className="mt-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 text-center">
+                <div className="font-mono text-xs text-emerald-600 dark:text-emerald-400 font-bold mb-1">transazioni</div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Alice → Simone: 1 BTC &nbsp;|&nbsp; Carol → Dave: 0.5 BTC &nbsp;|&nbsp; …</p>
+              </div>
+            </div>
+
+            {/* Come si calcola l'hash del blocco */}
+            <div className="my-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-md bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center">
+                  <span className="text-amber-600 dark:text-amber-400 text-xs font-bold">f</span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Come si calcola l'hash del blocco?</h3>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+                L'hash viene calcolato applicando SHA-256 a <strong className="text-slate-800 dark:text-slate-100">tutti i campi dell'header</strong> concatenati insieme:
+              </p>
+              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 font-mono text-xs text-center">
+                <span className="text-slate-500 dark:text-slate-400">hash = SHA-256(</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">prevHash</span>
+                <span className="text-slate-400"> + </span>
+                <span className="text-violet-600 dark:text-violet-400 font-bold">merkle root</span>
+                <span className="text-slate-400"> + </span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold">nonce</span>
+                <span className="text-slate-400"> + </span>
+                <span className="text-slate-600 dark:text-slate-300 font-bold">timestamp</span>
+                <span className="text-slate-500 dark:text-slate-400">)</span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+                Se <em>qualsiasi</em> campo cambia — una transazione modificata altera il merkle root, che altera l'hash.
+                E siccome il blocco successivo contiene il <span className="text-amber-600 dark:text-amber-400 font-mono">prevHash</span> nel suo header,
+                anche il <em>suo</em> hash cambia. Effetto domino.
+              </p>
+            </div>
+
+            {/* Immutabilità — step a cascata */}
+            <div className="my-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl p-5">
+              <h3 className="text-sm font-bold text-red-700 dark:text-red-400 mb-3">Perché la blockchain è immutabile</h3>
+              <div className="space-y-2.5 text-sm text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                  <span>Eve (attaccante) modifica la tx nel blocco #102: <span className="font-mono text-xs">"1 BTC a Simone"</span> → <span className="font-mono text-xs text-red-600 dark:text-red-400">"1 BTC a Eve"</span></span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                  <span>Il <span className="font-mono text-xs text-violet-600 dark:text-violet-400">merkle root</span> cambia → l'hash del blocco #102 cambia completamente</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                  <span>Il blocco #103 ha nel suo header il <span className="font-mono text-xs text-amber-600 dark:text-amber-400">prevHash</span> del <em>vecchio</em> #102 → <strong className="text-red-700 dark:text-red-400">non corrisponde più</strong></span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                  <span>Blocchi #104, #105, … tutti invalidi a cascata</span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
+                  <span>L'intera rete rifiuta la catena modificata — <strong className="text-emerald-700 dark:text-emerald-400">Simone può fidarsi</strong></span>
+                </div>
+              </div>
+            </div>
+
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              Questo collegamento a catena rende la blockchain <strong className="text-slate-800 dark:text-slate-100">immutabile</strong>:
-              modificare una transazione in un blocco passato cambierebbe il suo hash, invalidando tutti i blocchi successivi.
-              Prova tu stesso nel grafico qui sotto!
+              Prova tu stesso nel grafico qui sotto: clicca su una transazione per modificarla e guarda l'effetto a cascata.
             </p>
             <div className="card p-4">
               <BlockStructureChart />
@@ -293,111 +546,22 @@ export default function LearnBlockchain() {
             </div>
           </section>
 
-          {/* ── Chapter 09: La Blockchain Ethereum ── */}
-          <section
-            id="ethereum" data-chapter="ethereum"
-            ref={(el: HTMLElement | null) => { sectionRefs.current['ethereum'] = el }}
-            className="scroll-mt-20"
-          >
-            <ChapterHeader ch={chapters[2]} />
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Ethereum è nato nel 2015 con un'idea rivoluzionaria: non solo registrare transazioni di valore,
-              ma eseguire <strong className="text-slate-800 dark:text-slate-100">programmi</strong> sulla blockchain.
-              Questi programmi sono gli <span className="text-blue-600 dark:text-blue-400 font-medium">smart contract</span>:
-              codice che vive sulla blockchain e si esegue automaticamente quando riceve una transazione.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              A differenza di Bitcoin (modello UTXO), Ethereum usa un modello ad{' '}
-              <strong className="text-slate-800 dark:text-slate-100">account</strong>: ogni indirizzo ha un saldo, un nonce
-              (contatore transazioni) e, se è uno smart contract, anche codice e storage. L'
-              <span className="text-blue-600 dark:text-blue-400 font-medium">EVM</span> (Ethereum Virtual Machine)
-              è il computer globale che esegue il codice degli smart contract su ogni nodo della rete.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Ma eseguire codice costa risorse. Per evitare abusi, Ethereum usa il concetto di{' '}
-              <span className="text-amber-600 dark:text-amber-400 font-medium">gas</span>: ogni operazione ha un costo in gas
-              e l'utente paga una fee in ETH proporzionale al gas usato. Dal 2021, con l'aggiornamento{' '}
-              <strong className="text-slate-800 dark:text-slate-100">EIP-1559</strong>, le fee funzionano così:
-            </p>
-            <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 text-sm space-y-1 mb-2 ml-2">
-              <li><strong className="text-slate-800 dark:text-slate-100">Base fee</strong> — calcolata automaticamente dal protocollo. Sale se i blocchi sono pieni (&gt;50%), scende se sono vuoti.</li>
-              <li><strong className="text-slate-800 dark:text-slate-100">Priority fee</strong> (mancia) — pagata volontariamente per avere priorità nell'inclusione.</li>
-              <li><strong className="text-slate-800 dark:text-slate-100">Fee totale</strong> = base fee + priority fee. La base fee viene <span className="text-red-600 dark:text-red-400 font-medium">bruciata</span> (distrutta), rendendo ETH potenzialmente deflazionario.</li>
-            </ul>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              Il grafico simula come la base fee si adatta alla domanda: prova ad alzare il livello di utilizzo dei blocchi e osserva la fee crescere.
-            </p>
-            <div className="card p-4">
-              <GasFeeChart />
-            </div>
-            <div className="mt-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-sm text-slate-500 dark:text-slate-400">
-              <strong className="text-slate-700 dark:text-slate-200">Come leggere il grafico:</strong> la linea{' '}
-              <span className="text-amber-500 font-medium">ambra</span> è la base fee, l'area{' '}
-              <span className="text-blue-500 font-medium">blu</span> è la fee totale (base + priority).
-              Quando la domanda supera il 50%, la base fee sale blocco dopo blocco. Questo meccanismo
-              crea un mercato efficiente per lo spazio nei blocchi.
-            </div>
-            <div className="mt-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 text-sm text-slate-600 dark:text-slate-300">
-              <strong className="text-indigo-700 dark:text-indigo-400">Smart contract in pratica:</strong> Uniswap, Aave, e tutte le app DeFi
-              che analizziamo in questo sito sono smart contract su Ethereum. Quando fai uno swap su Uniswap,
-              stai inviando una transazione allo smart contract della pool, che esegue la formula AMM ed effettua lo scambio.
-              Tutto on-chain, tutto verificabile.
-            </div>
-          </section>
-
-          {/* ── Chapter 10: Proof of Stake ── */}
-          <section
-            id="pos" data-chapter="pos"
-            ref={(el: HTMLElement | null) => { sectionRefs.current['pos'] = el }}
-            className="scroll-mt-20"
-          >
-            <ChapterHeader ch={chapters[3]} />
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Il <strong className="text-slate-800 dark:text-slate-100">Proof of Stake</strong> (PoS) è un meccanismo di consenso
-              alternativo al PoW. Invece di consumare energia per trovare un hash, i partecipanti bloccano ("stakano")
-              ETH come garanzia. In Ethereum servono almeno{' '}
-              <strong className="text-slate-800 dark:text-slate-100">32 ETH</strong> per diventare un validatore.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Ogni 12 secondi (uno <em>slot</em>), il protocollo seleziona casualmente un validatore come{' '}
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">block proposer</span>: chi propone il blocco.
-              La probabilità di essere scelti è proporzionale allo stake. Gli altri validatori{' '}
-              <span className="text-blue-600 dark:text-blue-400 font-medium">attestano</span> (votano) la validità del blocco.
-              Dopo 2 epoche (64 slot, ~12.8 minuti), il blocco raggiunge la <em>finalità</em>: non può più essere modificato.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              La sicurezza è garantita dallo <span className="text-red-600 dark:text-red-400 font-medium">slashing</span>:
-              se un validatore si comporta in modo disonesto (firma due blocchi diversi per lo stesso slot, o attesta
-              dati contraddittori), il protocollo gli confisca parte dello stake. Un attaccante dovrebbe controllare
-              oltre il 33% di tutto l'ETH in staking — attualmente oltre <strong className="text-slate-800 dark:text-slate-100">$30 miliardi</strong>.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              Ethereum è passata da PoW a PoS il 15 settembre 2022 con <strong className="text-slate-800 dark:text-slate-100">"The Merge"</strong>,
-              eliminando il mining e riducendo il consumo energetico del 99.95%.
-              Usa il confronto e il simulatore per esplorare le differenze.
-            </p>
-            <div className="card p-4">
-              <ConsensusComparisonChart />
-            </div>
-            <div className="mt-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-sm text-slate-500 dark:text-slate-400">
-              <strong className="text-slate-700 dark:text-slate-200">Come usare il grafico:</strong> nella tab "Confronto Metriche"
-              vedi le differenze chiave tra PoW e PoS. Nella tab "Selezione Validatore", regola il tuo stake con lo slider
-              e premi "Simula Epoca" per vedere chi viene selezionato come block proposer. Più ETH staki, maggiore la probabilità
-              di essere scelto.
-            </div>
-            <div className="mt-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-sm text-slate-600 dark:text-slate-300">
-              <strong className="text-amber-700 dark:text-amber-400">Conclusione:</strong> PoW e PoS risolvono lo stesso problema
-              (impedire che un attaccante crei blocchi falsi) con approcci diversi.
-              PoW usa il costo energetico come barriera, PoS usa il capitale economico.
-              Ethereum ha scelto PoS per la sostenibilità, mantenendo un livello di sicurezza
-              comparabile grazie al meccanismo di slashing.
-            </div>
-          </section>
-
           {/* CTA section */}
           <div className="border-t border-slate-200 dark:border-slate-700 pt-10 space-y-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">Continua a esplorare:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link
+                to="/learn/ethereum"
+                className="group flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700 rounded-lg p-4 transition-all hover:shadow-sm"
+              >
+                <div className="w-9 h-9 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-center shrink-0">
+                  <ArrowRightIcon size={16} weight="bold" className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-slate-800 dark:text-slate-200">Ethereum & PoS</div>
+                  <div className="text-xs text-slate-400">Smart contract, gas, Proof of Stake</div>
+                </div>
+              </Link>
               <Link
                 to="/learn/dex"
                 className="group flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-700 rounded-lg p-4 transition-all hover:shadow-sm"

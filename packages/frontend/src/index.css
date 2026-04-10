@@ -367,11 +367,13 @@ html.dark {
 }
 
 .home-metrics-grid {
-  background-color: var(--home-metrics-gap);
   border-color: var(--home-metrics-border);
 }
 
-.home-metric-cell { background-color: var(--home-metric-cell-bg); }
+.home-metric-cell {
+  background-color: var(--home-metric-cell-bg);
+  border-color: var(--home-metrics-border);
+}
 .home-metric-cell:hover { background-color: var(--home-metric-cell-hover); }
 .home-metric-index { color: var(--home-metric-index); }
 

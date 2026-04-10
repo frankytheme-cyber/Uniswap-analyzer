@@ -28,11 +28,11 @@ interface Block {
 
 const ORIGINAL_TX: Tx[][] = [
   [
-    { id: 'tx-0a', from: 'Alice', to: 'Bob', amount: '0.5 BTC', originalAmount: '0.5 BTC' },
+    { id: 'tx-0a', from: 'Alice', to: 'Simone', amount: '0.5 BTC', originalAmount: '0.5 BTC' },
     { id: 'tx-0b', from: 'Carol', to: 'Dave', amount: '1.2 BTC', originalAmount: '1.2 BTC' },
   ],
   [
-    { id: 'tx-1a', from: 'Bob', to: 'Eve', amount: '0.3 BTC', originalAmount: '0.3 BTC' },
+    { id: 'tx-1a', from: 'Simone', to: 'Eve', amount: '0.3 BTC', originalAmount: '0.3 BTC' },
     { id: 'tx-1b', from: 'Dave', to: 'Alice', amount: '0.8 BTC', originalAmount: '0.8 BTC' },
   ],
   [

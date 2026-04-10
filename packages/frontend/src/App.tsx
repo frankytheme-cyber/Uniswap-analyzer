@@ -10,6 +10,7 @@ import LearnIndex   from './pages/LearnIndex.tsx'
 import LearnDex     from './pages/LearnDex.tsx'
 import LearnLending from './pages/LearnLending.tsx'
 import LearnBlockchain from './pages/LearnBlockchain.tsx'
+import LearnEthereum from './pages/LearnEthereum.tsx'
 import MyPositions  from './pages/MyPositions.tsx'
 import NavBar       from './components/NavBar.tsx'
 import PasswordGate from './components/PasswordGate.tsx'
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="/learn/dex" element={<LearnDex />} />
           <Route path="/learn/lending" element={<LearnLending />} />
           <Route path="/learn/blockchain" element={<LearnBlockchain />} />
+          <Route path="/learn/ethereum" element={<LearnEthereum />} />
         </Route>
       </Routes>
 

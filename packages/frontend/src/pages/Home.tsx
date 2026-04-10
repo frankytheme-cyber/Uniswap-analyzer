@@ -68,7 +68,7 @@ const sections: Section[] = [
     tag: 'POSIZIONI',
     title: 'My Positions',
     description: 'Collega il tuo wallet e visualizza le posizioni attive su Uniswap V3 e V4 con P&L in tempo reale, fee accumulate e impermanent loss per posizione.',
-    detail: 'Analisi live di ogni NFT di liquidità: range attivo/inattivo, fee guadagnate vs IL, storico dei movimenti e confronto con strategia HODL.',
+    detail: 'Analisi live di ogni posizione di liquidità: range attivo/inattivo, fee guadagnate vs IL, storico dei movimenti e confronto con strategia HODL.',
     Icon: WalletIcon,
     accentVar: '--home-green',
     badgeBg: 'var(--home-badge-green-bg)',
@@ -96,7 +96,7 @@ const sections: Section[] = [
     tag: 'EDUCAZIONE',
     title: 'Learn DeFi',
     description: 'Guide interattive con grafici live su AMM, liquidità concentrata V3, impermanent loss, lending protocol e blockchain. Dalle basi alla pratica avanzata.',
-    detail: 'Tre percorsi: Pool di Liquidità (capitoli 01–05), Prestiti & Collaterale (capitolo 06), Blockchain & Consenso (capitoli 07–10). Ogni capitolo ha simulatori interattivi.',
+    detail: 'Quattro percorsi: Pool di Liquidità (capitoli 01–05), Prestiti & Collaterale (capitolo 06), Bitcoin & PoW (capitoli 07–08), Ethereum & PoS (capitoli 09–10). Ogni capitolo ha simulatori interattivi.',
     Icon: GraduationCapIcon,
     accentVar: '--home-violet',
     badgeBg: 'var(--home-badge-violet-bg)',
@@ -113,8 +113,8 @@ const Home: FC = () => {
   return (
     <div className="home-page min-h-screen flex flex-col">
       <SEO
-        title="Analisi Pool Liquidità Uniswap V3/V4"
-        description="Analizza la salute delle pool di liquidità Uniswap V3 e V4 su Ethereum, Arbitrum, Base e Polygon. Score di salute, simulatore impermanent loss, fee APR, efficienza del capitale e strategie LP."
+        title="Analisi Pool Uniswap V3 e V4"
+        description="Analizza pool Uniswap V3 e V4 su Ethereum, Arbitrum, Base e Polygon. Score di salute, fee APR, simulatore impermanent loss e strategie LP concentrate."
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'WebApplication',
@@ -152,9 +152,9 @@ const Home: FC = () => {
           </h1>
 
           <p className="home-text-muted text-lg max-w-xl leading-relaxed mb-10">
-            Score di salute quantitativo su sette parametri, simulatore impermanent loss,
-            backtesting e strategy advisor. Dati da The Graph, GeckoTerminal e DeFiLlama,
-            aggiornati ogni 15 minuti.
+            Analizza le pool di liquidità concentrata Uniswap V3 e V4 con sette parametri
+            quantitativi: fee APR, impermanent loss, efficienza del capitale e wash trading.
+            Score di salute aggiornato ogni 15 minuti da The Graph, GeckoTerminal e DeFiLlama.
           </p>
 
           {/* CTAs */}
@@ -213,7 +213,7 @@ const Home: FC = () => {
       <section className="max-w-6xl mx-auto px-6 py-20 w-full">
         <div className="mb-12">
           <span className="home-label text-xs font-mono tracking-widest uppercase">Sezioni</span>
-          <h2 className="mt-2 text-2xl font-bold home-text-primary">Cosa puoi fare con questo tool</h2>
+          <h2 className="mt-2 text-2xl font-bold home-text-primary">Analizza pool, gestisci posizioni e impara la DeFi</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,9 +275,13 @@ const Home: FC = () => {
             </p>
           </div>
 
-          <div className="home-metrics-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px rounded-xl overflow-hidden border">
-            {metrics.map((m, i) => (
-              <div key={m.label} className="home-metric-cell p-5 transition-colors">
+          <div className="home-metrics-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-xl overflow-hidden border">
+            {metrics.map((m, i) => {
+              const lgLastRowStart = Math.floor((metrics.length - 1) / 3) * 3
+              const hasBorderB = i < lgLastRowStart
+              const hasLgBorderR = i % 3 !== 2 && i !== metrics.length - 1
+              return (
+              <div key={m.label} className={['home-metric-cell p-5 transition-colors', hasBorderB ? 'border-b' : '', hasLgBorderR ? 'lg:border-r' : ''].filter(Boolean).join(' ')}>
                 <div className="flex items-start gap-3">
                   <span className="home-metric-index text-[10px] font-mono mt-0.5 shrink-0 w-5">
                     {String(i + 1).padStart(2, '0')}
@@ -288,7 +292,8 @@ const Home: FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
@@ -309,7 +314,7 @@ const Home: FC = () => {
             </p>
           </div>
           <div>
-            <h2 className="home-text-primary text-base font-semibold mb-3">Come analizzare una pool Uniswap V3</h2>
+            <h2 className="home-text-primary text-base font-semibold mb-3">Come analizzare una pool Uniswap V3 e V4</h2>
             <p className="home-text-muted text-sm leading-relaxed mb-3">
               Per valutare se una pool è conveniente per un LP occorre guardare oltre il semplice APY.
               L'<span className="home-text-secondary">impermanent loss</span> in V3 con range concentrato

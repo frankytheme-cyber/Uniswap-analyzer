@@ -6,6 +6,8 @@ Allow: /discover
 Allow: /learn
 Allow: /learn/dex
 Allow: /learn/lending
+Allow: /learn/blockchain
+Allow: /learn/ethereum
 
 Disallow: /api/
 Disallow: /pool/
