@@ -5,3 +5,4 @@ vendors
 dist
 build
 packages/backend/data/*.db
+.claude/worktrees/
