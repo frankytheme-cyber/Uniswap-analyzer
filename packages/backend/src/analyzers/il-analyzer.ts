@@ -38,7 +38,7 @@ export interface ILPerStrategy {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PRICE_MULTIPLIERS = [0.1, 0.2, 0.5, 0.7, 0.9, 1.1, 1.25, 1.5, 2, 3, 5, 10]
+const PRICE_MULTIPLIERS = [0.1, 0.2, 0.5, 0.7, 0.9, 1.0, 1.1, 1.25, 1.5, 2, 3, 5, 10]
 
 // ── V3 Concentrated-range IL Formula ─────────────────────────────────────────
 //
@@ -66,7 +66,7 @@ function calcV3DataPoint(
   feeAPR: number,
 ): ILDataPoint {
   // Handle full-range (passive) by clamping to near-infinite bounds
-  const a = rangeMinPercent <= -99 ? 0.000001 : Math.max(1 + rangeMinPercent / 100, 0.000001)
+  const a = rangeMinPercent <= -100 ? 0.000001 : Math.max(1 + rangeMinPercent / 100, 0.000001)
   const b = rangeMaxPercent >= 899 ? 1_000_000 : 1 + rangeMaxPercent / 100
 
   const sqrtR = Math.sqrt(r)
