@@ -37,7 +37,6 @@ export default function LidoCard({ position, privacy = false }: Props) {
     wstEthBalance,
     wstEthInEth,
     totalEthValue,
-    totalUSD,
     apr,
     averageApr,
     totalRewards30dEth,
