@@ -188,6 +188,64 @@ export interface WalletPositionsResponse {
   lastUpdated: string
 }
 
+// ── Lido Finance ──────────────────────────────────────────────────────────────
+
+export interface LidoRewardDay {
+  timeUnix:   number
+  apr:        number
+  rewardsEth: number   // per-day ETH reward
+  rewardsUsd: number   // per-day USD reward (historic price from Lido API)
+  balanceEth: number   // stETH balance after this event
+}
+
+export interface LidoPosition {
+  walletAddress:      string
+  stEthBalance:       number   // ETH
+  wstEthBalance:      number   // wstETH tokens
+  wstEthInEth:        number   // wstETH converted to ETH equivalent
+  totalEthValue:      number   // stETH + wstEthInEth
+  totalUSD:           number
+  apr:                number   // current APR (latest rebase)
+  averageApr:         number   // average over fetched period
+  dailyRewardsEth:    number   // APR-based estimate
+  yearlyRewardsEth:   number
+  rewards30d:         LidoRewardDay[]
+  totalRewards30dEth: number
+  totalRewards30dUSD: number
+  stEthPriceUsd:      number
+  lastUpdated:        string
+}
+
+// ── Aave Finance ─────────────────────────────────────────────────────────────
+
+export interface AaveSuppliedAsset {
+  symbol:       string
+  balance:      number   // underlying token amount
+  balanceUSD:   number
+  apy:          number   // supply APY (%)
+  isCollateral: boolean
+}
+
+export interface AaveBorrowedAsset {
+  symbol:    string
+  amount:    number
+  amountUSD: number
+  apy:       number      // borrow APY (%)
+  rateMode:  'variable' | 'stable'
+}
+
+export interface AavePosition {
+  walletAddress:    string
+  totalSuppliedUSD: number
+  totalBorrowedUSD: number
+  netWorthUSD:      number
+  healthFactor:     number   // 0 = no borrows / not applicable
+  netAPY:           number   // weighted net APY (%)
+  supplied:         AaveSuppliedAsset[]
+  borrowed:         AaveBorrowedAsset[]
+  lastUpdated:      string
+}
+
 // ── Backtesting ───────────────────────────────────────────────────────────────
 
 export interface BacktestResult {

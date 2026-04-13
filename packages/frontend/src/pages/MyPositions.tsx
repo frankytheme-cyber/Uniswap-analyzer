@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowRightIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
-import { useWalletPositions } from '../hooks/usePoolData.ts'
+import { useWalletPositions, useLidoPosition, useAavePosition } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
 import type { Chain } from '../types.ts'
-import Footer from '../components/Footer.tsx'
-import SEO from '../components/SEO.tsx'
+import Footer   from '../components/Footer.tsx'
+import SEO      from '../components/SEO.tsx'
+import LidoCard from '../components/dashboard/LidoCard.tsx'
+import AaveCard from '../components/dashboard/AaveCard.tsx'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -96,7 +98,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
 
       {/* ─── Header ─── */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-        {/* Left: pair + badges */}
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className={`font-bold leading-none ${isClosed ? 'text-base text-slate-500' : 'text-lg text-slate-900'}`}>{pair}</span>
           <span className="text-xs text-slate-400 font-mono">{feePct}%</span>
@@ -107,7 +108,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
           </span>
         </div>
 
-        {/* Right: IL (open) or PnL (closed) + status */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {!isClosed && position.ilPercent !== null && (
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -138,8 +138,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
       {/* ─── Body ─── */}
       <div className="p-3 sm:p-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-
-          {/* Range */}
           <DataCell label="Range">
             <div className="space-y-1 mt-1.5">
               <div className="flex items-center justify-between gap-2">
@@ -153,7 +151,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
             </div>
           </DataCell>
 
-          {/* Initial capital */}
           <DataCell label="Depositato" usd={position.initialValueUSD}>
             <TokenAmounts
               token0={position.token0} token1={position.token1}
@@ -161,7 +158,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
             />
           </DataCell>
 
-          {/* Current capital (open) or Withdrawn (closed) */}
           {!isClosed ? (
             <DataCell label="Attuale" usd={position.currentValueUSD}>
               <TokenAmounts
@@ -180,7 +176,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
             <div />
           )}
 
-          {/* PnL summary for closed positions */}
           {isClosed && position.pnlPercent !== null && (
             <div className="rounded-lg p-3 min-w-0 flex flex-col justify-center" style={{ backgroundColor: 'var(--bg-raised)' }}>
               <span className="text-[11px] font-semibold uppercase tracking-wide block text-slate-400">PnL vs HODL</span>
@@ -197,7 +192,6 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
             </div>
           )}
 
-          {/* Fees */}
           {hasFees ? (
             <DataCell
               label={hasUncollected ? 'Fee da prelevare' : 'Fee ritirate'}
@@ -298,17 +292,13 @@ interface SummaryBarProps {
 }
 
 function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Count, totalUncollectedFeesUSD, totalCollectedFeesUSD, totalFeesUSD, positions }: SummaryBarProps) {
-  // PnL calculations
-  const closedPositions = positions.filter((p) => p.status === 'closed')
-
-  // PnL vs HODL from closed positions
-  const totalPnlVsHodlUSD = closedPositions.reduce((s, p) => s + (p.pnlVsHodlUSD ?? 0), 0)
-  const pnlVsHodlPositive = totalPnlVsHodlUSD >= 0
-  const hasV4 = positions.some((p) => p.version === 'v4')
+  const closedPositions    = positions.filter((p) => p.status === 'closed')
+  const totalPnlVsHodlUSD  = closedPositions.reduce((s, p) => s + (p.pnlVsHodlUSD ?? 0), 0)
+  const pnlVsHodlPositive  = totalPnlVsHodlUSD >= 0
+  const hasV4              = positions.some((p) => p.version === 'v4')
 
   return (
     <div className="space-y-3">
-      {/* PnL vs HODL box (closed positions only) */}
       {closedPositions.length > 0 && (
         <div className={`border rounded-xl px-4 sm:px-5 py-3 sm:py-4 ${
           pnlVsHodlPositive
@@ -326,7 +316,6 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
         </div>
       )}
 
-      {/* Fees summary box */}
       {totalFeesUSD > 0 && (
         <div className="bg-gradient-to-r from-emerald-50 to-amber-50 border border-emerald-200 rounded-xl px-4 sm:px-5 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -354,7 +343,6 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
         </div>
       )}
 
-      {/* Position counts */}
       <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-3 text-sm">
         <div className="border rounded-lg px-2 sm:px-3 py-2 text-center sm:min-w-[72px]" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
           <div className="text-xl sm:text-2xl font-bold text-slate-900">{totalOpen}</div>
@@ -411,35 +399,58 @@ export default function MyPositions() {
   const onSelectPool = (chain: string, address: string) => navigate(`/pool/${chain}/${address}`)
 
   const saved = loadSaved()
-  const [chain,  setChain]  = useState<Chain>(saved.chain)
-  const [wallet, setWallet] = useState(saved.wallet)
-  const [query,  setQuery]  = useState(saved.wallet)
+  const [chain,   setChain]   = useState<Chain>(saved.chain)
+  const [wallet,  setWallet]  = useState(saved.wallet)
+  const [query,   setQuery]   = useState(saved.wallet)
+  // Privacy mode: nasconde (blur) gli importi quando è caricato un wallet.
+  // Default ON non appena c'è un wallet, così i numeri sono nascosti "out of the box".
+  const [privacy, setPrivacy] = useState(Boolean(saved.wallet))
 
   const { data, isLoading, isError, error } = useWalletPositions(chain, query)
+  const { data: lidoData, isLoading: lidoLoading } = useLidoPosition(query)
+  const { data: aaveData, isLoading: aaveLoading } = useAavePosition(query)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const addr = wallet.trim()
     setQuery(addr)
+    // Appena inserisci un wallet i numeri partono nascosti.
+    if (addr) setPrivacy(true)
     localStorage.setItem(LS_KEY, JSON.stringify({ chain, wallet: addr }))
   }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-base)' }}>
       <SEO
-        title="Le Mie Posizioni LP"
-        description="Visualizza le tue posizioni di liquidità attive su Uniswap V3 e V4 con P&L in tempo reale, fee accumulate, impermanent loss e storico movimenti su Ethereum, Arbitrum, Base e Polygon."
+        title="Il Mio Portafoglio DeFi"
+        description="Visualizza in un'unica vista le tue posizioni LP su Uniswap V3/V4 e i fondi in staking su Lido. Fee accumulate, impermanent loss, rewards stETH e P&L in tempo reale — sola lettura, nessuna connessione richiesta."
       />
-      <div className="max-w-5xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Le mie posizioni</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Posizioni LP su Uniswap V3 e V4 per un indirizzo wallet (sola lettura, nessuna connessione richiesta).
-          </p>
+
+      <div className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-8 flex-1 flex flex-col gap-6 sm:gap-8">
+
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Il mio portafoglio DeFi</h1>
+            <p className="text-slate-500 text-sm mt-1 max-w-xl">
+              Posizioni LP Uniswap V3/V4 e staking Lido in un'unica vista — sola lettura, nessuna connessione richiesta.
+            </p>
+          </div>
+          {/* Protocol badges */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+              Uniswap V3/V4
+            </span>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-teal-600 border border-teal-200">
+              Lido stETH
+            </span>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200">
+              Aave V3
+            </span>
+          </div>
         </div>
 
-        {/* Search form */}
+        {/* ── Search form ─────────────────────────────────────────────────── */}
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
           <select
             value={chain}
@@ -451,131 +462,244 @@ export default function MyPositions() {
             ))}
           </select>
 
-          <input
-            type="text"
-            value={wallet}
-            onChange={(e) => setWallet(e.target.value)}
-            placeholder="0x... indirizzo wallet"
-            className="flex-1 min-w-0 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            spellCheck={false}
-          />
+          <div className="flex-1 min-w-0 relative">
+            <input
+              type="text"
+              value={wallet}
+              onChange={(e) => setWallet(e.target.value)}
+              placeholder="0x... indirizzo wallet Ethereum"
+              className={`w-full border border-slate-200 rounded-lg px-3 py-2 pr-10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-[filter] ${
+                privacy && wallet ? 'blur-[6px] select-none' : ''
+              }`}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={() => setPrivacy((p) => !p)}
+              title={privacy ? 'Mostra indirizzo wallet' : 'Nascondi indirizzo wallet'}
+              aria-label={privacy ? 'Mostra indirizzo wallet' : 'Nascondi indirizzo wallet'}
+              className="absolute inset-y-0 right-0 px-2.5 text-slate-400 hover:text-slate-700 transition-colors flex items-center"
+            >
+              {privacy ? <EyeSlashIcon size={18} weight="regular" /> : <EyeIcon size={18} weight="regular" />}
+            </button>
+          </div>
 
           <button
             type="submit"
             disabled={!/^0x[0-9a-fA-F]{40}$/.test(wallet.trim())}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
           >
             Cerca
           </button>
         </form>
 
-        {/* Results */}
-        {isLoading && (
-          <div className="text-slate-400 text-sm">Caricamento posizioni…</div>
-        )}
-
+        {/* ── Error ───────────────────────────────────────────────────────── */}
         {isError && (
           <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {error instanceof Error ? error.message : 'Errore nel caricamento delle posizioni.'}
           </div>
         )}
 
-        {data && (
-          <div className="space-y-4">
-            <SummaryBar
-              totalOpen={data.totalOpen}
-              totalClosed={data.totalClosed}
-              inRange={data.inRange}
-              outOfRange={data.outOfRange}
-              v3Count={data.v3Count}
-              v4Count={data.v4Count}
-              totalUncollectedFeesUSD={data.totalUncollectedFeesUSD}
-              totalCollectedFeesUSD={data.totalCollectedFeesUSD}
-              totalFeesUSD={data.totalFeesUSD}
-              positions={data.positions}
-            />
+        {/* ── Two-column layout ────────────────────────────────────────────
+            DOM order: Lido first (→ mobile top), Uniswap second.
+            On lg: Lido → col 2 sticky, Uniswap → col 1
+        ────────────────────────────────────────────────────────────────── */}
+        {query && (
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] lg:items-start gap-6">
 
-            {data.positions.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                Nessuna posizione trovata su {chain} per questo wallet.
+            {/* ── RIGHT: Lido + Aave (first in DOM = mobile top) ─────────── */}
+            <div className="lg:col-start-2 lg:row-start-1 space-y-6">
+
+              {/* Lido */}
+              <div>
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 inline-block" />
+                  Lido Staking
+                </h2>
+
+                {lidoLoading ? (
+                  <div className="rounded-xl border border-teal-100 p-5 animate-pulse space-y-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    <div className="h-4 rounded w-2/5 bg-teal-100" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-10 rounded bg-teal-50" />
+                      <div className="h-10 rounded bg-teal-50" />
+                    </div>
+                    <div className="h-24 rounded bg-teal-50" />
+                  </div>
+                ) : lidoData ? (
+                  <LidoCard position={lidoData} privacy={privacy} />
+                ) : (
+                  <div className="rounded-xl border border-teal-200 px-4 py-5 text-sm text-slate-400" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    Nessuna posizione Lido su questo wallet.
+                  </div>
+                )}
               </div>
-            ) : (() => {
-              const open   = data.positions.filter((p) => p.status !== 'closed')
-              const closed = data.positions.filter((p) => p.status === 'closed')
-              return (
-                <div className="space-y-6">
-                  {open.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                        Posizioni attive · {open.length}
-                      </h3>
-                      {open.map((p) => (
-                        <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
-                      ))}
-                    </div>
-                  )}
-                  {closed.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        Posizioni chiuse · {closed.length}
-                      </h3>
-                      {closed.map((p) => (
-                        <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
 
-            <p className="text-xs text-slate-400">
-              Dati da The Graph + on-chain (fee, amounts) · aggiornati al {new Date(data.lastUpdated).toLocaleTimeString('it-IT')}
+              {/* Aave */}
+              <div>
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
+                  Aave V3
+                </h2>
+
+                {aaveLoading ? (
+                  <div className="rounded-xl border border-violet-100 p-5 animate-pulse space-y-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    <div className="h-4 rounded w-2/5 bg-violet-100" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-10 rounded bg-violet-50" />
+                      <div className="h-10 rounded bg-violet-50" />
+                    </div>
+                    <div className="h-24 rounded bg-violet-50" />
+                  </div>
+                ) : aaveData ? (
+                  <AaveCard position={aaveData} privacy={privacy} />
+                ) : (
+                  <div className="rounded-xl border border-violet-200 px-4 py-5 text-sm text-slate-400" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    Nessuna posizione Aave V3 su questo wallet.
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* ── LEFT: Uniswap positions (second in DOM = mobile bottom) ── */}
+            <div className="lg:col-start-1 lg:row-start-1">
+              <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
+                Uniswap Liquidity
+              </h2>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="rounded-xl border border-slate-200 p-4 animate-pulse space-y-2" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                      <div className="h-4 rounded w-1/3 bg-slate-100" />
+                      <div className="h-3 rounded w-1/4 bg-slate-50" />
+                    </div>
+                  ))}
+                </div>
+              ) : data ? (
+                <div className="space-y-4">
+                  <SummaryBar
+                    totalOpen={data.totalOpen}
+                    totalClosed={data.totalClosed}
+                    inRange={data.inRange}
+                    outOfRange={data.outOfRange}
+                    v3Count={data.v3Count}
+                    v4Count={data.v4Count}
+                    totalUncollectedFeesUSD={data.totalUncollectedFeesUSD}
+                    totalCollectedFeesUSD={data.totalCollectedFeesUSD}
+                    totalFeesUSD={data.totalFeesUSD}
+                    positions={data.positions}
+                  />
+
+                  {data.positions.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 text-sm">
+                      Nessuna posizione trovata su {chain} per questo wallet.
+                    </div>
+                  ) : (() => {
+                    const open   = data.positions.filter((p) => p.status !== 'closed')
+                    const closed = data.positions.filter((p) => p.status === 'closed')
+                    return (
+                      <div className="space-y-6">
+                        {open.length > 0 && (
+                          <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                              Posizioni attive · {open.length}
+                            </h3>
+                            {open.map((p) => (
+                              <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
+                            ))}
+                          </div>
+                        )}
+                        {closed.length > 0 && (
+                          <details className="group rounded-xl border border-slate-100" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none">
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                Posizioni chiuse · {closed.length}
+                              </h3>
+                              <svg
+                                className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                              </svg>
+                            </summary>
+                            <div className="space-y-3 px-4 pb-4 pt-1">
+                              {closed.map((p) => (
+                                <PositionRow key={p.id} position={p} chain={chain} onAnalyze={(poolId) => onSelectPool(chain, poolId)} />
+                              ))}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  <p className="text-xs text-slate-400">
+                    Dati da The Graph + on-chain · aggiornati al {new Date(data.lastUpdated).toLocaleTimeString('it-IT')}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-slate-100 px-4 py-10 text-center text-slate-400 text-sm" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                  Inserisci un indirizzo wallet per vedere le posizioni.
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* Empty state before any search */}
+        {!query && (
+          <div className="rounded-xl border border-slate-100 px-6 py-16 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <div className="text-3xl mb-3">🔍</div>
+            <p className="text-slate-500 text-sm max-w-sm mx-auto">
+              Inserisci un indirizzo wallet Ethereum per visualizzare le posizioni LP su Uniswap e i fondi in staking su Lido.
             </p>
           </div>
         )}
+
       </div>
 
-      {/* SEO content */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 pb-12 sm:pb-16 w-full">
+      {/* ── SEO content ─────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 pb-12 sm:pb-16 w-full">
         <div className="border-t border-slate-200 pt-8 sm:pt-12 grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 text-sm text-slate-500 leading-relaxed">
           <div>
-            <h2 className="text-slate-700 font-semibold mb-3 text-base">Monitora le posizioni Uniswap V3 e V4</h2>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Portafoglio DeFi in un'unica vista</h2>
             <p className="mb-3">
-              Visualizza tutte le posizioni LP di un wallet su Uniswap V3 e V4 senza connettere il portafoglio.
-              Inserisci un indirizzo Ethereum, Arbitrum, Base o Polygon per vedere le posizioni aperte e chiuse,
-              il range di prezzo, la liquidità depositata e il <strong className="text-slate-600">controvalore in USD</strong> aggiornato in tempo reale.
+              Visualizza in parallelo le posizioni LP su <strong className="text-slate-600">Uniswap V3 e V4</strong> e i fondi
+              in staking su <strong className="text-slate-600">Lido</strong> senza connettere il portafoglio.
+              Inserisci un indirizzo Ethereum per vedere fee maturate, impermanent loss e reward stETH aggiornati in tempo reale.
             </p>
             <p>
-              A differenza di altri tracker, le <strong className="text-slate-600">fee maturate (uncollected)</strong> vengono
-              calcolate on-chain tramite la formula <code className="text-xs bg-slate-100 px-1 rounded">feeGrowthInside</code> del
+              La colonna sinistra mostra le posizioni LP con range, capitale depositato, fee da prelevare e P&amp;L vs HODL.
+              La colonna destra mostra il balance stETH/wstETH, l'APR corrente e lo storico reward giornaliero degli ultimi 30 giorni.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Come vengono calcolate le fee Uniswap</h2>
+            <p className="mb-3">
+              Le fee da prelevare vengono calcolate on-chain tramite la formula <code className="text-xs bg-slate-100 px-1 rounded">feeGrowthInside</code> del
               whitepaper Uniswap — non dal subgraph — garantendo dati accurati anche per posizioni V4 sul nuovo PoolManager.
             </p>
-          </div>
-          <div>
-            <h2 className="text-slate-700 font-semibold mb-3 text-base">Come vengono calcolate le fee</h2>
-            <p className="mb-3">
-              Le fee da prelevare (pending) sono la differenza tra il <em className="text-slate-600">feeGrowthInside</em> attuale
-              della pool e l'ultimo snapshot registrato nella posizione, moltiplicata per la liquidità.
-              Per le posizioni V3 il calcolo avviene leggendo il contratto <strong className="text-slate-600">NonfungiblePositionManager</strong>;
-              per V4 si legge lo storage interno del <strong className="text-slate-600">PoolManager</strong> tramite <code className="text-xs bg-slate-100 px-1 rounded">extsload</code>.
-            </p>
             <p>
-              Le fee ritirate (collected) provengono dallo storico registrato dal subgraph The Graph
-              e includono tutti i <code className="text-xs bg-slate-100 px-1 rounded">collect()</code> eseguiti dal wallet nel tempo.
+              Le fee ritirate provengono dallo storico The Graph e includono tutti i <code className="text-xs bg-slate-100 px-1 rounded">collect()</code> eseguiti dal wallet nel tempo.
             </p>
           </div>
           <div>
-            <h2 className="text-slate-700 font-semibold mb-3 text-base">Impermanent loss e capitale attuale</h2>
+            <h2 className="text-slate-700 font-semibold mb-3 text-base">Reward Lido e storico giornaliero</h2>
             <p className="mb-3">
-              Per ogni posizione aperta viene calcolato il <strong className="text-slate-600">capitale attuale</strong> in token
-              e in USD, derivato dalla liquidità e dal prezzo corrente della pool (formula V3 whitepaper §6.3).
-              L'<strong className="text-slate-600">impermanent loss</strong> confronta il valore attuale della posizione LP
-              con quello che avrebbe avuto facendo HODL dei token iniziali.
+              I dati Lido provengono direttamente dall'API ufficiale di <strong className="text-slate-600">stake.lido.fi</strong>.
+              Ogni riga della tabella reward mostra il cambio in stETH, il valore in dollari al prezzo storico di quel giorno, l'APR
+              e il balance cumulativo — identico a quanto visibile sul sito Lido.
             </p>
             <p>
-              Quando una posizione è completamente out-of-range, il capitale è interamente in un solo token:
-              100% token0 se il prezzo è sotto il range, 100% token1 se è sopra.
-              L'IL mostrato tiene conto di questa conversione forzata.
+              Il balance stETH viene letto on-chain via JSON-RPC. Il wstETH viene convertito in ETH equivalente usando
+              il tasso <code className="text-xs bg-slate-100 px-1 rounded">stEthPerToken()</code> del contratto wstETH.
             </p>
           </div>
           <div>
@@ -584,10 +708,9 @@ export default function MyPositions() {
               {[
                 ['Uniswap V3', 'posizioni lette dal subgraph, fee calcolate on-chain via NonfungiblePositionManager'],
                 ['Uniswap V4', 'posizioni ricostruite da eventi ModifyLiquidity, fee via PoolManager extsload'],
-                ['Ethereum', 'mainnet — pool con la TVL più alta'],
-                ['Arbitrum', 'solo V3 (subgraph V4 non ancora disponibile)'],
-                ['Base', 'V3 + V4, L2 di Coinbase'],
-                ['Polygon', 'V3 + V4, sidechain EVM'],
+                ['Lido stETH', 'balance on-chain Ethereum mainnet, reward da stake.lido.fi API'],
+                ['Ethereum', 'mainnet — supporta Uniswap V3/V4 + Lido'],
+                ['Arbitrum / Base / Polygon', 'Uniswap V3/V4 (Lido su Ethereum mainnet)'],
               ].map(([name, desc]) => (
                 <li key={name} className="flex gap-2">
                   <span className="text-indigo-400 mt-0.5 shrink-0">·</span>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult, WalletPositionsResponse } from '../types.ts'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult, WalletPositionsResponse, LidoPosition, AavePosition } from '../types.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -161,6 +161,28 @@ export function useWalletPositions(chain: string, walletAddress: string) {
     queryKey:  ['wallet-positions', chain, walletAddress],
     queryFn:   () => fetchJson(`${API}/wallet/${chain}/${walletAddress}/positions`),
     enabled:   !!chain && /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+// ── Lido Finance ──────────────────────────────────────────────────────────────
+
+export function useLidoPosition(walletAddress: string) {
+  return useQuery<LidoPosition>({
+    queryKey:  ['lido', walletAddress],
+    queryFn:   () => fetchJson(`${API}/lido/wallet/${walletAddress}`),
+    enabled:   /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+// ── Aave Finance ──────────────────────────────────────────────────────────────
+
+export function useAavePosition(walletAddress: string) {
+  return useQuery<AavePosition>({
+    queryKey:  ['aave', walletAddress],
+    queryFn:   () => fetchJson(`${API}/aave/wallet/${walletAddress}`),
+    enabled:   /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
     staleTime: 15 * 60 * 1000,
   })
 }

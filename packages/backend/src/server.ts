@@ -16,6 +16,8 @@ import analysisRouter from './routes/analysis.ts'
 import watchlistRouter  from './routes/watchlist.ts'
 import discoveryRouter  from './routes/discovery.ts'
 import walletRouter     from './routes/wallet.ts'
+import lidoRouter       from './routes/lido.ts'
+import aaveRouter       from './routes/aave.ts'
 
 const app  = express()
 const PORT = process.env.PORT ?? 3001
@@ -31,6 +33,8 @@ app.use('/api/analysis',  analysisRouter)
 app.use('/api/watchlist', watchlistRouter)
 app.use('/api/discover',  discoveryRouter)
 app.use('/api/wallet',    walletRouter)
+app.use('/api/lido',      lidoRouter)
+app.use('/api/aave',      aaveRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({
