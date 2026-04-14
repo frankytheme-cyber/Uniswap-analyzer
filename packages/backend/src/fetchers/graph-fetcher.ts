@@ -173,6 +173,7 @@ export interface ModifyLiquidityEvent {
   amount:    string   // liquidity delta (BigInt, negative for removes)
   amount0:   string   // token0 amount (BigDecimal)
   amount1:   string   // token1 amount (BigDecimal)
+  amountUSD: string   // historic USD value at event time (BigDecimal)
   timestamp: string
   origin:    string
 }
@@ -425,6 +426,7 @@ const GET_WALLET_MODIFY_LIQUIDITIES_V4 = gql`
       amount
       amount0
       amount1
+      amountUSD
       timestamp
       origin
     }
@@ -885,6 +887,8 @@ export class GraphFetcherV4 extends GraphFetcher {
         deposited1: number
         withdrawn0: number
         withdrawn1: number
+        depositUSD: number       // sum of amountUSD at mint-event time (historic)
+        withdrawnUSD: number     // sum of amountUSD at burn-event time (historic)
         firstTimestamp: string   // earliest event = opened
         lastTimestamp: string    // latest event (for closed = approx close date)
       }
@@ -901,17 +905,22 @@ export class GraphFetcherV4 extends GraphFetcher {
           deposited1:     0,
           withdrawn0:     0,
           withdrawn1:     0,
+          depositUSD:     0,
+          withdrawnUSD:   0,
           firstTimestamp: event.timestamp,
           lastTimestamp:  event.timestamp,
         }
         const delta = BigInt(event.amount)
+        const eventUSD = Math.abs(parseFloat(event.amountUSD ?? '0'))
         g.netLiquidity += delta
         if (delta > 0n) {
           g.deposited0 += Math.abs(parseFloat(event.amount0))
           g.deposited1 += Math.abs(parseFloat(event.amount1))
+          g.depositUSD += eventUSD
         } else {
           g.withdrawn0 += Math.abs(parseFloat(event.amount0))
           g.withdrawn1 += Math.abs(parseFloat(event.amount1))
+          g.withdrawnUSD += eventUSD
         }
         // Track first/last timestamps
         if (event.timestamp < g.firstTimestamp) g.firstTimestamp = event.timestamp
@@ -940,6 +949,8 @@ export class GraphFetcherV4 extends GraphFetcher {
             collectedFeesToken1: '0',
             openedAtTimestamp:   g.firstTimestamp,
             closedAtTimestamp:   !isOpen ? g.lastTimestamp : undefined,
+            historicDepositUSD:  g.depositUSD > 0 ? g.depositUSD : undefined,
+            historicWithdrawnUSD: g.withdrawnUSD > 0 ? g.withdrawnUSD : undefined,
           }
         })
     } catch (error) {

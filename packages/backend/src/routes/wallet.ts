@@ -225,6 +225,7 @@ function enrichPosition(
     tickUpper,
     priceLower:       priceAtTick(tickLower, dec0, dec1),
     priceUpper:       priceAtTick(tickUpper, dec0, dec1),
+    currentPrice,
     liquidity:        p.liquidity,
     inRange:          isOpen ? isInRange(p) : false,
     currentTick,
@@ -232,13 +233,16 @@ function enrichPosition(
     closedAt,
     openTxHash:       p.openTxHash ?? null,
     closeTxHash:      p.closeTxHash ?? null,
-    // Initial capital (use historic USD for closed positions — current prices are misleading)
+    // Initial capital: always prefer historic USD (value at the opening timestamp).
+    // Current-price fallback is only a last resort when the subgraph did not expose
+    // amountUSD on the mint / ModifyLiquidity event — it does NOT represent the
+    // deposited capital, it represents a HODL valuation at "now".
     depositedToken0:  initialToken0,
     depositedToken1:  initialToken1,
-    initialValueUSD:  !isOpen && p.historicDepositUSD ? p.historicDepositUSD : initialValueUSD,
+    initialValueUSD:  p.historicDepositUSD && p.historicDepositUSD > 0 ? p.historicDepositUSD : initialValueUSD,
     withdrawnToken0:  withdrawn0,
     withdrawnToken1:  withdrawn1,
-    withdrawnValueUSD: !isOpen && p.historicWithdrawnUSD !== undefined ? p.historicWithdrawnUSD : withdrawn0 * token0PriceUSD + withdrawn1 * token1PriceUSD,
+    withdrawnValueUSD: p.historicWithdrawnUSD && p.historicWithdrawnUSD > 0 ? p.historicWithdrawnUSD : withdrawn0 * token0PriceUSD + withdrawn1 * token1PriceUSD,
     // Current amounts (from liquidity + sqrtPrice)
     currentAmount0:   current.amount0,
     currentAmount1:   current.amount1,

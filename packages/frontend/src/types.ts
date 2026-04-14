@@ -142,6 +142,7 @@ export interface WalletPosition {
   tickUpper:        number
   priceLower:       number
   priceUpper:       number
+  currentPrice:     number
   liquidity:        string
   inRange:          boolean
   currentTick:      number

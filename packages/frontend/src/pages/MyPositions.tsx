@@ -148,6 +148,15 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
                 <span className="text-[11px] text-slate-400">Max</span>
                 <span className="font-mono text-xs text-slate-700">{formatPrice(position.priceUpper)}</span>
               </div>
+              {!isClosed && (
+                <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <span className="text-[11px] font-semibold text-indigo-500 shrink-0">Price</span>
+                  <span className="font-mono text-xs font-bold text-indigo-600 whitespace-nowrap truncate">
+                    {position.currentPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                    <span className="text-[10px] text-indigo-400 ml-1">{position.token1}</span>
+                  </span>
+                </div>
+              )}
             </div>
           </DataCell>
 
@@ -267,7 +276,7 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
         </div>
         <button
           onClick={() => onAnalyze(position.poolId)}
-          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors shrink-0 self-end sm:self-auto"
+          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors shrink-0 self-end sm:self-auto inline-flex items-center gap-1 whitespace-nowrap"
         >
           Analizza pool <ArrowRightIcon size={12} weight="bold" />
         </button>
@@ -502,14 +511,14 @@ export default function MyPositions() {
         )}
 
         {/* ── Two-column layout ────────────────────────────────────────────
-            DOM order: Lido first (→ mobile top), Uniswap second.
-            On lg: Lido → col 2 sticky, Uniswap → col 1
+            DOM order: Uniswap first (→ mobile top), Lido/Aave second (→ mobile bottom).
+            On lg: explicit col-start keeps Uniswap on col 1 and Lido/Aave on col 2.
         ────────────────────────────────────────────────────────────────── */}
         {query && (
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] lg:items-start gap-6">
 
-            {/* ── RIGHT: Lido + Aave (first in DOM = mobile top) ─────────── */}
-            <div className="lg:col-start-2 lg:row-start-1 space-y-6">
+            {/* ── RIGHT: Lido + Aave (second in DOM = mobile bottom) ─────── */}
+            <div className="lg:col-start-2 lg:row-start-1 space-y-6 order-2 lg:order-none">
 
               {/* Lido */}
               <div>
@@ -563,8 +572,8 @@ export default function MyPositions() {
 
             </div>
 
-            {/* ── LEFT: Uniswap positions (second in DOM = mobile bottom) ── */}
-            <div className="lg:col-start-1 lg:row-start-1">
+            {/* ── LEFT: Uniswap positions (first in DOM = mobile top) ────── */}
+            <div className="lg:col-start-1 lg:row-start-1 order-1 lg:order-none">
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
                 Uniswap Liquidity
