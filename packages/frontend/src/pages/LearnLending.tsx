@@ -96,18 +96,54 @@ export default function LearnLending() {
               un asset come collaterale e prendere in prestito un altro asset. Non c'è una controparte diretta:
               un algoritmo regola i tassi di interesse in tempo reale in base all'utilizzo del pool di liquidità.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-2">
+            <p className="text-slate-600 leading-relaxed mb-4">
               Il tasso di interesse non è fisso: cresce lentamente finché l'utilizzo è basso, poi sale
               <span className="text-slate-900 font-medium"> bruscamente</span> dopo una soglia chiamata{' '}
               <span className="text-amber-600 font-medium">kink</span> (tipicamente all'80%). Questo meccanismo incentiva
               i borrower a restituire il prestito e i lender a depositare di più quando la domanda è alta.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-6">
+            <p className="text-slate-600 leading-relaxed mb-4">
               Il parametro più critico è l'<span className="text-slate-900 font-medium">Health Factor</span>: un numero che
               misura la salute della tua posizione. Scende quando il valore del collaterale diminuisce o il debito aumenta.
-              Sotto <strong className="text-red-600">1.0</strong>, la posizione viene liquidata automaticamente da bot
-              che guadagnano un bonus del 5% sul collaterale. Usa il simulatore per capire quanto sei lontano dalla liquidazione.
             </p>
+
+            {/* Health Factor thresholds */}
+            <div className="card overflow-hidden mb-6">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Health Factor — zone di rischio</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Sopra <strong className="text-slate-800">1.5</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2.5 py-1">Prudente</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Tra <strong className="text-slate-800">1.0</strong> e <strong className="text-slate-800">1.2</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full px-2.5 py-1">Aggiungi collaterale</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-red-50 text-red-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Sotto <strong className="text-slate-800">1.0</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-full px-2.5 py-1">Liquidazione (bonus 5%)</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <div className="card p-4">
               <AaveLendingChart />
             </div>

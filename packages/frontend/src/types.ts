@@ -247,6 +247,26 @@ export interface AavePosition {
   lastUpdated:      string
 }
 
+// ── Wallet Tokens ─────────────────────────────────────────────────────────────
+
+export interface WalletToken {
+  symbol:     string
+  name:       string
+  address:    string      // contract address or 'native'
+  balance:    number
+  balanceUSD: number
+  priceUSD:   number
+  decimals:   number
+}
+
+export interface WalletTokensResponse {
+  walletAddress: string
+  chain:         string
+  tokens:        WalletToken[]
+  totalUSD:      number
+  lastUpdated:   string
+}
+
 // ── Backtesting ───────────────────────────────────────────────────────────────
 
 export interface BacktestResult {

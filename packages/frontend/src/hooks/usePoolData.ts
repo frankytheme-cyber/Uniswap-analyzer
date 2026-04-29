@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult, WalletPositionsResponse, LidoPosition, AavePosition } from '../types.ts'
+import type { PoolAnalysis, WatchlistEntry, DayData, Tick, RawPool, ILResult, StrategyAnalysis, ILPerStrategy, BacktestResult, DiscoveryResult, WalletPositionsResponse, LidoPosition, AavePosition, WalletTokensResponse } from '../types.ts'
 import { useWatchlistStore } from '../stores/watchlist-store.ts'
 
 const API = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
@@ -172,6 +172,17 @@ export function useLidoPosition(walletAddress: string) {
     queryKey:  ['lido', walletAddress],
     queryFn:   () => fetchJson(`${API}/lido/wallet/${walletAddress}`),
     enabled:   /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
+    staleTime: 15 * 60 * 1000,
+  })
+}
+
+// ── Wallet Tokens ─────────────────────────────────────────────────────────────
+
+export function useWalletTokens(chain: string, walletAddress: string) {
+  return useQuery<WalletTokensResponse>({
+    queryKey:  ['wallet-tokens', chain, walletAddress],
+    queryFn:   () => fetchJson(`${API}/wallet/${chain}/${walletAddress}/tokens`),
+    enabled:   !!chain && /^0x[0-9a-fA-F]{40}$/.test(walletAddress),
     staleTime: 15 * 60 * 1000,
   })
 }

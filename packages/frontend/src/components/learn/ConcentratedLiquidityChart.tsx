@@ -148,84 +148,115 @@ export default function ConcentratedLiquidityChart() {
         </p>
       </div>
 
-      {/* Efficiency table */}
-      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Efficienza del capitale — come si calcola</p>
-        <table className="w-full text-sm font-mono">
-          <thead>
-            <tr className="text-xs text-slate-400 uppercase">
-              <th className="text-left pb-2 pr-4 font-medium">Versione</th>
-              <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
-              <th className="text-left pb-2 font-medium">Profondità al prezzo corrente</th>
-            </tr>
-          </thead>
-          <tbody className="align-top">
-            <tr className="border-t border-slate-200">
-              <td className="py-2 pr-4 text-indigo-500 font-semibold whitespace-nowrap">V2 Full Range</td>
-              <td className="py-2 pr-4 text-slate-600">Liquidità distribuita da $0 a infinito. La maggior parte del capitale è lontana dal prezzo attuale e non lavora</td>
-              <td className="py-2 text-slate-700 font-semibold">100 unità</td>
-            </tr>
-            <tr className="border-t border-slate-200">
-              <td className="py-2 pr-4 text-emerald-600 font-semibold whitespace-nowrap">V3 ±{rangePct}%</td>
-              <td className="py-2 pr-4 text-slate-600">Stesso capitale concentrato nel range ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()}. Tutta la liquidità lavora vicino al prezzo corrente</td>
-              <td className="py-2 text-indigo-600 font-semibold">{peakConc} unità</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="mt-3 pt-3 border-t border-slate-200">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Calcolo step-by-step: da dove arriva {peakConc}?</p>
-          <table className="w-full text-sm font-mono">
-            <thead>
-              <tr className="text-xs text-slate-400 uppercase">
-                <th className="text-left pb-2 pr-4 font-medium">Step</th>
-                <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
-                <th className="text-left pb-2 font-medium">Calcolo</th>
-              </tr>
-            </thead>
-            <tbody className="align-top">
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Base V2</td>
-                <td className="py-2 pr-4 text-slate-600">In V2 la liquidità copre da $0 a infinito. Fissiamo la profondità al prezzo corrente come riferimento</td>
-                <td className="py-2 text-slate-700">
-                  <div>Profondità V2 = <span className="text-indigo-600 font-semibold">100 unità</span> (baseline)</div>
-                </td>
-              </tr>
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1</td>
-                <td className="py-2 pr-4 text-slate-600">Scegli un range V3 di ±{rangePct}% attorno al prezzo corrente ($2,000)</td>
-                <td className="py-2 text-slate-700">
-                  <div>Limite basso: $2,000 × (1 - {rangePct}/100) = <span className="font-semibold">${rangeMin.toLocaleString()}</span></div>
-                  <div>Limite alto: $2,000 × (1 + {rangePct}/100) = <span className="font-semibold">${rangeMax.toLocaleString()}</span></div>
-                </td>
-              </tr>
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
-                <td className="py-2 pr-4 text-slate-600">V3 concentra <strong>tutto</strong> il capitale in quel range. Meno tick da coprire = più liquidità per ogni tick</td>
-                <td className="py-2 text-slate-700">
-                  <div>Concentrazione = riferimento × (50 / range%)</div>
-                  <div>= 100 × (50 / {rangePct}) = 100 × {(50 / rangePct).toFixed(2)}</div>
-                  <div>= <span className="text-indigo-600 font-semibold">{peakConc} unità</span></div>
-                </td>
-              </tr>
-              <tr className="border-t border-slate-200 bg-slate-100/50">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Risultato</td>
-                <td className="py-2 pr-4 text-slate-600">Efficienza = quante volte più profonda è la liquidità V3 rispetto a V2</td>
-                <td className="py-2 text-slate-700">
-                  <div className="text-indigo-600 font-semibold">{peakConc} ÷ 100 = {efficiency}× più efficiente</div>
-                  <div className="text-emerald-600 font-semibold mt-1">Fee generate: {efficiency}× rispetto a V2</div>
-                  <div className="text-amber-600 font-semibold mt-1">Trade-off: fuori da ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()} → fee = 0</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      {/* Efficiency comparison */}
+      <div className="border border-slate-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Efficienza del capitale — confronto V2 vs V3</p>
         </div>
 
-        <p className="mt-3 text-xs text-slate-400 italic">
-          * Formula semplificata per scopi didattici. In V3, la liquidità è <strong className="text-slate-500">uniforme</strong> in tutto il range scelto (le barre verdi hanno la stessa altezza).
-          Il fattore 50 rappresenta un range V2 di riferimento: quando il range V3 è il 50% del totale (±50%), l'efficienza è 1× (uguale a V2).
-          Range più stretto → divisore più piccolo → efficienza più alta.
-        </p>
+        {/* V2 vs V3 rows */}
+        <div className="divide-y divide-slate-100">
+          <div className="px-4 py-3 flex items-start gap-3">
+            <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 font-mono text-[10px] font-bold shrink-0 mt-0.5">V2</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 mb-1">Liquidità distribuita da $0 a infinito — la maggior parte del capitale non lavora</p>
+              <p className="font-mono text-sm text-slate-700">Profondità al prezzo corrente: <span className="text-indigo-600 font-semibold">100 unità</span></p>
+            </div>
+          </div>
+          <div className="px-4 py-3 flex items-start gap-3">
+            <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-600 font-mono text-[10px] font-bold shrink-0 mt-0.5">V3</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 mb-1">Stesso capitale concentrato nel range ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()}</p>
+              <p className="font-mono text-sm text-slate-700">Profondità al prezzo corrente: <span className="text-emerald-600 font-semibold">{peakConc} unità</span></p>
+            </div>
+          </div>
+        </div>
+
+        {/* Step-by-step */}
+        <div className="border-t border-slate-200">
+          <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Step-by-step: da dove arriva {peakConc}?</p>
+          </div>
+
+          {/* Base V2 */}
+          <div className="px-4 py-3 border-b border-slate-100 bg-indigo-50/30">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 text-[10px] font-bold shrink-0 mt-0.5">REF</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1">In V2 la liquidità copre da $0 a infinito — fissiamo la profondità come riferimento</p>
+                <div className="bg-white border border-slate-200 rounded-md px-3 py-2 inline-block">
+                  <p className="font-mono text-sm text-slate-700">Profondità V2 = <span className="text-indigo-600 font-semibold">100 unità</span> <span className="text-slate-400 text-xs">(baseline)</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 1 */}
+          <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">1</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 mb-1">Scegli un range V3 di ±{rangePct}% attorno al prezzo corrente ($2,000)</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                  <p className="text-[10px] text-slate-400 uppercase">Limite basso</p>
+                  <p className="font-mono text-sm text-slate-700">$2,000 × (1 − {rangePct}/100) = <span className="font-semibold">${rangeMin.toLocaleString()}</span></p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                  <p className="text-[10px] text-slate-400 uppercase">Limite alto</p>
+                  <p className="font-mono text-sm text-slate-700">$2,000 × (1 + {rangePct}/100) = <span className="font-semibold">${rangeMax.toLocaleString()}</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="px-4 py-3 border-b border-slate-100 flex items-start gap-3">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">2</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 mb-1">V3 concentra <strong className="text-slate-700">tutto</strong> il capitale nel range — meno tick = più liquidità per tick</p>
+              <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                <p className="font-mono text-sm text-slate-700 leading-relaxed">
+                  Concentrazione = riferimento × (50 / range%)<br />
+                  = <span className="text-indigo-600">100</span> × (50 / <span className="text-emerald-600">{rangePct}</span>) = 100 × {(50 / rangePct).toFixed(2)}<br />
+                  = <span className="text-emerald-600 font-semibold">{peakConc} unità</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Risultato */}
+          <div className="px-4 py-3 bg-emerald-50/30">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-bold shrink-0 mt-0.5">✓</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-2">Risultato: quante volte più profonda è la liquidità V3 rispetto a V2</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2 text-center">
+                    <p className="text-[10px] text-slate-400 uppercase">Efficienza</p>
+                    <p className="font-mono text-lg font-bold text-indigo-600">{efficiency}×</p>
+                  </div>
+                  <div className="bg-white border border-emerald-200 rounded-md px-3 py-2 text-center">
+                    <p className="text-[10px] text-slate-400 uppercase">Fee generate</p>
+                    <p className="font-mono text-lg font-bold text-emerald-600">{efficiency}×</p>
+                    <p className="text-[10px] text-slate-400">rispetto a V2</p>
+                  </div>
+                  <div className="bg-white border border-amber-200 rounded-md px-3 py-2 text-center">
+                    <p className="text-[10px] text-slate-400 uppercase">Trade-off</p>
+                    <p className="font-mono text-xs font-semibold text-amber-600 mt-1">Fuori da ${rangeMin.toLocaleString()}–${rangeMax.toLocaleString()}</p>
+                    <p className="text-[10px] text-amber-500">fee = 0</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200">
+          <p className="text-xs text-slate-400 italic">
+            * Formula semplificata. In V3, la liquidità è <strong className="text-slate-500">uniforme</strong> nel range scelto.
+            Il fattore 50 è il riferimento V2: a ±50% l'efficienza è 1×. Range più stretto → efficienza più alta.
+          </p>
+        </div>
       </div>
 
       {/* Explanation cards */}

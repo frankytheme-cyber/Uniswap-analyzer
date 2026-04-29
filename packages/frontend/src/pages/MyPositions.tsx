@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
-import { useWalletPositions, useLidoPosition, useAavePosition } from '../hooks/usePoolData.ts'
+import { useWalletPositions, useLidoPosition, useAavePosition, useWalletTokens } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
 import type { Chain } from '../types.ts'
 import Footer   from '../components/Footer.tsx'
 import SEO      from '../components/SEO.tsx'
 import LidoCard from '../components/dashboard/LidoCard.tsx'
 import AaveCard from '../components/dashboard/AaveCard.tsx'
+import WalletTokensCard from '../components/dashboard/WalletTokensCard.tsx'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -416,8 +417,9 @@ export default function MyPositions() {
   const [privacy, setPrivacy] = useState(Boolean(saved.wallet))
 
   const { data, isLoading, isError, error } = useWalletPositions(chain, query)
-  const { data: lidoData, isLoading: lidoLoading } = useLidoPosition(query)
-  const { data: aaveData, isLoading: aaveLoading } = useAavePosition(query)
+  const { data: lidoData,   isLoading: lidoLoading   } = useLidoPosition(query)
+  const { data: aaveData,   isLoading: aaveLoading   } = useAavePosition(query)
+  const { data: tokensData, isLoading: tokensLoading } = useWalletTokens(chain, query)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -455,6 +457,9 @@ export default function MyPositions() {
             </span>
             <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200">
               Aave V3
+            </span>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              Token
             </span>
           </div>
         </div>
@@ -514,11 +519,92 @@ export default function MyPositions() {
             DOM order: Uniswap first (→ mobile top), Lido/Aave second (→ mobile bottom).
             On lg: explicit col-start keeps Uniswap on col 1 and Lido/Aave on col 2.
         ────────────────────────────────────────────────────────────────── */}
-        {query && (
+        {query && (() => {
+          // ── Portfolio total ──────────────────────────────────────────────
+          const lpUSD      = data
+            ? data.positions.filter((p) => p.status === 'open').reduce((s, p) => s + p.currentValueUSD + p.uncollectedFeesUSD, 0)
+            : 0
+          const lidoUSD    = lidoData?.totalUSD    ?? 0
+          const aaveUSD    = aaveData?.netWorthUSD ?? 0
+          const tokensUSD  = tokensData?.totalUSD  ?? 0
+          const grandTotal = lpUSD + lidoUSD + aaveUSD + tokensUSD
+
+          const anyLoaded  = !!(data || lidoData || aaveData || tokensData)
+          const allLoading = isLoading && lidoLoading && aaveLoading && tokensLoading
+
+          return (
+          <>
+          {/* ── Total portfolio card ──────────────────────────────────────── */}
+          {anyLoaded && !allLoading && grandTotal > 0 && (
+            <div className="rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-slate-50 px-4 sm:px-5 py-3 sm:py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Portafoglio totale</div>
+                  <div className={`text-2xl sm:text-3xl font-bold font-mono text-slate-900 mt-0.5 ${privacy ? 'blur-[6px] select-none' : ''}`}>
+                    {fmtUsd(grandTotal)}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
+                  {tokensUSD > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Token</div>
+                      <div className={`text-sm font-bold font-mono text-slate-700 ${privacy ? 'blur-[5px] select-none' : ''}`}>{fmtUsd(tokensUSD)}</div>
+                    </div>
+                  )}
+                  {lpUSD > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-indigo-500">Uniswap LP</div>
+                      <div className={`text-sm font-bold font-mono text-indigo-700 ${privacy ? 'blur-[5px] select-none' : ''}`}>{fmtUsd(lpUSD)}</div>
+                    </div>
+                  )}
+                  {lidoUSD > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-teal-600">Lido</div>
+                      <div className={`text-sm font-bold font-mono text-teal-700 ${privacy ? 'blur-[5px] select-none' : ''}`}>{fmtUsd(lidoUSD)}</div>
+                    </div>
+                  )}
+                  {aaveUSD > 0 && (
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-violet-600">Aave</div>
+                      <div className={`text-sm font-bold font-mono text-violet-700 ${privacy ? 'blur-[5px] select-none' : ''}`}>{fmtUsd(aaveUSD)}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] lg:items-start gap-6">
 
-            {/* ── RIGHT: Lido + Aave (second in DOM = mobile bottom) ─────── */}
+            {/* ── RIGHT: Tokens + Lido + Aave (second in DOM = mobile bottom) ─── */}
             <div className="lg:col-start-2 lg:row-start-1 space-y-6 order-2 lg:order-none">
+
+              {/* Wallet Tokens */}
+              <div>
+                <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
+                  Token nel wallet
+                </h2>
+
+                {tokensLoading ? (
+                  <div className="rounded-xl border border-slate-200 p-5 animate-pulse space-y-3" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    <div className="h-4 rounded w-2/5 bg-slate-100" />
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-slate-100" />
+                        <div className="flex-1 h-4 rounded bg-slate-100" />
+                        <div className="w-16 h-4 rounded bg-slate-100" />
+                      </div>
+                    ))}
+                  </div>
+                ) : tokensData ? (
+                  <WalletTokensCard data={tokensData} privacy={privacy} />
+                ) : (
+                  <div className="rounded-xl border border-slate-200 px-4 py-5 text-sm text-slate-400" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                    Nessun token trovato su questo wallet.
+                  </div>
+                )}
+              </div>
 
               {/* Lido */}
               <div>
@@ -660,7 +746,9 @@ export default function MyPositions() {
             </div>
 
           </div>
-        )}
+        </>
+        )
+        })()}
 
         {/* Empty state before any search */}
         {!query && (

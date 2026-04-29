@@ -106,13 +106,57 @@ export default function Learn() {
               <span className="text-slate-900 font-mono font-semibold"> x · y = k</span>. La formula considera il{' '}
               <em>numero di token</em>, non il loro valore in dollari.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-2">
-              Nella nostra pool: <strong className="text-slate-800">x</strong> = 100 ETH,{' '}
-              <strong className="text-slate-800">y</strong> = 200,000 USDC.
-              Quindi <span className="text-slate-900 font-mono">k = 100 × 200,000 = 20,000,000</span>.
-              Il prezzo di ETH si ricava dal rapporto:{' '}
-              <span className="text-slate-900 font-mono">P = y/x = 200,000/100 = 2,000 USDC</span>.
-            </p>
+            {/* Pool composition table */}
+            <div className="card overflow-hidden mb-2">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Composizione della Pool</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3 text-slate-500 w-16">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 font-mono font-semibold text-xs">x</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Riserva Token A <span className="text-slate-400 text-xs">(ETH)</span></td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-800">100 <span className="text-slate-400 font-normal text-xs">ETH</span></td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3 text-slate-500">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-blue-50 text-blue-600 font-mono font-semibold text-xs">y</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Riserva Token B <span className="text-slate-400 text-xs">(USDC)</span></td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-800">200,000 <span className="text-slate-400 font-normal text-xs">USDC</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Formula derivations */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+              <div className="card p-4">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Prodotto Costante</p>
+                <div className="font-mono text-sm text-slate-600 space-y-1 mb-3">
+                  <p><span className="text-amber-600 font-semibold">k</span> = <span className="text-indigo-600">x</span> × <span className="text-blue-600">y</span></p>
+                  <p><span className="text-amber-600 font-semibold">k</span> = <span className="text-indigo-600">100</span> × <span className="text-blue-600">200,000</span></p>
+                </div>
+                <div className="border-t border-slate-100 pt-3 flex items-baseline gap-2">
+                  <span className="font-mono text-xs text-amber-600 font-semibold">k =</span>
+                  <span className="font-mono text-lg font-bold text-amber-600">20,000,000</span>
+                </div>
+              </div>
+              <div className="card p-4">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Prezzo Derivato</p>
+                <div className="font-mono text-sm text-slate-600 space-y-1 mb-3">
+                  <p><span className="text-emerald-600 font-semibold">P</span> = <span className="text-blue-600">y</span> / <span className="text-indigo-600">x</span></p>
+                  <p><span className="text-emerald-600 font-semibold">P</span> = <span className="text-blue-600">200,000</span> / <span className="text-indigo-600">100</span></p>
+                </div>
+                <div className="border-t border-slate-100 pt-3 flex items-baseline gap-2">
+                  <span className="font-mono text-xs text-emerald-600 font-semibold">P =</span>
+                  <span className="font-mono text-lg font-bold text-emerald-600">2,000</span>
+                  <span className="text-xs text-slate-400">USDC / ETH</span>
+                </div>
+              </div>
+            </div>
             <p className="text-slate-600 leading-relaxed mb-6">
               Quando compri ETH, ne togli dalla pool → x diminuisce → y deve aumentare per mantenere k costante → il
               prezzo di ETH sale. Più grande è l'ordine rispetto alla liquidità, maggiore è il{' '}
@@ -144,18 +188,54 @@ export default function Learn() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[1]} />
-            <p className="text-slate-600 leading-relaxed mb-2">
-              In Uniswap V2, se depositi $400,000 nella pool ETH/USDC (200 ETH + 200,000 USDC), la liquidità è distribuita
+            <p className="text-slate-600 leading-relaxed mb-4">
+              In Uniswap V2, se depositi nella pool ETH/USDC, la liquidità è distribuita
               uniformemente su tutti i prezzi possibili, da $0 a infinito. La maggior parte del capitale è{' '}
               <span className="text-slate-900 font-medium">inattiva</span>: lavora solo la liquidità vicina al prezzo corrente.
+              In V3 puoi scegliere un <span className="text-slate-900 font-medium">range di prezzo</span> e concentrare il capitale dove serve.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-2">
-              In Uniswap V3 puoi scegliere un <span className="text-slate-900 font-medium">range di prezzo</span>:
-              ad esempio $1,600–$2,400 (±20% da $2,000). Tutta la tua liquidità è concentrata dove il prezzo scambia di più.
-            </p>
+
+            {/* V2 vs V3 comparison */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="card p-4 border-l-2 border-l-indigo-300">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Uniswap V2 — Full Range</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Deposito</span>
+                    <span className="font-mono font-semibold text-slate-800">$400,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Range</span>
+                    <span className="font-mono text-slate-600">$0 → ∞</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Capitale attivo</span>
+                    <span className="font-mono font-semibold text-red-500">~5%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-4 border-l-2 border-l-emerald-400">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Uniswap V3 — Concentrata</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Deposito</span>
+                    <span className="font-mono font-semibold text-slate-800">$400,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Range</span>
+                    <span className="font-mono text-slate-600">$1,600 → $2,400</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Capitale attivo</span>
+                    <span className="font-mono font-semibold text-emerald-600">~100%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p className="text-slate-600 leading-relaxed mb-6">
-              Risultato: la stessa quantità di capitale genera <span className="text-emerald-600 font-medium">molte più fee</span>{' '}
-              perché ogni swap trova più profondità nel range. Il trade-off: se ETH esce dal range, la posizione smette di guadagnare fee.
+              Stessa quantità di capitale, ma molte più fee perché ogni swap trova più profondità nel range.
+              Il trade-off: se ETH esce dal range, la posizione smette di guadagnare.
               Usa lo slider per vedere come la larghezza del range influenza l'efficienza.
             </p>
             <div className="card p-4">
@@ -177,15 +257,58 @@ export default function Learn() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[2]} />
-            <p className="text-slate-600 leading-relaxed mb-2">
-              Un trader vuole comprare $10,000 di ETH dalla pool. A $2,000/ETH dovrebbe ottenere 5 ETH a prezzo spot.
-              Ma l'ordine "consuma" liquidità dal prezzo corrente verso l'alto, spostando il prezzo durante l'esecuzione.
+            <p className="text-slate-600 leading-relaxed mb-4">
+              Un trader vuole comprare ETH dalla pool. L'ordine "consuma" liquidità dal prezzo corrente verso l'alto,
+              spostando il prezzo durante l'esecuzione. Più grande è l'ordine, più il prezzo si muove.
             </p>
+
+            {/* Trade example */}
+            <div className="card overflow-hidden mb-3">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Esempio: acquisto ETH</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-2.5 text-slate-500">Ordine</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-800">$10,000</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-2.5 text-slate-500">Prezzo spot</td>
+                    <td className="px-4 py-2.5 text-right font-mono text-slate-600">$2,000 / ETH</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 text-slate-500">ETH attesi (ideale)</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-indigo-600">5.000 ETH</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Fee tiers */}
+            <div className="card overflow-hidden mb-4">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Fee Tier disponibili</p>
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-slate-100">
+                <div className="px-4 py-3 text-center">
+                  <p className="font-mono text-lg font-bold text-emerald-600">0.05%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Stablecoin</p>
+                </div>
+                <div className="px-4 py-3 text-center bg-emerald-50/50">
+                  <p className="font-mono text-lg font-bold text-emerald-600">0.30%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Standard</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="font-mono text-lg font-bold text-emerald-600">1.00%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Exotic</p>
+                </div>
+              </div>
+            </div>
+
             <p className="text-slate-600 leading-relaxed mb-6">
-              Con una pool liquida e range concentrato, anche ordini grandi subiscono poco slippage. Con pool poco liquide,
-              il prezzo si sposta molto con ordini relativamente piccoli. Ogni swap paga una{' '}
-              <span className="text-emerald-600 font-medium">fee</span> (0.05%, 0.30% o 1.00%) che va direttamente agli LP
-              attivi nel range. Prova a cambiare la dimensione dell'ordine e il fee tier per vedere l'effetto.
+              La fee va direttamente agli LP attivi nel range.
+              Prova a cambiare la dimensione dell'ordine e il fee tier per vedere l'effetto.
             </p>
             <div className="card p-4">
               <PriceImpactChart />
@@ -206,17 +329,54 @@ export default function Learn() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[3]} />
-            <p className="text-slate-600 leading-relaxed mb-2">
+            <p className="text-slate-600 leading-relaxed mb-4">
               L'<span className="text-slate-900 font-medium">Impermanent Loss</span> (IL) è la perdita di valore che subisce un
-              LP rispetto al semplice HODL dei due token. Se depositi $200,000 nella pool ETH/USDC
-              (100 ETH a $2,000 + 100,000 USDC) e ETH sale del 25% a $2,500, l'AMM ribilancia automaticamente:
-              vendi ETH e compri USDC per mantenere il rapporto. Il risultato è che hai meno ETH di quanti ne avresti con un semplice HODL.
+              LP rispetto al semplice HODL dei due token. L'AMM ribilancia automaticamente la posizione:
+              vendi il token che sale e compri quello che scende. Vediamo un esempio concreto.
             </p>
+
+            {/* IL scenario: before → after */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="card p-4">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Deposito iniziale</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">ETH</span>
+                    <span className="font-mono font-semibold text-slate-800">100 <span className="text-slate-400 font-normal text-xs">@ $2,000</span></span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">USDC</span>
+                    <span className="font-mono font-semibold text-slate-800">100,000</span>
+                  </div>
+                  <div className="border-t border-slate-100 pt-2 flex justify-between">
+                    <span className="text-slate-500">Totale</span>
+                    <span className="font-mono font-bold text-slate-800">$300,000</span>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-4 border-l-2 border-l-red-300">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Dopo ETH +25% → $2,500</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">LP ha</span>
+                    <span className="font-mono text-slate-600">meno ETH, più USDC</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">HODL varrebbe</span>
+                    <span className="font-mono font-semibold text-emerald-600">$350,000</span>
+                  </div>
+                  <div className="border-t border-slate-100 pt-2 flex justify-between">
+                    <span className="text-slate-500">IL</span>
+                    <span className="font-mono font-bold text-red-500">−0.6%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p className="text-slate-600 leading-relaxed mb-6">
-              In V3 con range concentrato, l'IL è <span className="text-red-600 font-medium">amplificato</span> rispetto a V2:
-              range stretto = più fee ma anche più IL. La domanda chiave è:{' '}
-              <em className="text-slate-700">le fee coprono l'IL?</em> Usa il simulatore qui sotto per testare:
-              imposta il range e i prezzi di uscita, e guarda quanti giorni servono per recuperare la perdita con le fee.
+              In V3 con range concentrato, l'IL è <span className="text-red-600 font-medium">amplificato</span>:
+              range stretto = più fee ma anche più IL. La domanda chiave:{' '}
+              <em className="text-slate-700">le fee coprono l'IL?</em> Usa il simulatore per testare.
             </p>
             <div className="card p-4">
               <ILManualSimulator
@@ -235,17 +395,34 @@ export default function Learn() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[4]} />
-            <p className="text-slate-600 leading-relaxed mb-2">
+            <p className="text-slate-600 leading-relaxed mb-4">
               Quando ETH esce dal tuo range (es. sopra $2,200 con un range stretto ±10%), la posizione smette di guadagnare fee.
               Il <span className="text-slate-900 font-medium">ribilanciamento</span> significa chiudere la posizione e riaprirla
-              con un nuovo range attorno al prezzo attuale.
+              con un nuovo range attorno al prezzo attuale. Ma attenzione: il rebalancing ha un costo nascosto.
             </p>
+
+            {/* Rebalancing impact — Spinoglio 2024 */}
+            <div className="card overflow-hidden mb-4">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Impatto del rebalancing frequente <span className="normal-case text-slate-300">— Spinoglio 2024, ETH/USDC</span></p>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-slate-100">
+                <div className="px-4 py-4 text-center">
+                  <p className="text-xs text-slate-400 mb-1">Impermanent Loss</p>
+                  <p className="font-mono text-2xl font-bold text-red-500">5×</p>
+                  <p className="text-xs text-slate-400 mt-1">moltiplicato</p>
+                </div>
+                <div className="px-4 py-4 text-center">
+                  <p className="text-xs text-slate-400 mb-1">Fee guadagnate</p>
+                  <p className="font-mono text-2xl font-bold text-emerald-600">1.5×</p>
+                  <p className="text-xs text-slate-400 mt-1">moltiplicato</p>
+                </div>
+              </div>
+            </div>
+
             <p className="text-slate-600 leading-relaxed mb-6">
-              Ribilanciare troppo spesso <span className="text-red-600 font-medium">moltiplica l'IL</span> e aggiunge costi di
-              gas. Ricerche empiriche (Spinoglio 2024 su ETH/USDC Uniswap V3) mostrano che il rebalancing frequente moltiplica l'IL fino a{' '}
-              <strong className="text-slate-900">5×</strong> a fronte di un aumento delle fee di soli{' '}
-              <strong className="text-slate-900">1.5×</strong>. Nel grafico sotto, attiva le strategie per vedere dove ognuna esce dal range e
-              richiede un rebalancing.
+              Il trade-off è sfavorevole: l'IL cresce molto più delle fee.
+              Nel grafico sotto, attiva le strategie per vedere dove ognuna esce dal range e richiede un rebalancing.
             </p>
             <div className="card p-4">
               <RebalancingTimeline />
@@ -269,18 +446,54 @@ export default function Learn() {
               un asset come collaterale e prendere in prestito un altro asset. Non c'è una controparte diretta:
               un algoritmo regola i tassi di interesse in tempo reale in base all'utilizzo del pool di liquidità.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-2">
+            <p className="text-slate-600 leading-relaxed mb-4">
               Il tasso di interesse non è fisso: cresce lentamente finché l'utilizzo è basso, poi sale
               <span className="text-slate-900 font-medium"> bruscamente</span> dopo una soglia chiamata{' '}
               <span className="text-amber-600 font-medium">kink</span> (tipicamente all'80%). Questo meccanismo incentiva
               i borrower a restituire il prestito e i lender a depositare di più quando la domanda è alta.
             </p>
-            <p className="text-slate-600 leading-relaxed mb-6">
+            <p className="text-slate-600 leading-relaxed mb-4">
               Il parametro più critico è l'<span className="text-slate-900 font-medium">Health Factor</span>: un numero che
               misura la salute della tua posizione. Scende quando il valore del collaterale diminuisce o il debito aumenta.
-              Sotto <strong className="text-red-600">1.0</strong>, la posizione viene liquidata automaticamente da bot
-              che guadagnano un bonus del 5% sul collaterale. Usa il simulatore per capire quanto sei lontano dalla liquidazione.
             </p>
+
+            {/* Health Factor thresholds */}
+            <div className="card overflow-hidden mb-6">
+              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Health Factor — zone di rischio</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Sopra <strong className="text-slate-800">1.5</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2.5 py-1">Prudente</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Tra <strong className="text-slate-800">1.0</strong> e <strong className="text-slate-800">1.2</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full px-2.5 py-1">Aggiungi collaterale</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-red-50 text-red-600 font-mono font-semibold text-xs">HF</span>
+                    </td>
+                    <td className="py-3 text-slate-600">Sotto <strong className="text-slate-800">1.0</strong></td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-full px-2.5 py-1">Liquidazione (bonus 5%)</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <div className="card p-4">
               <AaveLendingChart />
             </div>

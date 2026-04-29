@@ -212,52 +212,110 @@ export default function LiquidityCurveChart() {
 
       {/* Reactive math walkthrough */}
       {tradeResult && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 overflow-x-auto">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Calcolo step-by-step: come funziona x · y = k</p>
-          <table className="w-full text-sm font-mono">
-            <thead>
-              <tr className="text-xs text-slate-400 uppercase">
-                <th className="text-left pb-2 pr-4 font-medium">Step</th>
-                <th className="text-left pb-2 pr-4 font-medium">Cosa succede</th>
-                <th className="text-left pb-2 font-medium">Calcolo</th>
-              </tr>
-            </thead>
-            <tbody className="align-top">
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Prima</td>
-                <td className="py-2 pr-4 text-slate-600">La pool contiene due token in equilibrio</td>
-                <td className="py-2 text-slate-700">
-                  <div>ETH = {fmtN(poolEth)} &nbsp; USDC = {fmtN(tradeResult.usdcInPool)}</div>
-                  <div>k = {fmtN(poolEth)} × {fmtN(tradeResult.usdcInPool)} = <span className="text-indigo-600 font-semibold">{fmtN(k)}</span></div>
-                  <div>Spot = {fmtN(tradeResult.usdcInPool)} ÷ {fmtN(poolEth)} = <span className="text-indigo-600 font-semibold">{fmtD(tradeResult.spotPrice)} USDC/ETH</span></div>
-                </td>
-              </tr>
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">1</td>
-                <td className="py-2 pr-4 text-slate-600">Togli {fmtN(effectiveDx)} ETH dalla pool</td>
-                <td className="py-2 text-slate-700">{fmtN(poolEth)} - {fmtN(effectiveDx)} = <span className="font-semibold">{fmtN(tradeResult.ethAfter)} ETH</span></td>
-              </tr>
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">2</td>
-                <td className="py-2 pr-4 text-slate-600">k resta costante, la pool ricalcola gli USDC</td>
-                <td className="py-2 text-slate-700">{fmtN(k)} ÷ {fmtN(tradeResult.ethAfter)} = <span className="font-semibold">{fmtN(tradeResult.usdcAfter)} USDC</span></td>
-              </tr>
-              <tr className="border-t border-slate-200">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">3</td>
-                <td className="py-2 pr-4 text-slate-600">Il trader paga la differenza in USDC</td>
-                <td className="py-2 text-indigo-600 font-semibold">{fmtN(tradeResult.usdcAfter)} - {fmtN(tradeResult.usdcInPool)} = {fmtN(tradeResult.usdcPaid)} USDC</td>
-              </tr>
-              <tr className="border-t border-slate-200 bg-slate-100/50">
-                <td className="py-2 pr-4 text-slate-400 font-semibold whitespace-nowrap">Dopo</td>
-                <td className="py-2 pr-4 text-slate-600">Il prezzo si è spostato</td>
-                <td className="py-2 text-slate-700">
-                  <div>Prezzo medio: {fmtN(tradeResult.usdcPaid)} ÷ {fmtN(effectiveDx)} = <span className="font-semibold">{fmtD(tradeResult.priceAvg)} USDC/ETH</span></div>
-                  <div className={tradeResult.impact > 5 ? 'text-amber-600 font-semibold' : 'text-indigo-600 font-semibold'}>Price impact: +{tradeResult.impact.toFixed(2)}%</div>
-                  <div>Nuovo spot: {fmtN(tradeResult.usdcAfter)} ÷ {fmtN(tradeResult.ethAfter)} = <span className="text-indigo-600 font-semibold">{fmtD(tradeResult.newSpotPrice)} USDC/ETH</span></div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Calcolo step-by-step: come funziona x · y = k</p>
+          </div>
+
+          {/* Step: Prima — stato iniziale */}
+          <div className="px-4 py-3 border-b border-slate-200 bg-indigo-50/30">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-600 text-[10px] font-bold shrink-0 mt-0.5">PRE</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-2">La pool contiene due token in equilibrio</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-slate-400 uppercase">Riserve</p>
+                    <p className="font-mono text-sm text-slate-700"><span className="text-indigo-600 font-semibold">{fmtN(poolEth)}</span> ETH + <span className="text-blue-600 font-semibold">{fmtN(tradeResult.usdcInPool)}</span> USDC</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-slate-400 uppercase">Costante k</p>
+                    <p className="font-mono text-sm"><span className="text-indigo-600">{fmtN(poolEth)}</span> × <span className="text-blue-600">{fmtN(tradeResult.usdcInPool)}</span> = <span className="text-amber-600 font-semibold">{fmtN(k)}</span></p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-slate-400 uppercase">Prezzo spot</p>
+                    <p className="font-mono text-sm"><span className="text-blue-600">{fmtN(tradeResult.usdcInPool)}</span> ÷ <span className="text-indigo-600">{fmtN(poolEth)}</span> = <span className="text-emerald-600 font-semibold">{fmtD(tradeResult.spotPrice)}</span> <span className="text-slate-400 text-xs">USDC/ETH</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Steps 1-2-3 */}
+          <div className="divide-y divide-slate-100">
+            <div className="px-4 py-3 flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">1</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1">Togli {fmtN(effectiveDx)} ETH dalla pool</p>
+                <p className="font-mono text-sm text-slate-700">
+                  <span className="text-indigo-600">{fmtN(poolEth)}</span> − {fmtN(effectiveDx)} = <span className="text-indigo-600 font-semibold">{fmtN(tradeResult.ethAfter)} ETH</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">2</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1"><span className="text-amber-600 font-medium">k</span> resta costante → la pool ricalcola gli USDC</p>
+                <p className="font-mono text-sm text-slate-700">
+                  <span className="text-amber-600">{fmtN(k)}</span> ÷ <span className="text-indigo-600">{fmtN(tradeResult.ethAfter)}</span> = <span className="text-blue-600 font-semibold">{fmtN(tradeResult.usdcAfter)} USDC</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">3</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1">Il trader paga la differenza in USDC</p>
+                <p className="font-mono text-sm text-indigo-600 font-semibold">
+                  {fmtN(tradeResult.usdcAfter)} − {fmtN(tradeResult.usdcInPool)} = {fmtN(tradeResult.usdcPaid)} USDC
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4: nuovo prezzo */}
+          <div className="divide-y divide-slate-100">
+            <div className="px-4 py-3 flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 text-slate-500 font-mono text-xs font-bold shrink-0 mt-0.5">4</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1">Il nuovo prezzo ETH si ricava dalle riserve aggiornate: <span className="text-emerald-600 font-medium">P = y / x</span></p>
+                <p className="font-mono text-sm text-slate-700">
+                  <span className="text-blue-600">{fmtN(tradeResult.usdcAfter)}</span> ÷ <span className="text-indigo-600">{fmtN(tradeResult.ethAfter)}</span> = <span className="text-emerald-600 font-semibold">{fmtD(tradeResult.newSpotPrice)} USDC/ETH</span>
+                  <span className="text-slate-400 ml-2 text-xs">(era {fmtD(tradeResult.spotPrice)})</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Step: Dopo — risultato */}
+          <div className="px-4 py-3 border-t border-slate-200 bg-amber-50/30">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold shrink-0 mt-0.5">POST</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-2">Riepilogo dello swap</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-slate-400 uppercase">Prezzo medio pagato</p>
+                    <p className="font-mono text-sm text-slate-700">
+                      {fmtN(tradeResult.usdcPaid)} ÷ {fmtN(effectiveDx)} = <span className="font-semibold">{fmtD(tradeResult.priceAvg)}</span> <span className="text-slate-400 text-xs">USDC/ETH</span>
+                    </p>
+                  </div>
+                  <div className={`border rounded-md px-3 py-2 ${tradeResult.impact > 5 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+                    <p className="text-[10px] text-slate-400 uppercase">Price impact</p>
+                    <p className={`font-mono text-sm font-semibold ${tradeResult.impact > 5 ? 'text-red-600' : 'text-amber-600'}`}>+{tradeResult.impact.toFixed(2)}%</p>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-slate-400 uppercase">Nuovo prezzo ETH</p>
+                    <p className="font-mono text-sm text-slate-700">
+                      <span className="text-emerald-600 font-semibold">{fmtD(tradeResult.newSpotPrice)}</span> <span className="text-slate-400 text-xs">USDC/ETH</span>
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">+{fmtD(tradeResult.newSpotPrice - tradeResult.spotPrice)} rispetto a prima</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

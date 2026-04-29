@@ -7,6 +7,7 @@ import {
   getUncollectedFeesBatchV4,
   resolveV4TokenIds,
 } from '../fetchers/onchain-fetcher.ts'
+import { getWalletTokens } from '../fetchers/wallet-tokens-fetcher.ts'
 
 const router = Router()
 
@@ -429,6 +430,37 @@ router.get('/:chain/:address/positions', async (req, res) => {
       totalFeesUSD,
       lastUpdated:  new Date().toISOString(),
     })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(JSON.stringify({ error: message, context, timestamp: new Date().toISOString() }))
+    res.status(500).json({ error: message })
+  }
+})
+
+// ── GET /api/wallet/:chain/:address/tokens ────────────────────────────────────
+// Returns native + ERC-20 token balances with USD values.
+
+router.get('/:chain/:address/tokens', async (req, res) => {
+  const { chain, address } = req.params
+  const context = { route: 'GET /wallet/:chain/:address/tokens', chain, address }
+
+  if (!SUPPORTED_CHAINS.includes(chain)) {
+    res.status(400).json({ error: `Unsupported chain: ${chain}. Supported: ${SUPPORTED_CHAINS.join(', ')}` })
+    return
+  }
+
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    res.status(400).json({ error: 'Invalid wallet address format (expected 0x + 40 hex chars)' })
+    return
+  }
+
+  try {
+    const result = await cache.get(
+      CACHE_KEYS.walletTokens(chain, address),
+      'POOL',
+      () => getWalletTokens(chain, address),
+    )
+    res.json(result)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error(JSON.stringify({ error: message, context, timestamp: new Date().toISOString() }))

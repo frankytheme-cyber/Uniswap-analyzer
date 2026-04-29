@@ -155,11 +155,42 @@ export default function LearnEthereum() {
               e l'utente paga una fee in ETH proporzionale al gas usato. Dal 2021, con l'aggiornamento{' '}
               <strong className="text-slate-800 dark:text-slate-100">EIP-1559</strong>, le fee funzionano così:
             </p>
-            <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 text-sm space-y-1 mb-2 ml-2">
-              <li><strong className="text-slate-800 dark:text-slate-100">Base fee</strong> — calcolata automaticamente dal protocollo. Sale se i blocchi sono pieni (&gt;50%), scende se sono vuoti.</li>
-              <li><strong className="text-slate-800 dark:text-slate-100">Priority fee</strong> (mancia) — pagata volontariamente per avere priorità nell'inclusione.</li>
-              <li><strong className="text-slate-800 dark:text-slate-100">Fee totale</strong> = base fee + priority fee. La base fee viene <span className="text-red-600 dark:text-red-400 font-medium">bruciata</span> (distrutta), rendendo ETH potenzialmente deflazionario.</li>
-            </ul>
+            {/* EIP-1559 fee breakdown */}
+            <div className="card overflow-hidden mb-2">
+              <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">EIP-1559 — struttura delle fee</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-3 w-32">
+                      <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-mono font-semibold text-xs">base fee</span>
+                    </td>
+                    <td className="py-3 text-slate-600 dark:text-slate-300">Calcolata dal protocollo. Sale se blocchi &gt;50% pieni, scende se vuoti.</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-full px-2.5 py-1">Bruciata</span>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-mono font-semibold text-xs">priority</span>
+                    </td>
+                    <td className="py-3 text-slate-600 dark:text-slate-300">Mancia volontaria per avere priorità nell'inclusione.</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 rounded-full px-2.5 py-1">Al validatore</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono font-semibold text-xs">totale</span>
+                    </td>
+                    <td className="py-3 text-slate-600 dark:text-slate-300" colSpan={2}>
+                      <span className="font-mono text-xs">base fee + priority fee</span> — la base fee bruciata rende ETH potenzialmente <span className="text-slate-800 dark:text-slate-100 font-medium">deflazionario</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
               Il grafico simula come la base fee si adatta alla domanda: prova ad alzare il livello di utilizzo dei blocchi e osserva la fee crescere.
             </p>
@@ -188,29 +219,50 @@ export default function LearnEthereum() {
             className="scroll-mt-20"
           >
             <ChapterHeader ch={chapters[1]} />
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
               Il <strong className="text-slate-800 dark:text-slate-100">Proof of Stake</strong> (PoS) è un meccanismo di consenso
               alternativo al PoW. Invece di consumare energia per trovare un hash, i partecipanti bloccano ("stakano")
-              ETH come garanzia. In Ethereum servono almeno{' '}
-              <strong className="text-slate-800 dark:text-slate-100">32 ETH</strong> per diventare un validatore.
+              ETH come garanzia. Il protocollo seleziona casualmente un validatore per proporre ogni blocco.
             </p>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-              Ogni 12 secondi (uno <em>slot</em>), il protocollo seleziona casualmente un validatore come{' '}
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">block proposer</span>: chi propone il blocco.
-              La probabilità di essere scelti è proporzionale allo stake. Gli altri validatori{' '}
-              <span className="text-blue-600 dark:text-blue-400 font-medium">attestano</span> (votano) la validità del blocco.
-              Dopo 2 epoche (64 slot, ~12.8 minuti), il blocco raggiunge la <em>finalità</em>: non può più essere modificato.
-            </p>
+
+            {/* PoS key parameters */}
+            <div className="card overflow-hidden mb-4">
+              <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Parametri chiave del PoS Ethereum</p>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Stake minimo</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-800 dark:text-slate-100">32 <span className="text-slate-400 font-normal text-xs">ETH</span></td>
+                  </tr>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Tempo per slot</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-800 dark:text-slate-100">12 <span className="text-slate-400 font-normal text-xs">secondi</span></td>
+                  </tr>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Finalità</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-800 dark:text-slate-100">2 epoche <span className="text-slate-400 font-normal text-xs">(~12.8 min)</span></td>
+                  </tr>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">Soglia attacco</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-red-500 dark:text-red-400">33% <span className="text-slate-400 font-normal text-xs">dello stake (~$30B)</span></td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">The Merge</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-emerald-600 dark:text-emerald-400">15 set 2022 <span className="text-slate-400 font-normal text-xs">(−99.95% energia)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
               La sicurezza è garantita dallo <span className="text-red-600 dark:text-red-400 font-medium">slashing</span>:
-              se un validatore si comporta in modo disonesto (firma due blocchi diversi per lo stesso slot, o attesta
-              dati contraddittori), il protocollo gli confisca parte dello stake. Un attaccante dovrebbe controllare
-              oltre il 33% di tutto l'ETH in staking — attualmente oltre <strong className="text-slate-800 dark:text-slate-100">$30 miliardi</strong>.
+              se un validatore si comporta in modo disonesto, il protocollo gli confisca parte dello stake.
+              La probabilità di proporre un blocco è proporzionale all'ETH stakato.
             </p>
             <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              Ethereum è passata da PoW a PoS il 15 settembre 2022 con <strong className="text-slate-800 dark:text-slate-100">"The Merge"</strong>,
-              eliminando il mining e riducendo il consumo energetico del 99.95%.
-              Usa il confronto e il simulatore per esplorare le differenze.
+              Usa il confronto e il simulatore qui sotto per esplorare le differenze tra PoW e PoS.
             </p>
             <div className="card p-4">
               <ConsensusComparisonChart />
