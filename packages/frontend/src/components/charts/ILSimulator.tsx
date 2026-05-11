@@ -31,6 +31,9 @@ function formatRange(min: number, max: number): string {
   return `[${minStr}, ${maxStr}]`
 }
 
+type HorizonDays = 30 | 60 | 90
+const HORIZONS: HorizonDays[] = [30, 60, 90]
+
 export default function ILSimulator({
   strategies,
   selectedStrategyId,
@@ -40,6 +43,7 @@ export default function ILSimulator({
   token1 = 'token1',
 }: Props) {
   const [showAll, setShowAll] = useState(false)
+  const [horizonDays, setHorizonDays] = useState<HorizonDays>(30)
 
   if (strategies.length === 0) {
     return (
@@ -51,6 +55,10 @@ export default function ILSimulator({
 
   const selected = strategies.find((s) => s.strategyId === selectedStrategyId) ?? strategies[0]
 
+  // Net Return = IL + fees accumulate. Fee = 0 quando il prezzo è fuori range (V3 concentrato).
+  const feesEarnedPercent = (inRange: boolean) =>
+    inRange ? selected.currentFeeAPR * (horizonDays / 365) : 0
+
   const chartData = strategies[0].points.map((p, i) => {
     const row: Record<string, number | string> = {
       xLabel: fmtPct(p.priceChangePercent),
@@ -59,6 +67,8 @@ export default function ILSimulator({
       row[s.strategyId + '_il']   = s.points[i].ilPercent
       row[s.strategyId + '_days'] = s.points[i].feeOffsetDays === -1 ? 0 : s.points[i].feeOffsetDays
     }
+    const selPoint = selected.points[i]
+    row['net_return'] = parseFloat((selPoint.ilPercent + feesEarnedPercent(selPoint.inRange)).toFixed(2))
     return row
   })
 
@@ -76,17 +86,33 @@ export default function ILSimulator({
     <div className="space-y-5">
       {/* Intestazione + toggle */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-sm font-medium text-slate-600">Curva Impermanent Loss per Strategia</h3>
-        <button
-          onClick={() => setShowAll((v) => !v)}
-          className={`text-xs px-3 py-1 rounded border transition-colors ${
-            showAll
-              ? 'bg-indigo-50 border-indigo-300 text-indigo-600'
-              : 'border-slate-200 text-slate-400 hover:border-slate-400 hover:text-slate-600'
-          }`}
-        >
-          {showAll ? '▤ Tutte sovrapposte' : '— Solo selezionata'}
-        </button>
+        <h3 className="text-sm font-medium text-slate-600">Curva IL + Net Return per Strategia</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-slate-400">Orizzonte fee:</span>
+          {HORIZONS.map((d) => (
+            <button
+              key={d}
+              onClick={() => setHorizonDays(d)}
+              className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                horizonDays === d
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                  : 'border-slate-200 text-slate-400 hover:border-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {d}gg
+            </button>
+          ))}
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className={`text-xs px-3 py-1 rounded border transition-colors ${
+              showAll
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-600'
+                : 'border-slate-200 text-slate-400 hover:border-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {showAll ? '▤ Tutte sovrapposte' : '— Solo selezionata'}
+          </button>
+        </div>
       </div>
 
       {/* Selettore strategia */}
@@ -108,6 +134,25 @@ export default function ILSimulator({
             <span className="text-slate-400 ml-0.5 font-mono">{formatRange(s.rangeMinPercent, s.rangeMaxPercent)}</span>
           </button>
         ))}
+      </div>
+
+      {/* Legenda curve */}
+      <div className="flex items-center gap-4 flex-wrap text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5" style={{ backgroundColor: STRATEGY_COLORS[selected.strategyId] }} />
+          <span className="text-slate-600">IL puro</span>
+          <span className="text-slate-400">(perdita vs HODL)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5 bg-emerald-500" />
+          <span className="text-slate-600">Net Return {horizonDays}gg</span>
+          <span className="text-slate-400">(IL + fee accumulate)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 border-t-2 border-dashed border-blue-400" />
+          <span className="text-slate-600">Recovery</span>
+          <span className="text-slate-400">(gg per pareggiare IL, asse dx)</span>
+        </div>
       </div>
 
       {/* Grafico */}
@@ -160,6 +205,9 @@ export default function ILSimulator({
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8 }}
             labelStyle={{ color: '#64748b', fontSize: 11 }}
             formatter={(value: number, name: string) => {
+              if (name === 'net_return') {
+                return [`${value.toFixed(2)}%`, `Net Return ${horizonDays}gg — ${selected.strategyName}`]
+              }
               if ((name as string).endsWith('_il')) {
                 const id = (name as string).replace('_il', '')
                 const s = strategies.find((x) => x.strategyId === id)
@@ -171,6 +219,9 @@ export default function ILSimulator({
 
           <Legend
             formatter={(value) => {
+              if (value === 'net_return') {
+                return <span style={{ color: '#10b981', fontSize: 10 }}>Net Return {horizonDays}gg</span>
+              }
               const id = (value as string).replace(/_il$/, '').replace(/_days$/, '')
               const s = strategies.find((x) => x.strategyId === id)
               return <span style={{ color: '#64748b', fontSize: 10 }}>{s?.strategyName ?? id}</span>
@@ -192,6 +243,16 @@ export default function ILSimulator({
           ))}
 
           <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="net_return"
+            stroke="#10b981"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, fill: '#10b981' }}
+          />
+
+          <Line
             yAxisId="right"
             type="monotone"
             dataKey={selected.strategyId + '_days'}
@@ -206,26 +267,74 @@ export default function ILSimulator({
       </ResponsiveContainer>
 
       {/* Info sintetica strategia selezionata */}
-      <div className="grid grid-cols-3 gap-3 border-t border-slate-200 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border-t border-slate-200 pt-4">
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
           <p className="text-xs text-slate-400 mb-1">Range</p>
           <p className="text-sm font-medium text-slate-800 font-mono">
             {formatRange(selected.rangeMinPercent, selected.rangeMaxPercent)}
           </p>
+          <p className="text-xs text-slate-400 mt-1.5">
+            Fee APR <span className="text-emerald-600 font-semibold">{selected.currentFeeAPR.toFixed(1)}%</span>
+          </p>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <p className="text-xs text-slate-400 mb-1">Fee APR corrente</p>
-          <p className="text-sm font-bold text-emerald-600">{selected.currentFeeAPR.toFixed(1)}%</p>
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <p className="text-xs text-slate-400 mb-1">IL a ±10%</p>
-          {(() => {
-            const pt = selected.points.find((p) => Math.abs(p.priceMultiplier - 1.1) < 0.01)
-            return pt
-              ? <p className="text-sm font-bold text-red-500">{pt.ilPercent.toFixed(2)}%</p>
-              : <p className="text-sm text-slate-400">N/D</p>
-          })()}
-        </div>
+
+        {/* Card breakdown a +10% */}
+        {(() => {
+          const pt = selected.points.find((p) => Math.abs(p.priceMultiplier - 1.1) < 0.01)
+          if (!pt) return <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-400">N/D</div>
+          const fee = pt.inRange ? selected.currentFeeAPR * (horizonDays / 365) : 0
+          const net = pt.ilPercent + fee
+          return (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-2">Scenario prezzo +10% ({horizonDays}gg)</p>
+              <div className="space-y-1 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">IL</span>
+                  <span className="text-red-500 font-semibold">{pt.ilPercent.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Fee {pt.inRange ? '' : '(fuori range)'}</span>
+                  <span className="text-emerald-600 font-semibold">+{fee.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-300 pt-1 mt-1">
+                  <span className="text-slate-700 font-semibold">Net Return</span>
+                  <span className={`font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {net >= 0 ? '+' : ''}{net.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Card breakdown a -10% */}
+        {(() => {
+          const pt = selected.points.find((p) => Math.abs(p.priceMultiplier - 0.9) < 0.01)
+          if (!pt) return <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-400">N/D</div>
+          const fee = pt.inRange ? selected.currentFeeAPR * (horizonDays / 365) : 0
+          const net = pt.ilPercent + fee
+          return (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-2">Scenario prezzo −10% ({horizonDays}gg)</p>
+              <div className="space-y-1 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">IL</span>
+                  <span className="text-red-500 font-semibold">{pt.ilPercent.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Fee {pt.inRange ? '' : '(fuori range)'}</span>
+                  <span className="text-emerald-600 font-semibold">+{fee.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-300 pt-1 mt-1">
+                  <span className="text-slate-700 font-semibold">Net Return</span>
+                  <span className={`font-bold ${net >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {net >= 0 ? '+' : ''}{net.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {currentPrice && (

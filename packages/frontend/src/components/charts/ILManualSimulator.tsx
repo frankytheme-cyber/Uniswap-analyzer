@@ -104,6 +104,9 @@ function PriceInput({
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+type HorizonDays = 30 | 60 | 90
+const HORIZONS: HorizonDays[] = [30, 60, 90]
+
 export default function ILManualSimulator({
   initialFeeAPR = 0,
   currentPrice,
@@ -113,6 +116,7 @@ export default function ILManualSimulator({
   const [rangeMin, setRangeMin] = useState(-20)
   const [rangeMax, setRangeMax] = useState(20)
   const [feeAPR,   setFeeAPR]   = useState(initialFeeAPR)
+  const [horizonDays, setHorizonDays] = useState<HorizonDays>(30)
 
   const [token0EntryUSD, setToken0EntryUSD] = useState(currentPrice ?? 0)
   const [token1EntryUSD, setToken1EntryUSD] = useState(1)
@@ -171,15 +175,18 @@ export default function ILManualSimulator({
       const feeOffsetDays = dailyFee > 0 && ilPercent < 0
         ? parseFloat((Math.abs(ilPercent) / dailyFee).toFixed(1))
         : null
+      const feesEarned = inRange ? feeAPR * (horizonDays / 365) : 0
+      const netReturnPercent = parseFloat((ilPercent + feesEarned).toFixed(2))
       return {
         r: mult,
         xLabel:       `${((mult - 1) * 100).toFixed(0)}%`,
         ilPercent,
+        netReturnPercent,
         feeOffsetDays,
         inRange,
       }
     })
-  }, [rangeMin, rangeMax, feeAPR])
+  }, [rangeMin, rangeMax, feeAPR, horizonDays])
 
   const simResult  = useMemo(() => calcV3IL(r, rangeMin, rangeMax), [r, rangeMin, rangeMax])
   const simIL      = simResult.ilPercent
@@ -187,6 +194,8 @@ export default function ILManualSimulator({
   const simFeeOffset = simDailyFee > 0 && simIL < 0
     ? Math.abs(simIL) / simDailyFee
     : null
+  const simFeesEarned = simResult.inRange ? feeAPR * (horizonDays / 365) : 0
+  const simNetReturn = parseFloat((simIL + simFeesEarned).toFixed(2))
 
   const priceMin    = rangeMin <= -99 ? null : (1 + rangeMin / 100)
   const priceMax    = rangeMax >= 899 ? null : (1 + rangeMax / 100)
@@ -275,7 +284,7 @@ export default function ILManualSimulator({
         </div>
       </div>
 
-      {/* ── Fee APR ──────────────────────────────────────────────────────────── */}
+      {/* ── Fee APR + Orizzonte ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div>
           <p className="text-xs text-slate-500 mb-1.5">Fee APR (%)</p>
@@ -288,10 +297,47 @@ export default function ILManualSimulator({
           />
         </div>
         <div>
+          <p className="text-xs text-slate-500 mb-1.5">Orizzonte fee</p>
+          <div className="flex gap-1">
+            {HORIZONS.map((d) => (
+              <button
+                key={d}
+                onClick={() => setHorizonDays(d)}
+                className={`flex-1 text-xs px-2 py-1.5 rounded border transition-colors ${
+                  horizonDays === d
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                    : 'border-slate-200 text-slate-400 hover:border-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {d}gg
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
           <p className="text-xs text-slate-500 mb-1.5">Range impostato</p>
           <div className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 text-sm font-mono text-slate-700">
             {rangeMin}% / +{rangeMax}%
           </div>
+        </div>
+      </div>
+
+      {/* ── Legenda curve ────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-4 flex-wrap text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5 bg-red-500" />
+          <span className="text-slate-600">IL puro</span>
+          <span className="text-slate-400">(perdita vs HODL)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5 bg-emerald-500" />
+          <span className="text-slate-600">Net Return {horizonDays}gg</span>
+          <span className="text-slate-400">(IL + fee accumulate)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-4 border-t-2 border-dashed border-blue-400" />
+          <span className="text-slate-600">Recovery</span>
+          <span className="text-slate-400">(gg per pareggiare IL)</span>
         </div>
       </div>
 
@@ -355,8 +401,9 @@ export default function ILManualSimulator({
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 8 }}
             labelStyle={{ color: '#64748b', fontSize: 11 }}
             formatter={(value: number, name: string) => {
-              if (name === 'ilPercent')     return [`${value.toFixed(2)}%`, 'Impermanent Loss']
-              if (name === 'feeOffsetDays') return [`${value?.toFixed(0) ?? '—'} giorni`, 'Fee per coprire IL']
+              if (name === 'ilPercent')        return [`${value.toFixed(2)}%`, 'Impermanent Loss']
+              if (name === 'netReturnPercent') return [`${value.toFixed(2)}%`, `Net Return ${horizonDays}gg`]
+              if (name === 'feeOffsetDays')    return [`${value?.toFixed(0) ?? '—'} giorni`, 'Fee per coprire IL']
               return [value, name]
             }}
           />
@@ -366,6 +413,12 @@ export default function ILManualSimulator({
             type="monotone" dataKey="ilPercent"
             stroke="#ef4444" strokeWidth={2.5}
             dot={false} activeDot={{ r: 4, fill: '#ef4444' }}
+          />
+          <Line
+            yAxisId="left"
+            type="monotone" dataKey="netReturnPercent"
+            stroke="#10b981" strokeWidth={2}
+            dot={false} activeDot={{ r: 4, fill: '#10b981' }}
           />
           <Line
             yAxisId="right"
@@ -481,10 +534,12 @@ export default function ILManualSimulator({
           color={simIL < -5 ? 'text-red-500' : simIL < -1 ? 'text-amber-500' : 'text-slate-600'}
         />
         <MetricCard
-          label="Giorni per coprire IL"
-          value={simFeeOffset != null ? `${simFeeOffset.toFixed(0)} gg` : feeAPR <= 0 ? 'N/D' : '0 gg'}
-          sub={feeAPR > 0 ? `APR ${feeAPR.toFixed(1)}%` : 'imposta Fee APR'}
-          color="text-blue-500"
+          label={`Net Return ${horizonDays}gg`}
+          value={`${simNetReturn >= 0 ? '+' : ''}${simNetReturn.toFixed(2)}%`}
+          sub={feeAPR > 0
+            ? `IL ${simIL.toFixed(2)}% + fee ${simFeesEarned.toFixed(2)}%`
+            : 'imposta Fee APR'}
+          color={simNetReturn >= 0 ? 'text-emerald-600' : 'text-red-500'}
         />
         <MetricCard
           label="Composizione posizione"
@@ -549,7 +604,22 @@ export default function ILManualSimulator({
                 {simIL.toFixed(2)}% {simResult.inRange ? '' : '(fuori range)'}
               </td>
             </tr>
+            <tr className="border-t border-slate-200">
+              <td className="py-2 pr-4 text-emerald-600 font-semibold whitespace-nowrap">Fee accumulate</td>
+              <td className="py-2 pr-4 text-slate-600">Fee guadagnate nell'orizzonte (azzerate fuori range)</td>
+              <td className="py-2 font-mono font-semibold text-emerald-600">
+                +{simFeesEarned.toFixed(2)}% <span className="text-slate-400 font-normal">in {horizonDays}gg @ APR {feeAPR.toFixed(1)}%</span>
+              </td>
+            </tr>
             <tr className="border-t border-slate-200 bg-slate-100/50">
+              <td className={`py-2 pr-4 font-semibold whitespace-nowrap ${simNetReturn >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>Net Return</td>
+              <td className="py-2 pr-4 text-slate-600">Risultato finale = IL + fee accumulate</td>
+              <td className={`py-2 font-mono font-semibold ${simNetReturn >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                {simNetReturn >= 0 ? '+' : ''}{simNetReturn.toFixed(2)}%
+                <span className="text-slate-400 font-normal"> ({horizonDays}gg)</span>
+              </td>
+            </tr>
+            <tr className="border-t border-slate-200">
               <td className="py-2 pr-4 text-blue-500 font-semibold whitespace-nowrap">Recovery</td>
               <td className="py-2 pr-4 text-slate-600">Giorni di fee necessari per compensare l'IL</td>
               <td className="py-2 font-mono font-semibold text-blue-600">
@@ -566,8 +636,13 @@ export default function ILManualSimulator({
 
       {/* ── Punti chiave ─────────────────────────────────────────────────────── */}
       <div className="border-t border-slate-200 pt-4">
-        <p className="text-xs text-slate-400 mb-3">IL ai movimenti chiave del ratio pool</p>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <p className="text-xs text-slate-400 mb-3">
+          Breakdown ai movimenti chiave —{' '}
+          <span className="text-red-500">IL</span> +{' '}
+          <span className="text-emerald-600">Fee {horizonDays}gg</span> ={' '}
+          <span className="text-slate-700 font-semibold">Net</span>
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {[
             { label: '−25%', r: 0.75 },
             { label: '−10%', r: 0.90 },
@@ -577,15 +652,25 @@ export default function ILManualSimulator({
             { label: '+100%', r: 2.00 },
           ].map(({ label, r: rp }) => {
             const { ilPercent, inRange } = calcV3IL(rp, rangeMin, rangeMax)
+            const fee = inRange ? feeAPR * (horizonDays / 365) : 0
+            const net = ilPercent + fee
             return (
-              <div key={label} className="bg-slate-50 border border-slate-200 rounded p-2 text-center">
-                <p className="text-xs text-slate-400 mb-0.5">{label}</p>
-                <p className={`text-sm font-bold ${ilPercent < -5 ? 'text-red-500' : ilPercent < -1 ? 'text-amber-500' : 'text-slate-600'}`}>
-                  {ilPercent.toFixed(1)}%
-                </p>
-                {!inRange && (
-                  <p className="text-xs text-slate-300 mt-0.5">out</p>
-                )}
+              <div key={label} className="bg-slate-50 border border-slate-200 rounded p-2">
+                <p className="text-xs text-slate-400 mb-1 text-center">{label}{!inRange && <span className="text-slate-300 ml-1">out</span>}</p>
+                <div className="space-y-0.5 text-xs font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">IL</span>
+                    <span className="text-red-500">{ilPercent.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Fee</span>
+                    <span className="text-emerald-600">+{fee.toFixed(2)}%</span>
+                  </div>
+                  <div className={`flex justify-between border-t border-slate-200 pt-0.5 font-semibold ${net >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                    <span>Net</span>
+                    <span>{net >= 0 ? '+' : ''}{net.toFixed(2)}%</span>
+                  </div>
+                </div>
               </div>
             )
           })}

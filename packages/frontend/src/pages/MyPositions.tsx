@@ -90,6 +90,11 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
   const hasCollected   = position.collectedFees0 > 0 || position.collectedFees1 > 0
   const hasFees        = hasUncollected || hasCollected
 
+  // Net = IL + fee accumulate (% sul capitale depositato). Solo per posizioni aperte.
+  const totalAccruedFeesUSD = position.uncollectedFeesUSD + position.collectedFeesUSD
+  const feesPercent = position.initialValueUSD > 0 ? (totalAccruedFeesUSD / position.initialValueUSD) * 100 : 0
+  const netPercent  = !isClosed && position.ilPercent !== null ? position.ilPercent + feesPercent : null
+
   const borderClass = isClosed
     ? 'border-slate-200'
     : position.inRange ? 'border-emerald-200' : 'border-amber-200'
@@ -111,10 +116,21 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
 
         <div className="flex items-center gap-1.5 flex-wrap">
           {!isClosed && position.ilPercent !== null && (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              position.ilPercent >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
-            }`}>
-              IL {position.ilPercent >= 0 ? '+' : ''}{position.ilPercent.toFixed(2)}%
+            <span
+              className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200"
+              title="Impermanent Loss + Fee accumulate (% sul capitale depositato) = Net Return"
+            >
+              <span className={position.ilPercent >= 0 ? 'text-emerald-700' : 'text-red-600'}>
+                IL {position.ilPercent >= 0 ? '+' : ''}{position.ilPercent.toFixed(2)}%
+              </span>
+              <span className="text-slate-300">+</span>
+              <span className="text-emerald-600">
+                Fee +{feesPercent.toFixed(2)}%
+              </span>
+              <span className="text-slate-300">=</span>
+              <span className={`font-bold ${(netPercent ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                Net {(netPercent ?? 0) >= 0 ? '+' : ''}{(netPercent ?? 0).toFixed(2)}%
+              </span>
             </span>
           )}
           {isClosed && position.pnlPercent !== null && (
