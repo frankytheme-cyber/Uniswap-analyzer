@@ -342,20 +342,42 @@ function SummaryBar({ totalOpen, totalClosed, inRange, outOfRange, v3Count, v4Co
   return (
     <div className="space-y-3">
       {closedPositions.length > 0 && (
-        <div className={`border rounded-xl px-4 sm:px-5 py-3 sm:py-4 ${
+        <details className={`group border rounded-xl ${
           pnlVsHodlPositive
             ? 'bg-gradient-to-r from-emerald-50 to-emerald-50/50 border-emerald-200'
             : 'bg-gradient-to-r from-red-50 to-red-50/50 border-red-200'
         }`}>
-          <div className="flex items-center justify-between">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 select-none">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">PnL vs HODL · {closedPositions.length} posizioni chiuse</div>
               <div className={`text-xl sm:text-2xl font-bold font-mono mt-0.5 ${pnlVsHodlPositive ? 'text-emerald-700' : 'text-red-600'}`}>
                 {pnlVsHodlPositive ? '+' : '-'}{fmtUsd(Math.abs(totalPnlVsHodlUSD))}
               </div>
             </div>
+            <svg
+              className={`h-4 w-4 shrink-0 transition-transform group-open:rotate-180 ${pnlVsHodlPositive ? 'text-emerald-500' : 'text-red-400'}`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+            </svg>
+          </summary>
+          <div className="px-4 sm:px-5 pb-3 sm:pb-4 pt-1 space-y-1.5">
+            {closedPositions.map((p) => {
+              const pnl = p.pnlVsHodlUSD ?? 0
+              const positive = pnl >= 0
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-3 text-sm border-t border-slate-200/60 pt-1.5 first:border-t-0 first:pt-0">
+                  <span className="font-medium text-slate-600">{p.token0}/{p.token1}</span>
+                  <span className={`font-bold font-mono ${positive ? 'text-emerald-700' : 'text-red-600'}`}>
+                    {positive ? '+' : '-'}{fmtUsd(Math.abs(pnl))}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-        </div>
+        </details>
       )}
 
       {totalFeesUSD > 0 && (
