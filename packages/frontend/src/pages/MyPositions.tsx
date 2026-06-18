@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, EyeIcon, EyeSlashIcon, CircleNotchIcon } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { useWalletPositions, useLidoPosition, useAavePosition, useWalletTokens } from '../hooks/usePoolData.ts'
 import type { WalletPosition } from '../types.ts'
@@ -563,6 +563,20 @@ export default function MyPositions() {
 
           const anyLoaded  = !!(data || lidoData || aaveData || tokensData)
           const allLoading = isLoading && lidoLoading && aaveLoading && tokensLoading
+
+          // Preload: appena premi "Cerca" e finché nessun protocollo ha risposto,
+          // mostra un unico indicatore di caricamento prima della griglia.
+          if (allLoading) {
+            return (
+              <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+                <CircleNotchIcon size={36} weight="bold" className="text-indigo-500 animate-spin" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-700">Carico le posizioni del wallet…</div>
+                  <div className="text-xs text-slate-400 mt-1 font-mono">{query.slice(0, 6)}…{query.slice(-4)}</div>
+                </div>
+              </div>
+            )
+          }
 
           return (
           <>
