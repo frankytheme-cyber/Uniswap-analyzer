@@ -95,6 +95,16 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
   const feesPercent = position.initialValueUSD > 0 ? (totalAccruedFeesUSD / position.initialValueUSD) * 100 : 0
   const netPercent  = !isClosed && position.ilPercent !== null ? position.ilPercent + feesPercent : null
 
+  // APY annuo del range: fee accumulate annualizzate sul capitale depositato
+  const rangeAPY = (() => {
+    if (position.initialValueUSD <= 0 || !position.openedAt) return null
+    const start = new Date(position.openedAt).getTime()
+    const end   = position.closedAt ? new Date(position.closedAt).getTime() : Date.now()
+    const days  = (end - start) / (1000 * 60 * 60 * 24)
+    if (days < 1) return null
+    return (totalAccruedFeesUSD / position.initialValueUSD) * (365 / days) * 100
+  })()
+
   const borderClass = isClosed
     ? 'border-slate-200'
     : position.inRange ? 'border-emerald-200' : 'border-amber-200'
@@ -172,6 +182,12 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
                     {position.currentPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     <span className="text-[10px] text-indigo-400 ml-1">{position.token1}</span>
                   </span>
+                </div>
+              )}
+              {rangeAPY !== null && (
+                <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <span className="text-[11px] font-semibold text-emerald-600 shrink-0">APY</span>
+                  <span className="font-mono text-xs font-bold text-emerald-700">{rangeAPY.toFixed(2)}%</span>
                 </div>
               )}
             </div>
