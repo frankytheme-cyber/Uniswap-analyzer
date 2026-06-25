@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { runAnalysis, getDayDatasWithDbFallback } from '../services/analysis-service.ts'
 import { cache, CACHE_KEYS } from '../cache/cache-manager.ts'
 import { db } from '../db/duckdb-store.ts'
-import { GraphFetcher } from '../fetchers/graph-fetcher.ts'
+import { GraphFetcher, GraphFetcherV4 } from '../fetchers/graph-fetcher.ts'
 import { calculateFeeApr } from '../analyzers/fees-analyzer.ts'
 import { calculateIL, calculateILForAllStrategies } from '../analyzers/il-analyzer.ts'
 import { analyzeStrategy, ALL_STRATEGIES } from '../analyzers/strategy-advisor.ts'
@@ -31,7 +31,10 @@ router.get('/:chain/:address/history', async (req, res) => {
   const { chain, address } = req.params
   const days  = Math.min(parseInt(req.query['days'] as string ?? '30', 10), 365)
   const poolId = address.toLowerCase()
-  const context = { route: 'GET /analysis/:chain/:address/history', chain, poolId, days }
+  // V4 pools are identified by a 32-byte PoolId (66 chars), V3 by a 20-byte
+  // address (42 chars). Route V4 ids to the V4 subgraph fetcher.
+  const isV4 = poolId.length > 42
+  const context = { route: 'GET /analysis/:chain/:address/history', chain, poolId, days, version: isV4 ? 'v4' : 'v3' }
 
   try {
     // Prova prima dal DB locale
@@ -43,7 +46,7 @@ router.get('/:chain/:address/history', async (req, res) => {
     }
 
     // Fallback: fetch dal subgraph e persisti
-    const fetcher  = new GraphFetcher(chain)
+    const fetcher  = isV4 ? new GraphFetcherV4(chain) : new GraphFetcher(chain)
     const dayDatas = await cache.get(
       CACHE_KEYS.dayDatas(chain, poolId, days),
       'DAY_DATAS',
@@ -52,6 +55,13 @@ router.get('/:chain/:address/history', async (req, res) => {
     await db.upsertDayDatas(chain, poolId, dayDatas)
     res.json(dayDatas)
   } catch (error) {
+    // V4 history is best-effort: the subgraph may not be deployed on this chain.
+    // Return an empty series instead of a 500 so the UI shows a clean fallback.
+    if (isV4) {
+      console.warn(JSON.stringify({ warning: 'V4 history unavailable', context, timestamp: new Date().toISOString() }))
+      res.json([])
+      return
+    }
     const message = error instanceof Error ? error.message : String(error)
     console.error(JSON.stringify({ error: message, context, timestamp: new Date().toISOString() }))
     res.status(500).json({ error: message })

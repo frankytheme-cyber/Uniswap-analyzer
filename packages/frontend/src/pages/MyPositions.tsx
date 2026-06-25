@@ -301,6 +301,7 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
                   quote={position.token1}
                   priceLower={position.priceLower}
                   priceUpper={position.priceUpper}
+                  currentPrice={position.currentPrice}
                 />
               </div>
             )}

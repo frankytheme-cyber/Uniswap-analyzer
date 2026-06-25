@@ -12,6 +12,8 @@ interface Props {
   /** Position range bounds (in token1 per token0) to overlay on the price line. */
   priceLower: number
   priceUpper: number
+  /** Current price (token1 per token0) — used to auto-orient the subgraph OHLC. */
+  currentPrice: number
   days?:      number
 }
 
@@ -25,7 +27,7 @@ function formatDate(ts: number): string {
   return new Date(ts * 1000).toLocaleDateString('it-IT', { month: 'short', day: 'numeric' })
 }
 
-export default function PositionTrendChart({ chain, poolId, quote, priceLower, priceUpper, days = 30 }: Props) {
+export default function PositionTrendChart({ chain, poolId, quote, priceLower, priceUpper, currentPrice, days = 30 }: Props) {
   const { data: history, isLoading, isError } = usePoolHistory(chain, poolId, days)
 
   if (isLoading) {
@@ -42,10 +44,19 @@ export default function PositionTrendChart({ chain, poolId, quote, priceLower, p
     )
   }
 
+  // The subgraph OHLC (`close`) is token0Price, which may be the inverse of the
+  // card's price (priceAtTick → token1/token0). Auto-detect orientation by
+  // comparing the most recent close against currentPrice and invert if needed.
+  const lastClose = parseFloat(history[0].close)
+  const invert =
+    lastClose > 0 && currentPrice > 0 &&
+    Math.abs(Math.log(1 / lastClose / currentPrice)) < Math.abs(Math.log(lastClose / currentPrice))
+  const orient = (close: number) => (invert && close > 0 ? 1 / close : close)
+
   // Subgraph returns most-recent-first; chart reads left→right oldest→newest.
   const data = [...history].reverse().map((d) => ({
     label:     formatDate(d.date),
-    price:     parseFloat(d.close),
+    price:     orient(parseFloat(d.close)),
     volumeUSD: parseFloat(d.volumeUSD),
     feesUSD:   parseFloat(d.feesUSD),
   }))
