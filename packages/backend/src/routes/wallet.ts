@@ -122,6 +122,10 @@ function enrichPosition(
   version: 'v3' | 'v4',
   ethPriceUSD: number,
   uncollected: { owed0: bigint; owed1: bigint } = { owed0: 0n, owed1: 0n },
+  // Historical USD prices (token0/token1) on the position's close date. When
+  // provided, collected ("ritirate") fees are valued at this stable historical
+  // basis instead of the fluctuating current price.
+  collectedFeePricesUSD?: { price0: number; price1: number },
 ) {
   const { net0, net1 } = netAmounts(p)
   const tickLower = parseInt(p.tickLower.tickIdx)
@@ -173,7 +177,11 @@ function enrichPosition(
   const collected1 = subgraphBug
     ? 0
     : Math.max(0, rawCollected1 - parseFloat(p.withdrawnToken1))
-  const collectedFeesUSD = collected0 * token0PriceUSD + collected1 * token1PriceUSD
+  // Prefer the historical close-date price so the "ritirate" figure is stable;
+  // fall back to current price when historical data is unavailable.
+  const collectedFeesUSD = collectedFeePricesUSD
+    ? collected0 * collectedFeePricesUSD.price0 + collected1 * collectedFeePricesUSD.price1
+    : collected0 * token0PriceUSD + collected1 * token1PriceUSD
 
   // ── IL (open) / PnL (closed) ──
   const currentPrice = priceAtTick(currentTick, dec0, dec1)
@@ -323,6 +331,39 @@ router.get('/:chain/:address/positions', async (req, res) => {
     const openV4   = v4Raw.filter((p) => p.liquidity !== '0')
     const closedV4 = v4Raw.filter((p) => p.liquidity === '0')
 
+    // ── Historical close-date prices for collected ("ritirate") fees ──
+    // Value realized fees at each token's USD price on the day the position
+    // closed (a stable, historical figure) rather than the live price, which
+    // would make the "ritirate" total drift on every refresh.
+    const DAY = 86400
+    const tokenDayId = (tokenAddr: string, ts: number) => `${tokenAddr.toLowerCase()}-${Math.floor(ts / DAY)}`
+
+    const closedWithTs = closedV3.filter((p) => p.closedAtTimestamp && p.pool.token0.id && p.pool.token1.id)
+    const feePriceIds = Array.from(new Set(
+      closedWithTs.flatMap((p) => {
+        const ts = parseInt(p.closedAtTimestamp!)
+        return [tokenDayId(p.pool.token0.id!, ts), tokenDayId(p.pool.token1.id!, ts)]
+      }),
+    ))
+    const histPrices = feePriceIds.length > 0
+      ? await cache.get(
+          `wallet-feeprices:${chain}:${address.toLowerCase()}`,
+          'DAY_DATAS',
+          () => v3Fetcher.getTokenPricesUSDAtDays(feePriceIds),
+        )
+      : new Map<string, number>()
+
+    // position.id → close-date prices, only when BOTH tokens have historical data
+    const closedFeePrices = new Map<string, { price0: number; price1: number }>()
+    for (const p of closedWithTs) {
+      const ts = parseInt(p.closedAtTimestamp!)
+      const price0 = histPrices.get(tokenDayId(p.pool.token0.id!, ts))
+      const price1 = histPrices.get(tokenDayId(p.pool.token1.id!, ts))
+      if (price0 !== undefined && price1 !== undefined) {
+        closedFeePrices.set(p.id, { price0, price1 })
+      }
+    }
+
     // ── Compute uncollected fees on-chain ──
 
     // V3: one batch RPC call per position (5 eth_calls each, batched)
@@ -384,8 +425,8 @@ router.get('/:chain/:address/positions', async (req, res) => {
         const uc = v3FeeMap.get(p.id)
         return enrichPosition(p, 'v3', ethPriceUSD, uc ? { owed0: uc.fees0, owed1: uc.fees1 } : undefined)
       }),
-      // Closed V3 (no uncollected fees, but may have collectedFees)
-      ...closedV3.map((p) => enrichPosition(p, 'v3', ethPriceUSD)),
+      // Closed V3 (no uncollected fees, but may have collectedFees valued at close-date prices)
+      ...closedV3.map((p) => enrichPosition(p, 'v3', ethPriceUSD, undefined, closedFeePrices.get(p.id))),
       // Closed V4 (no uncollected fees)
       ...closedV4.map((p) => enrichPosition(p, 'v4', ethPriceUSD)),
       // Open V4 with uncollected fees

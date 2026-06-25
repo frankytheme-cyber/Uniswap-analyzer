@@ -886,6 +886,7 @@ export default function MyPositions() {
             </p>
             <p>
               Le fee ritirate provengono dallo storico The Graph e includono tutti i <code className="text-xs bg-slate-100 px-1 rounded">collect()</code> eseguiti dal wallet nel tempo.
+              Sono valorizzate al prezzo del token nel <strong>giorno di chiusura</strong> della posizione (valore realizzato), non al prezzo corrente — così la cifra resta stabile tra un aggiornamento e l'altro.
             </p>
           </div>
           <div>

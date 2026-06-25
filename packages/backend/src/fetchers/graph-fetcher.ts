@@ -492,6 +492,21 @@ const GET_ETH_PRICE_USD = gql`
   }
 `
 
+/**
+ * Historical per-token USD price by day. tokenDayData id = `${tokenAddress}-${dayIndex}`
+ * where dayIndex = floor(unixTimestamp / 86400). Used to value collected fees at
+ * the price on the day a position was closed (a stable, historical figure) rather
+ * than the fluctuating current price.
+ */
+const GET_TOKEN_DAY_PRICES = gql`
+  query GetTokenDayPrices($ids: [ID!]!) {
+    tokenDayDatas(first: 1000, where: { id_in: $ids }) {
+      id
+      priceUSD
+    }
+  }
+`
+
 // ── GraphFetcher Class ──────────────────────────────────────────────────────
 
 export class GraphFetcher {
@@ -765,6 +780,33 @@ export class GraphFetcher {
     } catch {
       return 0
     }
+  }
+
+  /**
+   * Batch-fetch historical USD prices for (token, day) pairs.
+   * Returns a Map keyed by `${tokenAddress}-${dayIndex}` → priceUSD.
+   * Tokens/days without a tokenDayData entry are simply absent from the map,
+   * letting callers fall back to current-price valuation.
+   */
+  async getTokenPricesUSDAtDays(ids: string[]): Promise<Map<string, number>> {
+    const out = new Map<string, number>()
+    if (ids.length === 0) return out
+    try {
+      const data = await this.client.request<{ tokenDayDatas: { id: string; priceUSD: string }[] }>(
+        GET_TOKEN_DAY_PRICES,
+        { ids },
+      )
+      for (const t of data.tokenDayDatas) {
+        out.set(t.id, parseFloat(t.priceUSD))
+      }
+    } catch (error) {
+      // Non-fatal: callers fall back to current-price valuation.
+      console.warn(JSON.stringify({
+        warning: 'getTokenPricesUSDAtDays failed', error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      }))
+    }
+    return out
   }
 
   async getTopPoolsByFeeTier(feeTier: string): Promise<CompetitorPool[]> {
