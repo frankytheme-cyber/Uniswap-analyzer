@@ -9,6 +9,7 @@ import SEO      from '../components/SEO.tsx'
 import LidoCard from '../components/dashboard/LidoCard.tsx'
 import AaveCard from '../components/dashboard/AaveCard.tsx'
 import WalletTokensCard from '../components/dashboard/WalletTokensCard.tsx'
+import PositionTrendChart from '../components/charts/PositionTrendChart.tsx'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ const EXPLORER_TX: Record<string, string> = {
 }
 
 function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition; chain: string; onAnalyze: (poolId: string) => void }) {
+  const [showTrend, setShowTrend] = useState(false)
   const feePct   = (position.feeTier / 10000).toFixed(2)
   const pair     = `${position.token0}/${position.token1}`
   const isClosed = position.status === 'closed'
@@ -274,6 +276,36 @@ function PositionRow({ position, chain, onAnalyze }: { position: WalletPosition;
             <div />
           )}
         </div>
+
+        {/* ─── Andamento prezzo / volume / fee (lazy) ─── */}
+        {!isClosed && (
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => setShowTrend((v) => !v)}
+              className="flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <span>Andamento · prezzo, volume e fee (30gg)</span>
+              <svg
+                className={`h-4 w-4 transition-transform ${showTrend ? 'rotate-180' : ''}`}
+                viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
+            {showTrend && (
+              <div className="mt-3">
+                <PositionTrendChart
+                  chain={chain}
+                  poolId={position.poolId}
+                  quote={position.token1}
+                  priceLower={position.priceLower}
+                  priceUpper={position.priceUpper}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ─── Footer ─── */}
